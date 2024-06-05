@@ -1,0 +1,32 @@
+--update this script in sandbox and take db bac pac file after and update in dev
+
+declare @tbl varchar(100)
+ 
+declare @stat varchar(100)
+ 
+declare @cmd varchar(200)
+ 
+ 
+DECLARE abc CURSOR LOCAL FOR
+ 
+    select object_name(object_id), name from sys.stats where name not like '_wa%' and auto_drop = 1
+ 
+OPEN abc;
+ 
+FETCH next from abc into @tbl, @stat
+ 
+WHILE @@FETCH_STATUS = 0
+ 
+BEGIN
+ 
+	set @cmd = 'UPDATE STATISTICS ' + '[' + @tbl + '] ['+ @stat  + '] ' + ' WITH AUTO_DROP = OFF;'
+ 
+	EXEC (@cmd)
+ 
+	FETCH next from abc into @tbl, @stat
+ 
+END
+ 
+CLOSE abc;
+ 
+DEALLOCATE abc;
