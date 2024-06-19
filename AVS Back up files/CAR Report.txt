@@ -1,0 +1,2 @@
+K:\AOSService\PackagesLocalDirectory\bin\xppbp.exe -packagesroot=K:\AOSService\PackagesLocalDirectory -metadata=K:\AOSService\PackagesLocalDirectory -all -model="DogmaBaseModel" -xmlLog="C:\Users\Admin900710ebaa\Documents\DogmaBaseModel.xml" -module=DogmaBaseModel -car="C:\Users\Admin900710ebaa\Documents\DogmaBaseModel CAR.xlsx"
+
