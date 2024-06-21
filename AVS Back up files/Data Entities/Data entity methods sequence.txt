@@ -1,0 +1,39 @@
+https://rahulmsdax.blogspot.com/2019/08/data-entity-methods-execution-sequence.html
+
+
+
+Data entity methods execution sequence in Dynamics 365 F&O X++
+Here is a sequence of method’s calls during export:
+
+1. initValue
+2. validateField
+3. validateWrite
+4. update
+4.1. doUpdate
+4.1.1. persistEntity
+4.1.1.1. doPersistEntity
+4.1.1.1.1. initializeDataSources
+4.1.1.1.1.1. initializeEntityDataSource
+Note: initializeDataSource is called once for each DataSource in Entity.
+4.1.1.1.2. mapEntityToDataSources
+Note: initializeDataSource is called once for each DataSource in Entity.
+4.1.1.1.3. saveDataSources
+4.1.1.1.3.1. updateEntityDataSource
+4.1.1.1.4. mapEntityToDataSource (maybe for another record)
+4.1.1.1.5. saveDataSources
+4.1.1.1.5.1. updateEntityDataSource for update operation and (insertEntityDataSource for insert)
+4.1.1.1.5.1.1. mapDataSourceToEntity
+4.1.1.1.5.1.2. doSaveDataSource
+4.1.1.1.5.1.2.1. updateDataSource
+4.1.1.1.5.1.2.1.1. preupInsertDataSource
+4.1.1.1.5.1.2.1.1.1. validateWrite of table
+5.0 postLoad
+
+
+Here are some method’s calls during Import:
+
+defaultCTQuery
+copyCustomStagingToTarget
+postGetStagingData
+preTargetProcessSetBased
+postTargetProcess

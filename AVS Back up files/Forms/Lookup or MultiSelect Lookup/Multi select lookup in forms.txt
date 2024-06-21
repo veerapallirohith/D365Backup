@@ -1,0 +1,31 @@
+/// <summary>
+/// This is a extension class of serviceAgreementtable form used to create multi lookup value selection for document type
+/// </summary>
+[ExtensionOf(formStr(SMAAgreementTable))]
+internal final class DGAM_ServiceAgreementTable_Extension
+{
+    public  SysLookupMultiSelectCtrl msCtrlCust;
+    /// <summary>
+    /// This method is init method used here to create multi lookup value selection for document type
+    /// </summary>
+    public void init()
+    {
+        next init();
+       
+        FormRun element = any2Object(this) as FormRun;
+        Query query = new Query();
+        QueryBuildDataSource qbds;
+        //creating query to show customer account and customer name
+       //the query must contain only those fields that should be visible on the lookup
+        qbds = query.addDataSource(tableNum(DGMA_DocumentType));
+        qbds.fields().dynamic(NoYes::yes);
+        qbds.fields().addField(fieldNum(DGMA_DocumentType,DocumentType));
+        qbds.fields().addField(fieldNum(DGMA_DocumentType,Description));
+        //assigning control and query to the class
+        msCtrlCust = SysLookupMultiSelectCtrl::constructWithQuery(element,DocumentTypeMultiple, query);
+    }
+
+}
+
+
+Field should not be selected in form control other wise selected values in lookup wont be visible

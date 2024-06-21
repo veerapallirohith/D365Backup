@@ -1,0 +1,407 @@
+/// <summary>
+/// Extension of psaprojinvoicedp class to print project invoices serial numbers
+/// </summary>
+// Created by PTitus on 10/27/2021
+// As a part of TASK-1401 and CDI-294
+
+[ExtensionOf(classStr(PsaProjInvoiceDP))]
+final class PsaProjInvoiceDP_Extension
+{
+    public  CDPsaProjInvoiceTaxDetailsTmp  TmpPsaTaxDetails;
+   
+   
+
+    /// <summary>
+    /// To provide tax registration details
+    /// </summary>
+    protected void populatePSAProjInvoiceHeaderTmp()
+    {
+        next populatePSAProjInvoiceHeaderTmp();
+        ProjFundingSource projFundingSource = ProjFundingSource::find(ProjProposalJour::find(ProjInvoiceJour.ProposalId).FundingSource);
+        int billCountryValid = strscan(tmpPSAProjInvoiceHeader.CustAddress,"CAN",0,strLen(tmpPSAProjInvoiceHeader.CustAddress));
+      
+        if (curExt() == "CDUS"
+            && tmpPSAProjInvoiceHeader.taxable > 0
+            && tmpPSAProjInvoiceHeader.InvoiceCurrency == "USD"
+            && billCountryValid != 0)
+        {
+            tmpPSAProjInvoiceHeader.cdtaxdetails = "GST/HST -  83443 9465 RT0001   QST - 1216039455 TQ0001";
+        }
+        else if (curExt() == "CDCA"
+            && tmpPSAProjInvoiceHeader.taxable > 0
+            && tmpPSAProjInvoiceHeader.InvoiceCurrency == "CAD"
+            && billCountryValid != 0)
+        {
+            tmpPSAProjInvoiceHeader.cdtaxdetails = "GST/HST -  81514 6204 RT0001";
+        }
+        else
+        {
+            tmpPSAProjInvoiceHeader.cdtaxdetails = "";
+        }
+
+        tmpPSAProjInvoiceHeader.CDPaymentTermsId    = projFundingSource.PaymentTermsId;
+        tmpPSAProjInvoiceHeader.CDCustPurchaseOrder = projFundingSource.CustPurchaseOrder;
+
+        docuRef docuRef;
+        if (projInvoiceJour)
+        {
+            select firstonly docuRef
+            order by  RecId desc
+            where docuRef.RefTableId == 12089
+            && docuRef.RefRecId == projInvoiceJour.recid
+            && docuRef.Restriction == DocuRestriction::External
+            && docuRef.TypeId == "Note";
+            if (docuRef.Notes != "")
+            {
+                tmpPSAProjInvoiceHeader.CDExternalNotes = strFmt("Note: %1",docuRef.Notes);
+            }
+            else
+            {
+                tmpPSAProjInvoiceHeader.CDExternalNotes = "";
+            }
+        }
+    }
+
+    /// <summary>
+    /// To initialize the projinvoice on account
+    /// </summary>
+    /// <param name = "_projInvoiceOnAcc">_projInvoiceOnAcc</param>
+    protected void initFromProjInvoiceOnAcc(ProjInvoiceOnAcc _projInvoiceOnAcc)
+    {
+        next initFromProjInvoiceOnAcc(_projInvoiceOnAcc);
+ 
+        tmpPSAProjInvoice.CDExternalID = ProjOnAccTrans::find(_projInvoiceOnAcc.TransId).ExternalID;
+
+        tmpPSAProjInvoice.CDLineAmount = strFmt("%1" , tmpPSAProjInvoice.LineAmount);
+        tmpPSAProjInvoice.CDtaxwritecode = strFmt("%1 ",_projInvoiceOnAcc.TaxItemGroupId);
+        tmpPSAProjInvoice.CDQuantity = strFmt("%1", tmpPSAProjInvoice.Quantity);
+        tmpPSAProjInvoice.cdsalesprice = strFmt("%1", tmpPSAProjInvoice.SalesPrice);
+    }
+
+    /// <summary>
+    /// To initialize the projproposalon acc
+    /// </summary>
+    /// <param name = "_projProposalOnAcc">_projProposalOnAcc</param>
+    protected void initFromProjProposalOnAcc(ProjProposalOnAcc _projProposalOnAcc)
+    {
+        next initFromProjProposalOnAcc(_projProposalOnAcc);
+
+        tmpPSAProjInvoice.CDExternalID = ProjOnAccTrans::find(_projProposalOnAcc.TransId).ExternalID;
+        
+        tmpPSAProjInvoice.CDLineAmount = strFmt("%1" , tmpPSAProjInvoice.LineAmount);
+        tmpPSAProjInvoice.CDtaxwritecode = strFmt("%1 ",_projProposalOnAcc .TaxItemGroupId);
+        tmpPSAProjInvoice.CDQuantity = strFmt("%1", tmpPSAProjInvoice.Quantity);
+        tmpPSAProjInvoice.cdsalesprice = strFmt("%1", tmpPSAProjInvoice.SalesPrice);
+    }
+
+    protected void initFromProjProposalItem(ProjProposalItem _projProposalItem)
+    {
+        CustPackingSlipJour custPackingSlipJour;
+
+        next initFromProjProposalItem(_projProposalItem);
+
+        tmpPSAProjInvoice.CDItemId =  _projProposalItem.ItemId;
+       
+        select PackingSlipId from custPackingSlipJour
+            where custPackingSlipJour.SalesId == _projProposalItem.SalesId;
+
+        tmpPSAProjInvoice.CDPackingSlip = custPackingSlipJour.PackingSlipId;
+        tmpPSAProjInvoice.CDItemId = _projProposalItem.ItemId;
+        tmpPSAProjInvoice.CDQuantity = strFmt("%1",tmpPSAProjInvoice.quantity);
+        tmpPSAProjInvoice.CDLineAmount = strFmt("%1",tmpPSAProjInvoice.lineamount);
+        tmpPSAProjInvoice.cdsalesprice = strFmt("%1",tmpPSAProjInvoice.salesprice);
+        tmpPSAProjInvoice.CDTaxWriteCode = _projProposalItem.TaxItemGroupId;
+    }
+
+    /// <summary>
+    ///Insert method for project invoice proposal 
+    /// </summary>
+    /// <param name = "_projInvoiceItem"></param>
+    protected void insertProformaPSAProjInvoiceTmp(Common _cursor, char _lineSign)
+    {
+        next insertProformaPSAProjInvoiceTmp(_cursor, _lineSign);
+
+        ProjProposalItem _projProposalItem = _cursor as ProjProposalItem;
+        
+        if (ProjProposalItem::findRecId(_projProposalItem.RecId))
+        {
+            CustPackingSlipJour     custPackingSlipJour;
+            CustPackingSlipTrans    custPackingSlipTrans;
+            InventTrans             inventtrans;
+            InventTable             inventTable = InventTable::find(_projProposalItem.ItemId);
+            SalesLine               salesline;
+            InventDim               inventDim;
+            InventTransOrigin       inventTransOrig;
+            RecId                   inventTransOrigLocal;
+            ProjProposalJour         projProposalJour =  ProjProposalJour::find(_projProposalItem.ProposalId);
+            boolean refLineAdded = false;
+
+            tmpPSAProjInvoice.cdsalesprice = strFmt("Salesprice: %1",_projProposalItem.salesPrice());
+            tmpPSAProjInvoice.CDLINEAMOUNT = strFmt("LineAmount: %1",_projProposalItem.lineAmt());
+            tmpPSAProjInvoice.smabaseprice =  any2real(_projProposalItem.SalesId);
+
+            salesLine.clear();
+
+            select CustomerLineNum, CDCustomerShipmentNumber from salesLine
+                where salesLine.SalesId == _projProposalItem.SalesId
+                && salesLine.ItemId == _projProposalItem.ItemId
+                && salesLine.InventTransId == _projProposalItem.InventTransId;
+
+            select SalesId,InventTransId,ItemId ,PackingSlipId from CustpackingSlipTrans
+                    join custPackingSlipJour
+                where CustpackingSlipTrans.SalesId == _projProposalItem.SalesId
+                    && CustpackingSlipTrans.ItemId == _projProposalItem.itemid
+                    && CustpackingSlipTrans.InventTransId ==_projProposalItem.InventTransId;
+               
+
+            while select  * from inventtrans
+                where inventtrans.InvoiceId == projProposalJour.ProjInvoiceId
+                    && inventtrans.ItemId == _projProposalItem.itemID
+            join inventTransOrig
+                where inventTransOrig.RecId == inventtrans.InventTransOrigin
+                    && inventTransOrig.InventTransId == _projProposalItem.InventTransId
+                && inventtrans.PackingSlipId    ==  custPackingSlipTrans.PackingSlipId
+            Join inventdim
+                where inventdim.inventDimId == inventtrans.inventDimId
+               
+            {
+                if (!refLineAdded)
+                {
+                    tmpPSAProjInvoice.CDItemId = "   ******** REFERENCE    :";
+                    tmpPSAProjInvoice.CDtaxwritecode = "";
+                    tmpPSAProjInvoice.CDVersions = "";
+                    tmpPSAProjInvoice.CDQuantity   = "";
+                    tmpPSAProjInvoice.CDLineAmount = "";
+                    tmpPSAProjInvoice.cdsalesprice = "";
+                    tmpPSAProjInvoice.transtxt = strFmt("Cust Item # %1",salesLine.ExternalItemId);
+                    tmpPSAProjInvoice.insert();
+                    refLineAdded = true;
+                }
+                
+                select * from CustpackingSlipTrans
+                    join custPackingSlipJour
+                where CustpackingSlipTrans.SalesId == _projProposalItem.SalesId
+                    && CustpackingSlipTrans.ItemId == _projProposalItem.itemid
+                    && CustpackingSlipTrans.PackingSlipId == inventtrans.PackingSlipId;
+
+                tmpPSAProjInvoice.CDPackingSlip = strfmt("PS: %1",inventtrans.PackingSlipId);
+
+                if (inventDim.inventSerialId)
+                {
+                    tmpPSAProjInvoice.CDItemId = strFmt("Qty: 1 PS: %1",inventtrans.PackingSlipId);
+                    tmpPSAProjInvoice.Quantity = 1;
+                }
+                else
+                {
+                    tmpPSAProjInvoice.CDItemId = strFmt("Qty: %1 PS: %2",abs(inventtrans.Qty),inventtrans.PackingSlipId);
+                    tmpPSAProjInvoice.Quantity = abs(inventtrans.Qty);
+                }
+                tmpPSAProjInvoice.CDtaxwritecode = strFmt("Ship#: %1 ",salesline.CDCustomerShipmentNumber);
+                tmpPSAProjInvoice.CDVersions = strFmt("Version: %1",inventDim.InventVersionId);
+                tmpPSAProjInvoice.transtxt = strFmt("SN: %1  Version:%2",inventDim.inventSerialId,inventDim.InventVersionId );
+                tmpPSAProjInvoice.CDQuantity   = strFmt("Ship date: %1", custPackingSlipJour.DeliveryDate);
+                tmpPSAProjInvoice.CDLineAmount = strFmt("Cust: Line#: %1" , salesline.CustomerLineNum);
+                tmpPSAProjInvoice.cdsalesprice = strFmt("SO: %1", CustpackingSlipTrans.SalesId);
+                tmpPSAProjInvoice.insert();
+            }
+        }
+
+
+    }
+
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name = "_projInvoiceItem"></param>
+    protected void initFromProjInvoiceItem(ProjInvoiceItem _projInvoiceItem)
+    {
+        next initFromProjInvoiceItem(_projInvoiceItem);
+
+        tmpPSAProjInvoice.CDItemId = _projInvoiceItem.ItemId;
+        tmpPSAProjInvoice.CDPackingSlip = _projInvoiceItem.PackingSlipId;
+        tmpPSAProjInvoice.CDQuantity   = strFmt("%1",tmpPSAProjInvoice.quantity);
+        tmpPSAProjInvoice.CDLineAmount  = strFmt("%1",tmpPSAProjInvoice.lineamount);
+        tmpPSAProjInvoice.cdsalesprice  = strFmt("%1",tmpPSAProjInvoice.salesprice);
+        tmpPSAProjInvoice.CDTaxWriteCode = _projInvoiceItem.TaxItemGroupId;
+       
+    }
+
+    protected void insertPSAProjInvoiceTmp(Common _cursor, char _lineSign)
+    {
+        next insertPSAProjInvoiceTmp(_cursor, _lineSign);
+
+        ProjInvoiceItem _projInvoiceItem = _cursor as ProjInvoiceItem;
+        
+        if (ProjInvoiceItem::findRecId(_projInvoiceItem.RecId))
+        {
+            CustPackingSlipJour     custPackingSlipJour;
+            CustPackingSlipTrans    custPackingSlipTrans;
+            InventTrans             inventtrans;
+            InventTable             inventTable = InventTable::find(_projInvoiceItem.ItemId);
+            SalesLine               salesline;
+            InventDim               inventDim;
+            InventTransOrigin       inventTransOrig;
+            RecId                   inventTransOrigLocal ;
+            boolean refLineAdded = false;
+
+            tmpPSAProjInvoice.cdsalesprice = strFmt("Salesprice: %1",_projInvoiceItem.salesPrice());
+            tmpPSAProjInvoice.CDLINEAMOUNT = strFmt("LineAmount: %1",_projInvoiceItem.LineAmount);
+            tmpPSAProjInvoice.smabaseprice = any2real(_projInvoiceItem.SalesId);
+
+            salesLine.clear();
+
+            select CustomerLineNum, CDCustomerShipmentNumber from salesLine
+                where salesLine.SalesId == _projInvoiceItem.SalesId
+                    && salesLine.ItemId == _projInvoiceItem.ItemId
+                    && salesLine.InventTransId == _projInvoiceItem.InventTransId;
+
+            while select  * from inventtrans
+                where inventtrans.InvoiceId == projInvoiceJour.projinvoiceid
+                    && inventtrans.ItemId == _projInvoiceItem.itemID
+            join inventTransOrig
+                where inventTransOrig.RecId == inventtrans.InventTransOrigin
+                    && inventTransOrig.InventTransId == _projInvoiceItem.InventTransId
+            Join inventdim
+                where inventdim.inventDimId == inventtrans.inventDimId
+
+            {
+                if (!refLineAdded)
+                {
+                    tmpPSAProjInvoice.CDItemId = "**********REFERENCE   :";
+                    tmpPSAProjInvoice.CDtaxwritecode = "";
+                    tmpPSAProjInvoice.CDVersions = "";
+                    tmpPSAProjInvoice.CDQuantity   = "";
+                    tmpPSAProjInvoice.CDLineAmount = "";
+                    tmpPSAProjInvoice.cdsalesprice = "";
+                    tmpPSAProjInvoice.transtxt = strFmt("Cust Item # %1",salesLine.ExternalItemId);
+                    tmpPSAProjInvoice.insert();
+                    refLineAdded = true;
+                }
+
+                select * from CustpackingSlipTrans
+                    join custPackingSlipJour
+                where CustpackingSlipTrans.SalesId == _projInvoiceItem.SalesId
+                    && CustpackingSlipTrans.ItemId == _projInvoiceItem.itemid
+                    && CustpackingSlipTrans.PackingSlipId == inventtrans.PackingSlipId;
+                  
+                tmpPSAProjInvoice.CDPackingSlip = strfmt("PS: %1",inventtrans.PackingSlipId);
+
+                if (inventDim.inventSerialId)
+                {
+                    tmpPSAProjInvoice.CDItemId = strFmt("Qty: 1 PS: %1",inventtrans.PackingSlipId);
+                    tmpPSAProjInvoice.Quantity = 1;
+                }
+                else
+                {
+                    tmpPSAProjInvoice.CDItemId = strFmt("Qty: %1 PS: %2",abs(inventtrans.Qty),inventtrans.PackingSlipId);
+                    tmpPSAProjInvoice.Quantity = abs(inventtrans.Qty);
+                }
+                tmpPSAProjInvoice.CDtaxwritecode = strFmt("Ship#: %1 ",salesline.CDCustomerShipmentNumber);
+                tmpPSAProjInvoice.CDVersions = strFmt("Version: %1",inventDim.InventVersionId);
+                tmpPSAProjInvoice.transtxt = strFmt("SN: %1  Version:%2",inventDim.inventSerialId,inventDim.InventVersionId );
+                tmpPSAProjInvoice.CDQuantity   = strFmt("Ship date: %1", custPackingSlipJour.DeliveryDate);
+                tmpPSAProjInvoice.CDLineAmount = strFmt("Cust: Line#: %1" , salesline.CustomerLineNum);
+                tmpPSAProjInvoice.cdsalesprice = strFmt("SO: %1", CustpackingSlipTrans.SalesId);
+                tmpPSAProjInvoice.insert();
+            }
+        }
+    }
+
+    /// <summary>
+    ///  Used to select all records from table <c>PSAProjInvoiceTmp</c>.
+    /// </summary>
+    /// <returns>
+    /// Returns the table object with all the data.
+    /// </returns>
+
+        [
+          SRSReportDataSetAttribute(tableStr(CDPsaProjInvoiceTaxDetailsTmp))
+        ]
+           public CDPsaProjInvoiceTaxDetailsTmp getCDPsaProjInvoiceTaxDetails()
+        {
+            select TmpPsaTaxDetails;
+            return TmpPsaTaxDetails;
+        }
+
+        protected void insertPSAProjInvoiceHeaderTmp()
+        {
+            next insertPSAProjInvoiceHeaderTmp();
+            TaxTrans    taxtrans;
+            TmpPsaTaxDetails.setConnection(this.parmUserConnection());
+
+            while select taxtrans 
+                where taxtrans.Voucher == projInvoiceJour.LedgerVoucher
+                    && taxtrans.TransDate == projInvoiceJour.invoicedate
+            {
+                tmppsataxdetails.CDSourceBaseAmountCur = abs(this.displaySourceBaseAmountCur(taxtrans));
+                TmpPsaTaxDetails.CDSourceRegulateAmountCur = abs(this.displaySourceRegulateAmountCur(taxtrans));
+                TmpPsaTaxDetails.CDTaxCode = taxtrans.TaxCode;
+                TmpPsaTaxDetails.insert();
+            }
+           
+        }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name = "_taxTrans"></param>
+    /// <returns></returns>
+    private boolean doChangeDisplaySign(TaxTrans _taxTrans)
+    {
+        boolean  changeDisplaySign;
+        #ISOCountryRegionCodes
+        boolean doChange = changeDisplaySign;
+
+        if (SysCountryRegionCode::isLegalEntityInCountryRegion([#isoCZ]) && _taxTrans.IntracomVAT)
+        {
+            doChange = false;
+        }
+        return doChange;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name = "_taxDirection"></param>
+    /// <param name = "_taxReverseCharge"></param>
+    /// <param name = "_changeSignForReverseCharge"></param>
+    /// <returns></returns>
+    private int taxChangeDisplaySign(TaxDirection _taxDirection, TaxReverseCharge _taxReverseCharge = NoYes::No, boolean _changeSignForReverseCharge = true)
+    {
+        boolean  changeDisplaySign;
+        if (changeDisplaySign && (_taxReverseCharge == NoYes::No || _changeSignForReverseCharge))
+        {
+            return Tax::changeDisplaySign(_taxDirection);
+        }
+        else
+        {
+            return 1;
+        }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name = "_taxtrans"></param>
+    display TaxBaseCur displaySourceBaseAmountCur(TaxTrans _taxTrans)
+    {
+        boolean changeDisplaySign;
+        #ISOCountryRegionCodes
+        changeDisplaySign = this.doChangeDisplaySign(_taxTrans);
+        return _taxTrans.SourceBaseAmountCur * this.taxChangeDisplaySign(_taxTrans.TaxDirection, _taxTrans.ReverseCharge_W, Tax::changeSignForReverseCharge(_taxTrans));
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name = "_taxTrans"></param>
+    /// <returns></returns>
+    display TaxRegulationAmountCur displaySourceRegulateAmountCur(TaxTrans _taxTrans)
+    {
+        boolean changeDisplaySign;
+        #ISOCountryRegionCodes
+        changeDisplaySign = this.doChangeDisplaySign(_taxTrans);
+        return _taxTrans.SourceRegulateAmountCur * this.taxChangeDisplaySign(_taxTrans.TaxDirection, _taxTrans.ReverseCharge_W, Tax::changeSignForReverseCharge(_taxTrans));
+    }
+
+}

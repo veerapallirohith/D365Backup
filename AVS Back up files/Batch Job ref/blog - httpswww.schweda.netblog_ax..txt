@@ -1,0 +1,298 @@
+blog - https://www.schweda.net/blog_ax.php?bid=654&wdl=en
+
+
+
+Welcome at schweda.net | EN | DE
+  Dynamics AXDynamics 365 
+ 
+Enter keywords...
+Search
+This post is machine-translated. The original post in german language can be found here.
+Create batch job with multiple tasks by code
+02/13/2019Microsoft Dynamics AX (Axapta)German version
+The code snippets below show how to create batch jobs using the BatchHeader class.
+
+Examples for a RunBaseBatch construct
+static void createBatchWithMultipletasks(Args _args)
+{
+    BatchHeader batchHeader;
+    Tutorial_RunbaseBatch batchTask1, batchTask2, batchTask3;
+
+    //create batch header
+    batchHeader = BatchHeader::construct();
+    batchHeader.parmCaption("Example of a batch job with multiple tasks");
+
+    //create instances of the classes to use as batch tasks
+    batchTask1 = Tutorial_RunbaseBatch::construct();
+    batchTask2 = Tutorial_RunbaseBatch::construct();
+    batchTask3 = Tutorial_RunbaseBatch::construct();
+
+    //add the batch tasks to the batch header
+    batchHeader.addTask(batchTask1);
+    batchHeader.addTask(batchTask2);
+    batchHeader.addTask(batchTask3);
+
+    //save the batch
+    batchHeader.save();
+}
+If you want to make sure that the individual tasks are processed in a certain order or between dependencies, you can do this as follows:
+
+static void createBatchWithMultipletasks(Args _args)
+{
+    BatchHeader batchHeader;
+    Tutorial_RunbaseBatch batchTask1, batchTask2, batchTask3;
+
+    //create batch header
+    batchHeader = BatchHeader::construct();
+    batchHeader.parmCaption("Example of a batch job with multiple tasks");
+
+    //create instances of the classes to use as batch tasks
+    batchTask1 = Tutorial_RunbaseBatch::construct();
+    batchTask2 = Tutorial_RunbaseBatch::construct();
+    batchTask3 = Tutorial_RunbaseBatch::construct();
+
+    //add the batch tasks to the batch header
+    batchHeader.addTask(batchTask1);
+    batchHeader.addTask(batchTask2);
+    batchHeader.addTask(batchTask3);
+
+    //define a dependency between the batch tasks
+    batchHeader.addDependency(batchTask2, batchTask1, BatchDependencyStatus::Finished);
+    batchHeader.addDependency(batchTask3, batchTask2, BatchDependencyStatus::Finished);
+
+    //save the batch
+    batchHeader.save();
+}
+Of course you can also set up warnings...
+
+static void createBatchWithMultipletasks(Args _args)
+{
+    BatchHeader batchHeader;
+    Tutorial_RunbaseBatch batchTask1, batchTask2, batchTask3;
+
+    //create batch header
+    batchHeader = BatchHeader::construct();
+    batchHeader.parmCaption("Example of a batch job with multiple tasks");
+
+    //create instances of the classes to use as batch tasks
+    batchTask1 = Tutorial_RunbaseBatch::construct();
+    batchTask2 = Tutorial_RunbaseBatch::construct();
+    batchTask3 = Tutorial_RunbaseBatch::construct();
+
+    //add the batch tasks to the batch header
+    batchHeader.addTask(batchTask1);
+    batchHeader.addTask(batchTask2);
+    batchHeader.addTask(batchTask3);
+    
+    // Set the batch alert configurations
+    batchHeader.parmAlerts(NoYes::No, NoYes::Yes, NoYes::No, NoYes::Yes, NoYes::Yes);
+    
+    //save the batch
+    batchHeader.save();
+}
+...or set a planned start time:
+
+static void createBatchWithMultipletasks(Args _args)
+{
+    BatchHeader batchHeader;
+    Tutorial_RunbaseBatch batchTask1, batchTask2, batchTask3;
+    #define.11pm('23:00')
+
+    //create batch header
+    batchHeader = BatchHeader::construct();
+    batchHeader.parmCaption("Example of a batch job with multiple tasks");
+
+    //create instances of the classes to use as batch tasks
+    batchTask1 = Tutorial_RunbaseBatch::construct();
+    batchTask2 = Tutorial_RunbaseBatch::construct();
+    batchTask3 = Tutorial_RunbaseBatch::construct();
+
+    //add the batch tasks to the batch header
+    batchHeader.addTask(batchTask1);
+    batchHeader.addTask(batchTask2);
+    batchHeader.addTask(batchTask3);
+    
+    // Set scheduled start date/time
+    batchHeader.parmStartDateTime(DateTimeUtil::newDateTime(systemDateGet(), str2time(#11pm), DateTimeUtil::getUserPreferredTimeZone()));
+    
+    //save the batch
+    batchHeader.save();
+}
+And of course you can also control the reccurence:
+
+static void createBatchWithMultipletasks(Args _args)
+{
+    BatchHeader batchHeader;
+    Tutorial_RunbaseBatch batchTask1, batchTask2, batchTask3;
+    SysRecurrenceData SysRecurrenceData;
+    #define.11pm('23:00')
+
+    //create batch header
+    batchHeader = BatchHeader::construct();
+    batchHeader.parmCaption("Example of a batch job with multiple tasks");
+
+    //create instances of the classes to use as batch tasks
+    batchTask1 = Tutorial_RunbaseBatch::construct();
+    batchTask2 = Tutorial_RunbaseBatch::construct();
+    batchTask3 = Tutorial_RunbaseBatch::construct();
+
+    //add the batch tasks to the batch header
+    batchHeader.addTask(batchTask1);
+    batchHeader.addTask(batchTask2);
+    batchHeader.addTask(batchTask3);
+
+    // Set the recurrence data to execute daily 11 pm
+    sysRecurrenceData = SysRecurrence::defaultRecurrence();
+    sysRecurrenceData = SysRecurrence::setRecurrenceStartDateTime(
+        sysRecurrenceData, 
+        DateTimeUtil::newDateTime(systemDateGet(),str2time(#11pm),DateTimeUtil::getUserPreferredTimeZone()));
+    sysRecurrenceData = SysRecurrence::setRecurrenceNoEnd(sysRecurrenceData);
+    sysRecurrenceData = SysRecurrence::setRecurrenceUnit(sysRecurrenceData, SysRecurrenceUnit::Day,1);
+    
+    batchHeader.parmRecurrenceData(sysRecurrenceData);
+    
+    //save the batch
+    batchHeader.save();
+}
+ 
+
+Example for a SysOperation-Construct
+Everything that is possible for a RunBaseBatch build is also possible for the SysOeration framework. Here you only have to take care to set the SysOperationExecutionMode correctly:
+
+static void createBatchWithMultipletasks(Args _args)
+{
+    BatchHeader batchHeader;
+    SysOperationServiceController controller1, controller2, controller3;
+    TutorialSysOperationDataContract dataContract1;
+
+    //create batch header
+    batchHeader = BatchHeader::construct();
+    batchHeader.parmCaption("Example of a batch job with multiple tasks (SysOperation)");
+
+    //create instances of the classes to use as batch tasks
+    controller1 = new SysOperationServiceController(
+        classStr(TutorialSysOperationService),
+        methodStr(TutorialSysOperationService, runService),
+        SysOperationExecutionMode::Synchronous);
+    controller1.parmLoadFromSysLastValue(false); // Don't use SysLastValue (so no values will be retrieved and no one will be stored)
+    dataContract1 = controller1.getDataContractObject();
+    dataContract1.parmCustAccount("US-004");
+    
+    controller2 = new SysOperationServiceController(
+        classStr(TutorialSysOperationService),
+        methodStr(TutorialSysOperationService, runService),
+        SysOperationExecutionMode::Synchronous);
+    controller2.parmLoadFromSysLastValue(false); // Don't use SysLastValue (so no values will be retrieved and no one will be stored)
+    dataContract1 = controller2.getDataContractObject();
+    dataContract1.parmCustAccount("US-005");    
+    
+    controller3 = new SysOperationServiceController(
+        classStr(TutorialSysOperationService),
+        methodStr(TutorialSysOperationService, runService),
+        SysOperationExecutionMode::Synchronous);
+    controller3.parmLoadFromSysLastValue(false); // Don't use SysLastValue (so no values will be retrieved and no one will be stored)
+    dataContract1 = controller3.getDataContractObject();
+    dataContract1.parmCustAccount("US-006");    
+
+    //add the batch tasks to the batch header
+    batchHeader.addTask(controller1);
+    batchHeader.addTask(controller2);    
+    batchHeader.addTask(controller3);    
+
+    //save the batch
+    batchHeader.save();
+}
+ 
+
+Combined example
+And of course it is also possible to combine RunBaseBatch and SysOperation in one batch job:
+
+static void createBatchWithMultipletasks(Args _args)
+{
+    BatchHeader batchHeader;
+    Tutorial_RunbaseBatch batchTask1, batchTask2;
+    TutorialSysOperationServiceController controller1;
+    TutorialSysOperationDataContract dataContract1;
+
+    //create batch header
+    batchHeader = BatchHeader::construct();
+    batchHeader.parmCaption("Example of a batch job with multiple tasks (RunBaseBatch and SysOperation)");
+
+    //create instances of the classes to use as batch tasks
+    batchTask1 = Tutorial_RunbaseBatch::construct();
+    batchTask2 = Tutorial_RunbaseBatch::construct();
+
+    controller1 = new TutorialSysOperationServiceController(
+        classStr(TutorialSysOperationService),
+        methodStr(TutorialSysOperationService, runService),
+        SysOperationExecutionMode::Synchronous);
+    controller1.parmLoadFromSysLastValue(false); // Don't use SysLastValue (so no values will be retrieved and no one will be stored)
+    dataContract1 = controller1.getDataContractObject();
+    dataContract1.parmCustAccount("US-004");
+
+    //add the batch tasks to the batch header
+    batchHeader.addTask(batchTask1);
+    batchHeader.addTask(batchTask2);
+    batchHeader.addTask(controller1);
+
+    //save the batch
+    batchHeader.save();
+}
+These post applies to following version:
+Dynamics AX 2012
+
+Magnus Bjelksjö	01/17/2022 10:05 | #1
+
+Hi!
+
+We have a scenario where we by code create mutiple batch tasks at runtime.
+
+- We have a "main"-task that in each batch run gathers data to be processed.
+- The case is that we want to have one batchtask per a ProjectId.
+
+But after the batch is finished all the individual ProjectId-tasks are still there in the batch job.
+
+The next time the "main"-task is fired there should be no batch tasks in the batchjob. Because there should be a new set of ProjectId-batchtasks created based on what data that exist in the database.
+
+The same batchjob is used over and over again due to a scheduled recurrency.
+
+What is the proper way to "clean up" the batch task list before the new batchrun occur?
+
+Magnus Bjelksjö	01/17/2022 10:06 | #2
+
+Hi!
+
+We have a scenario where we by code create mutiple batch tasks at runtime.
+
+- We have a "main"-task that in each batch run gathers data to be processed.
+- The case is that we want to have one batchtask per a ProjectId.
+
+But after the batch is finished all the individual ProjectId-tasks are still there in the batch job.
+
+The next time the "main"-task is fired there should be no batch tasks in the batchjob. Because there should be a new set of ProjectId-batchtasks created based on what data that exist in the database.
+
+The same batchjob is used over and over again due to a scheduled recurrency.
+
+What is the proper way to "clean up" the batch task list before the new batchrun occur?
+
+Keyur	01/21/2022 00:57 | #3
+
+Show comment written in different language
+
+Add comment
+ 
+ 
+
+Related posts
+SysOperation-Framework: Controlling ExecutionMode and server method to be executed using the MenuItem
+SysOperation-Framework: Force Batch Processing
+SysOperation-Framework: Usage data per MenuItem
+SysOperation-Framework: Simplest class construct
+SysOperation-Framework: Enable batch processing by default
+SysOperation framework: Pass selected records from a temporary table (1 Comment)
+SysOperation-Framework: Refresh calling form/formdatasource
+SysOperation-Framework: Lock field in dialog
+SysOperation-Framework: Change the properties of a dialog box depending on other dialog boxes
+SysOperation-Framework: Use a temporary table as parameter (1 Comment)
+...
+ 

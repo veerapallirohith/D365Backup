@@ -1,0 +1,54 @@
+using Microsoft.DynamicsOnline.Infrastructure.Components.SharedServiceUnitStorage;
+using System.IO;
+/// <summary>
+/// This class is used to to run the business logic when api call's are made
+/// </summary>
+class DGMA_PurchaseOrderAmountService
+{
+   /// <summary>
+   /// This method is used to get the input of purchase order id and return the total amount to api
+   /// </summary>
+    /// <param name = "request">DGMA_PurchaseOrderAmountRequest</param>
+    /// <returns>response</returns>
+    public DGMA_PurchaseOrderAmountResponse create(DGMA_PurchaseOrderAmountRequest request)
+    {
+        var response = new DGMA_PurchaseOrderAmountResponse();
+        PurchId purchId = request.parmpurchId();
+        AmountCur    totalAmount;
+        PurchTotals             purchTotals;
+        PurchTable purchTable;
+        PurchLine purchline;
+        TaxJournalTrans     taxJournalTrans;
+        VendPurchOrderJour VendPurchOrderJour;
+        PurchTableVersion  purchTableVersion;
+        VendinvoiceJour   vendInvoiceJour;
+        Amount vat;
+        
+        changecompany(request.parmCompanyId())
+        {
+            try
+            {
+                purchTable = PurchTable::find(purchId);
+                purchTotals = purchTotals::newPurchTable(purchTable);
+                purchTotals.calc();
+                totalAmount = purchTotals.purchTotalAmount();
+                vat = purchTotals.purchTaxTotal();
+                response.parmSuccess(true);
+                real total  = totalAmount;
+                {
+                    response.parmTotalAmount(total);
+                    response.parmVat(Vat);
+                }
+            }
+            catch (Exception::CLRError)
+            {
+                System.Exception interopException = CLRInterop::getLastException();
+                response.parmSuccess(false);
+                response.parmErrorMessage(interopException.ToString());
+            }
+        }
+            
+        return response;
+    }
+
+}

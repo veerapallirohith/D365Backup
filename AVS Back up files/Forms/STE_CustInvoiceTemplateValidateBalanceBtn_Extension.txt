@@ -1,0 +1,75 @@
+/// <summary>
+/// Extension of CustInvoiceTemplate.
+/// written by PTD on 17/04/2023
+/// </summary>
+[ExtensionOf(formControlStr(CustInvoiceTemplate,STE_ValidateBalance))]
+final class STE_CustInvoiceTemplateValidateBalanceBtn_Extension
+{
+    
+    [SuppressBPWarning('BPUnusedStrFmtArgument','The placeholder %2 to strFmt is not used in the format string.')]
+    /// <summary>
+    /// Clicked Method For Intercompanytemplate Uploader Button
+    /// </summary>
+    ///
+    public void clicked()
+    {
+
+        FormControl formButtonControl = any2Object(this) as FormControl;
+        FormDataSource formDatasource = formButtonControl.formRun().dataSource(tableStr(CustInvoiceTemplate));
+        CustInvoiceTemplate custInvoiceTemplate = formDatasource.cursor();
+        STE_VendInvoiceTemplate         vendInvoiceTemplate;
+        CustInvoiceLineTemplate         custInvoiceLineTemplate;
+        STE_VendInvoiceLineTemplate     vendInvoiceLineTemplate;
+        STE_ARInterCompanyTable         aRInterCompanyTable;
+        CustInvoiceTemplate             custInvoiceTemplateUpdate;
+        next clicked();
+
+        aRInterCompanyTable = STE_ARInterCompanyTable::findByCustInvoiceTemplate(custInvoiceTemplate.RecId);
+        
+        //***************** Customer Free text Amount ********************
+        select sum(AmountCur) from custInvoiceLineTemplate 
+            where custInvoiceLineTemplate.CustInvoiceTemplate == custInvoiceTemplate.RecId;
+        
+        //********* Vendor free text Amount
+        
+        select crosscompany sum(AmountCur) 
+                  from vendInvoiceLineTemplate
+            join vendInvoiceTemplate
+            where vendInvoiceLineTemplate.VendInvoiceTemplate == vendInvoiceTemplate.RecId
+            &&    vendInvoiceTemplate.TemplateName            == custInvoiceTemplate.STE_VendorTemplateName
+            &&    vendInvoiceTemplate.DataAreaId              == aRInterCompanyTable.VendDataAreaId;
+
+        if(custInvoiceLineTemplate.AmountCur != vendInvoiceLineTemplate.AmountCur)
+        {
+            ttsbegin;
+            select forupdate custInvoiceTemplateUpdate                
+                       where custInvoiceTemplateUpdate.TemplateName == custInvoiceTemplate.TemplateName;
+            if(custInvoiceTemplateUpdate)
+            {
+                custInvoiceTemplateUpdate.STE_ValidateBalance = NoYes::No;
+                custInvoiceTemplateUpdate.update();
+                info(strFmt("@Stephanus:STE_interCompany_Amount",custInvoiceLineTemplate.AmountCur,vendInvoiceLineTemplate.AmountCur));
+                   
+            }
+            ttscommit;
+        }
+        else
+        {
+            ttsbegin;
+            select forupdate custInvoiceTemplateUpdate
+                       where custInvoiceTemplateUpdate.TemplateName == custInvoiceTemplate.TemplateName;
+            if(custInvoiceTemplateUpdate)
+            {
+                custInvoiceTemplateUpdate.STE_ValidateBalance = NoYes::Yes;
+                custInvoiceTemplateUpdate.update();
+                info(strFmt("@Stephanus:STE_interCompany_EqualAmt",custInvoiceLineTemplate.AmountCur,vendInvoiceLineTemplate.AmountCur));
+            }
+            ttscommit;
+        
+        }
+            
+        formDatasource.reread();
+        formDatasource.refresh();
+    }
+
+}

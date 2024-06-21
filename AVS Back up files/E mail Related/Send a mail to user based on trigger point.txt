@@ -1,0 +1,62 @@
+public  boolean EmailProcess(HcmEmploymentDetail hcmEmploymentDetail)
+{
+    SysMailerMessageBuilder     builder = new SysMailerMessageBuilder();
+    str                         receiverUserEmail;
+    SysEmailParameters          sysEmailParameters;
+    str1260                     body;
+    DirPartyTable               dirParty;
+    HcmWorker                   hcmWorker;
+    SysUserInfo                 sysUserTable;
+    LogisticsElectronicAddress   logisticsElectronicAddress;
+    HcmIdentificationType        hcmIdentificationType;
+    HcmIssuingAgency             hcmIssuingAgency;
+    HcmEmployment        HcmEmployment = HcmEmployment::find(hcmEmploymentDetail.Employment);
+    hcmWorker = HcmWorker::find(HcmEmployment.Worker);
+
+    if(hcmWorker)
+    {
+        select firstonly  dirParty where dirParty.RecId == hcmWorker.Person;
+
+        if(dirParty)
+        {
+            select firstonly logisticsElectronicAddress where LogisticsElectronicAddress.RecId == dirParty.PrimaryContactEmail;
+
+            if(logisticsElectronicAddress)
+            {
+                sysEmailParameters = SysEmailParameters::find();
+                if(sysEmailParameters)
+                {
+                    str url =' https://forms.office.com/Pages/ResponsePage.aspx?id=-CqqQdg8OUSpjf3472vR0RTr8I9GjVRHmEdrQmjxJNVUMVdLRVIxRDNSNExXRjI4N0ZXS0pCVkpCUiQlQCN0PWcu';
+                     body = StrFmt(" Dear %1 \n\nYour employment with Sacro has terminated as of %2  \n \nPlease use the following link to complete the exit questionnaire  \n \n%3. \n\n Thank you \n \n"
+                       ,dirParty.Name ,DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone()), url);
+                    
+                    try
+                    {
+                        builder.setFrom(sysEmailParameters.SMTPUserName);
+                        builder.addTo(logisticsElectronicAddress.Locator);
+                        builder.setSubject("Termination mail'");
+                        builder.setBody(body,false);
+                        var message = builder.getMessage();
+                        SysMailerFactory::getNonInteractiveMailer().sendNonInteractive(message);
+                    }
+                    catch(Exception::CLRError)
+                    {
+                    }
+                }
+                else
+                {
+                    Info(strfmt("@BCIntegration:SMTPConfig"));
+                }
+            }
+            else
+            {
+                Info(strfmt("@BCIntegration:PrimaryMailNotFound"));
+            }
+      
+                                            
+        }
+    }
+    return true;
+
+
+}

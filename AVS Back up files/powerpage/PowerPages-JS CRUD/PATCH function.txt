@@ -1,0 +1,30 @@
+const URL = `/_api/crf71_ste_costallocationextractiondvses/?$select=crf71_name,crf71_company`
+  $.ajax({
+    type: "GET",
+    url: URL,
+    contentType: "application/json",
+    success: function (basisAccount) {
+      for (let i = 0; i < basisAccount.value.length; i++) {
+        let basisaccountdata = basisAccount.value;
+        debugger;
+        webapi.safeAjax({
+          type: "PATCH",
+          async:false,
+          url: `/_api/crf71_ste_costallocationextractiondvses(${basisaccountdata[i].crf71_ste_costallocationextractiondvsid})`,
+          contentType: "application/json",
+          data:JSON.stringify({
+            crf71_company: 'S31'
+            }),
+          success: function (basislines) {
+            console.log(basislines);
+            alert("Operation successfull");
+          },
+          error: function (error) {
+            console.log(error);
+             alert("Something went wrong. Please check patch function");
+          },
+        });
+        }
+
+    },
+  });

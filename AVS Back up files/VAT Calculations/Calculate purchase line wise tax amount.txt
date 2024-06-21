@@ -1,0 +1,12 @@
+ public AmountCur Vat(PurchLine purchline)
+    {
+        AmountCur        totalAmount;
+        PurchTotals      purchTotals; 
+        PurchTable       purchTable;
+        purchTable = PurchTable::find(purchline.purchid);
+        purchTotals = purchTotals::newPurchTable(purchTable);
+        purchTotals.calc();
+        purchTotals.tax().sourceSingleLine(true,true);
+        totalAmount = purchTotals.tax().totalTaxAmountSingleLine(purchline.TableId,purchline.RecId);
+        return totalAmount + purchline.LineAmount;
+    }

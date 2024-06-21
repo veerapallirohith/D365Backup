@@ -1,0 +1,57 @@
+/// <summary>
+/// This class to used to get the lookup for the cost center
+/// </summary>
+internal final class STE_AssetAnalysisUIbuilder extends  SrsReportDataContractUIBuilder
+{
+    STEAssetAnalysisContract contract;
+    public DialogField CostCenter;       
+    public void postBuild()
+    {
+        super();
+        contract = this.dataContractObject();
+        // binding dialogs with contract fields
+
+        CostCenter = this.bindInfo().getDialogField(this.dataContractObject(), methodStr(STEAssetAnalysisContract, parmCostCenter));  
+        CostCenter.registerOverrideMethod(methodStr(FormStringControl,lookup),methodStr(STE_AssetAnalysisUIbuilder,CostCenterlookup),this);       
+    }
+
+    public void postRun()
+    {
+    }
+
+    private void CostCenterlookup(FormStringControl _lookup)
+    {
+        Query          query;
+        QueryBuildDataSource  qbds;
+        SysTableLookup     sysTableLookup;
+        DimensionAttribute   dimAttribute;
+        DimensionFinancialTag dimensionFinancialTag;
+        DimensionAttributeValue dimensionAttributeValue;
+        QueryBuildRange                     range1;
+        #define.KST('kst')
+        container kstValues;
+
+        while select * from  dimensionAttributeValue
+            join dimAttribute where dimAttribute.RECID == dimensionAttributeValue.DIMENSIONATTRIBUTE
+            join DimensionFinancialTag
+            where   DimensionFinancialTag.RecId == dimensionAttributeValue.EntityInstance
+            && dimAttribute.Name == #KST
+      {
+          kstValues += DimensionFinancialTag.FinancialTagCategory;
+      }
+
+        sysTableLookup = SysTableLookup::newParameters(tablenum(DimensionFinancialTag),_lookup);
+        sysTableLookup.addLookupfield(fieldnum(DimensionFinancialTag, Value));
+        sysTableLookup.addLookupfield(fieldNum(DimensionFinancialTag,Description));
+        query = new Query();
+        qbds = query.addDataSource(tableNum(DimensionFinancialTag));
+     //   qbds.addRange(fieldNum(DimensionFinancialTag, FinancialTagCategory)).value(queryvalue('5637144579'));
+       // qbds.addRange(fieldNum(DimensionFinancialTag, FinancialTagCategory)).value(queryvalue(kstValues));
+        range1 = qbds.addrange(fieldNum(DimensionFinancialTag, FinancialTagCategory));
+        range1.value(con2Str(kstValues));
+        sysTableLookup.parmQuery(query);
+        sysTableLookup.parmUseLookupValue(False);
+        sysTableLookup.performFormLookup();
+    }
+
+}

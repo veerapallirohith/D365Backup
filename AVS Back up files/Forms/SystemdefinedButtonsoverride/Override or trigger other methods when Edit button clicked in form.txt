@@ -1,0 +1,14 @@
+ public void init()
+ {
+     super();
+    
+     #SysSystemDefinedButtons
+     FormCommandButtonControl editButton = element.control(element.controlId(#SystemDefinedViewEditButton)) as FormCommandButtonControl;
+    // editButton.enabled();
+     element.viewEditModeHelper().EditModeSwitched += eventhandler(this.editButton);
+ }
+ public void editButton()
+ {}
+
+
+ref:  https://learn.microsoft.com/en-us/dynamics365/fin-ops-core/dev-itpro/user-interface/system-defined-buttons

@@ -1,0 +1,188 @@
+/// <summary>
+/// This class is used to generate new number sequence in decimal format based on main fixed asset id in asset table form
+/// </summary>
+[ExtensionOf(tableStr(AssetTable))]
+public final class STE_AssetTable_Extension
+{
+    public void initValue()
+    {
+        STE_AssetTableChildApplicable assetTableChildApplicable;
+        next initValue();
+
+        delete_from assetTableChildApplicable where assetTableChildApplicable.UserId == curUserId();
+
+        assetTableChildApplicable = null;
+        assetTableChildApplicable.AssetId = this.AssetId;
+        assetTableChildApplicable.AssetGroup = this.AssetGroup;
+        assetTableChildApplicable.UserId = curUserId();
+        assetTableChildApplicable.insert();
+    
+    }
+
+    /// <summary>
+    /// This method is used to create new number sequence in deciaml format based on main fixed asset id
+    /// </summary>
+    /// <param name = "_assetId">AssetId</param>
+    /// <returns>childlist</returns>
+    public static container childList(AssetId _assetId)
+    {
+        AssetTable assetTable;
+        AssetGroup assetGroup;
+        assetTable assetTableLoc;
+        AssetBook assetBook,assetBookFind;
+        STE_AssetTableChildApplicable assetTableChildApplicable;
+
+        container  childList;
+        str input;
+        str nextid;
+        real increment;
+        real inc;
+        str IncreasingNum;
+        str countincrementnum;
+        boolean Created;
+          
+        ;
+        next childList(_assetId);
+        
+        select firstonly assetTableChildApplicable 
+            where assetTableChildApplicable.UserId == curUserId();
+        if(assetTableChildApplicable.AssetGroup !='')
+        {
+            while select  mainassetid,incrementnumber,assetgroup,assetid from assetTable
+                order by recid asc
+               where assetTable.MainAssetId == _assetId
+          
+            {
+                assetGroup = AssetGroup::find(assetTable.AssetGroup);
+
+                if(assetGroup.FixedAssetAdditionalNumberFormat)
+                {
+                    int len = strLen(assetGroup.FixedAssetAdditionalNumberFormat);
+                    input = assetTable.MainAssetId;
+                    countincrementnum = any2Str(increment);
+                    int countfunc = strLen(countincrementnum);
+                    int newvar = countfunc-1;
+                    if(len != newvar)
+                    {
+                        increment = 0;
+                    }
+                    switch(len)
+                    {
+                        case 1:
+                            inc = increment+0;
+                            break;
+                        case 2:
+                            inc = increment+0.1;
+                            break;
+                        case 3:
+                            inc = increment+0.01;
+                            break;
+                        case 4:
+                            inc = increment+0.001;
+                            break;
+                        case 5:
+                            inc = increment+0.0001;
+                            break;
+                        case 6:
+                            inc = increment+0.00001;
+                            break;
+                        case 7:
+                            inc = increment+0.000001;
+                            break;
+                        case 8:
+                            inc = increment+0.0000001;
+                            break;
+                        case 9:
+                            inc = increment+0.00000001;
+                    }
+                    nextid = subStr(input,-0,-0) + any2Str(inc);
+                    IncreasingNum = nextid;
+
+                    {
+                        childList += assetTable.MainAssetId + strDel(IncreasingNum,1,1);
+                    }
+
+                    switch(len)
+                    {
+
+                        case 1:
+                            increment+= 0;
+                            break;
+                        case 2:
+                            increment+= 0.1;
+                            break;
+                        case 3:
+                            increment+= 0.01;
+                            break;
+                        case 4:
+                            increment+= 0.001;
+                            break;
+                        case 5:
+                            increment+= 0.0001;
+                            break;
+                        case 6:
+                            increment+= 0.00001;
+                            break;
+                        case 7:
+                            increment+= 0.000001;
+                            break;
+                        case 8:
+                            increment+= 0.0000001;
+                            break;
+                        case 9:
+                            increment+= 0.00000001;
+                            break;
+                    }
+
+                }
+
+            }
+
+            ttsbegin;
+           
+            select firstonly AssetId,MainAssetId,IncrementUpdate,AssetGroup,RecId from assetTableLoc order by RecId desc
+                where assetTableLoc.MainAssetId != '';
+              
+
+            select firstonly forupdate  assetTable order by RecId desc
+                where assetTable.MainAssetId != '';
+            {
+                if(assetTable)
+                {
+                    if(assetGroup.FixedAssetAdditionalNumberFormat)
+                    {                        
+                        AssetId OriAsset = assetTable.AssetId;
+                        assetTable.IncrementNumber  = conPeek(childList,conLen(childList));
+                        assetTable.AssetId = assetTable.IncrementNumber;
+                        assetTable.incrementupdate = NoYes::Yes;
+                        if(!assetTable::find(assetTable.AssetId))
+                        {
+                            NumberSeq::release(numberSequenceTable::find(assetGroup.AutoNumberSequenceTable).NumberSequence,OriAsset);
+                            assetTable.update();
+                            Created=true;
+                        }
+                    }
+                }
+            }           
+       
+            while select forupdate assetBook
+                where assetBook.AssetId == assetTableLoc.AssetId
+            {
+               
+                select firstonly assetBookFind where assetBookFind.AssetId == assetTable.AssetId
+                    && assetBookFind.BookId == assetBook.BookId;
+                if(!assetBookFind  && Created)
+                {
+                    assetBook.AssetId = assetTable.AssetId;                    
+                    assetBook.update();
+                }
+            }
+            ttscommit;
+            
+
+        }
+
+        return childList;
+    }
+
+}

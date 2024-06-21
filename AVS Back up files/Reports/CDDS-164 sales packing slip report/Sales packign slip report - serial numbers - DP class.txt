@@ -1,0 +1,220 @@
+/// <summary>
+/// This class is the extension of Sales packings slip dp to get serial numbers from inventttrans table 
+/// </summary>
+[ExtensionOf(ClassStr(SalesPackingSlipDP))]
+final class CDSalesPackingSlipDP_Extension
+{
+    public SalesPackingSlipHeaderTmp   salesPackingslipHeaderTmp;
+
+    [SysClientCacheDataMethodAttribute(true)]
+    public   CD_SalesPackingSlipChildDetailsTmp    salesPackingslipChildTmp;
+
+    /// <summary>
+    /// This is get method to get data source on report
+    /// </summary>
+    /// <returns>salesPackingslipChildTmp</returns>
+    [SRSReportDataSetAttribute(tableStr(CD_SalesPackingSlipChildDetailsTmp))]
+    public CD_SalesPackingSlipChildDetailsTmp getCD_SalesPackingSlipChildDetailsTmp()
+    {
+
+        this.setTransactionConnection(salesPackingslipChildTmp);
+
+        select salesPackingslipChildTmp;
+
+        return salesPackingslipChildTmp;
+    }
+
+    /// <summary>
+    /// This is a process report method 
+    /// </summary>
+    public void processReport()
+    {
+        SalesPackingSlipContract salesPackingSlipContract = this.parmPackingSlipContract();
+        CustPackingSlipJourRecId journalRecId = this.retrieveJournalRecId(salesPackingSlipContract);
+        custPackingSlipJour custPackingSlipJour = custPackingSlipJour::findRecId(journalRecId, true);
+
+        InventTrans inventtrans;
+        InventDim inventDim;
+        container conSN;
+        int setValue = 0;
+        int getValue = 0;
+
+
+        select firstonly inventTrans
+            where inventTrans.PackingSlipId == custPackingSlipJour.PackingSlipId
+            && inventTrans.CDInventSerialId == '';
+
+        if (!custPackingSlipJour.CDSerialNumberUpdated || inventTrans)
+        {
+            while select inventTrans
+                where inventTrans.PackingSlipId == custPackingSlipJour.PackingSlipId
+            join inventDim
+                where inventDim.inventDimId == inventTrans.inventDimId
+            {
+                setValue++;
+                if (inventDim.inventSerialId)
+                {
+                    conSN = conIns(conSN, setValue, inventDim.inventSerialId);
+                }
+            }
+            select firstonly  forupdate custPackingSlipJour;
+            if (conLen(conSN) >= 1)
+            {
+                while select forupdate inventTrans
+                    where inventTrans.PackingSlipId == custPackingSlipJour.PackingSlipId
+                        && inventTrans.CDInventSerialId == ''
+                {
+                    getValue++;
+                    ttsbegin;
+                    inventTrans.CDInventSerialId = conPeek(conSN, getValue);
+                    inventTrans.doUpdate();
+                    ttscommit;
+                }
+            }
+
+            custPackingSlipJour.CDSerialNumberUpdated = NoYes::Yes;
+            ttsbegin;
+            custPackingSlipJour.doUpdate();
+            ttscommit;
+        }
+        next processReport();
+    }
+
+    /// <summary>
+    /// This is a initialization method to get data for New data set CDSalespackingslipchild tmp
+    /// and overriding existing data
+    /// </summary>
+    /// <param name = "_salesPackingSlipHeaderTmp">_salesPackingSlipHeaderTmp</param>
+    /// <param name = "_packingSlipLineSelection"> SalesPackingSlipDPPackingSlipLineQuerySelection</param>
+    /// <returns>Salespackingsliptmp</returns>
+    protected SalesPackingSlipDetailsTmp initializeSalesPackingSlipLine(
+        SalesPackingSlipHeaderTmp                       _salesPackingSlipHeaderTmp,
+        SalesPackingSlipDPPackingSlipLineQuerySelection _packingSlipLineSelection)
+    {
+        const RefTableId CustPackingSlipTransTable = 1;
+       
+        RecordinsertList   recinsert;
+        recinsert  = new RecordinsertList(salesPackingslipChildTmp.TableId);
+        InventTrans           inventtranslocal          = InventTrans::findTransId(_packingSlipLineSelection.parmCustPackingSlipTrans().InventTransId);
+        InventTransOrigin   inventTransOrigin = InventTransOrigin::find(inventtranslocal.InventTransOrigin);
+        DirPartyTable       dirPartyTable = DirPartyTable::findRec(inventTransOrigin.Party);
+        LogisticsPostalAddress  logisticsPostalAddress;
+        LogisticsLocation   logisticsLocation;
+        DirPartyLocation    dirPartyLocation;
+        CustPackingSlipJour   custpackingslipjourlocal  = CustPackingSlipJour::findFromCustPackingSlipTrans(_packingSlipLineSelection.parmCustPackingSlipTrans().SalesId,  _packingSlipLineSelection.parmCustPackingSlipTrans().PackingSlipId,  _packingSlipLineSelection.parmCustPackingSlipTrans().DeliveryDate);
+        CustPackingSlipTrans   custpackingsliptransloc;  //= CustPackingSlipTrans::findRecId(InventTranslocal.inventtransorigin);
+        SalesPackingSlipDetailsTmp salesPackingSlipTmp  = next initializeSalesPackingSlipLine(
+                               _salesPackingSlipHeaderTmp, _packingSlipLineSelection);
+        salesPackingSlipTmp.CDCustomerShipNum   = _packingSlipLineSelection.parmCustPackingSlipTrans().salesLine().CDCustomerShipmentNumber;
+        salesPackingSlipTmp.CDCustomerLineNum   = _packingSlipLineSelection.parmCustPackingSlipTrans().salesLine().CustomerLineNum;
+        salesPackingSlipTmp.CDLineNum           = _packingSlipLineSelection.parmCustPackingSlipTrans().LineNum;
+        salesPackingSlipTmp.ExternalItemId      = _packingSlipLineSelection.parmCustPackingSlipTrans().salesLine().ExternalItemId;
+        salesPackingSlipTmp.CDInventSerialId    = _packingSlipLineSelection.parmCustPackingSlipTrans().CDInventSerialId;
+        salesPackingSlipTmp.CDInventVersionId   = _packingSlipLineSelection.parmCustPackingSlipTrans().inventDim().inventVersionId;
+        
+        if (this.checkPrintLineHeader(_packingSlipLineSelection.parmCustPackingSlipTrans()))
+        {
+            salesPackingslipChildTmp.LineHeader = _packingSlipLineSelection.parmCustPackingSlipTrans().LineHeader;
+        }
+                    
+        {
+            if(!salesPackingslipChildTmp.CDSerialNumberUpdated)
+            {
+                ttsbegin;
+                     
+                {
+                    while select  CDInventSerialId , qty,ItemId,InventDimId from inventtranslocal
+                where inventtranslocal.PackingSlipId == custpackingslipjourlocal.packingslipid
+                    
+                    {
+                        salesPackingslipChildTmp.cdinventserialid     = inventtranslocal.cdinventserialid;
+                        salesPackingslipChildTmp.PackingSlipId        = _packingSlipLineSelection.parmCustPackingSlipTrans().PackingSlipId;
+                        salesPackingslipChildTmp.CDCustomerShipNum    = _packingSlipLineSelection.parmCustPackingSlipTrans().salesLine().CDCustomerShipmentNumber;
+                        salesPackingslipChildTmp.CDCustomerLineNum    = _packingSlipLineSelection.parmCustPackingSlipTrans().salesLine().CustomerLineNum;
+                        salesPackingslipChildTmp.CDInventVersionId    = _packingSlipLineSelection.parmCustPackingSlipTrans().inventDim().inventVersionId;
+                        
+                        salesPackingslipChildTmp.ItemId               = inventtranslocal.ItemId;
+                        salesPackingslipChildTmp.SalesUnitTxt         = _packingSlipLineSelection.parmCustPackingSlipTrans().SalesUnitTxt();
+                        salesPackingslipChildTmp.Notes                = salesPackingSlipTmp.Notes;
+                        salesPackingslipChildTmp.InventDimProduct     = salesPackingSlipTmp.InventDimProduct;
+                        salesPackingslipChildTmp.TableNum             = custPackingSlipTransTable;
+                        salesPackingslipChildTmp.JournalRecId         = this.parmCustPackingSlipJour().RecId;
+                        salesPackingslipChildTmp.Qty                  = abs(inventtranslocal.Qty);
+                        salesPackingslipChildTmp.inventDimId          = inventtranslocal.inventDimId;
+                      //  salesPackingslipChildTmp.CDInvoicingName      = DirPartyTable::findRec(inventTransOrigin.Party).Name;
+                        select firstonly Location,Address from logisticsPostalAddress
+                            where logisticsPostalAddress.Location == dirPartyTable.PrimaryAddressLocation
+                            join logisticsLocation
+                            where logisticslocation.RecId == logisticsPostalAddress.Location
+                            join dirPartyLocation
+                            where dirPartyLocation.Location == logisticslocation.RecId
+                            && dirPartyLocation.IsPrimary == NoYes::Yes;
+                        salesPackingslipChildTmp.CDInvoicingName   = logisticsLocation.Description;
+                        salesPackingslipChildTmp.CDInvoiceAddress = logisticsPostalAddress.Address;
+
+
+                        if(salesPackingslipChildTmp.CDInventSerialId)
+                        {
+                            select firstonly RecId from custpackingsliptransloc
+                          where custpackingsliptransloc.CDInventSerialId == salesPackingslipChildTmp.CDInventSerialId;
+                      
+                            salesPackingslipChildTmp.Remain     = custpackingsliptrans::findRecId(custpackingsliptransloc.RecId).Remain;
+                            salesPackingslipChildTmp.Ordered    = salesPackingslipChildTmp.Qty;
+                        }
+                        else
+                        {
+                            salesPackingslipChildTmp.Remain     = any2real(salesPackingslipChildTmp.Remains());
+                            salesPackingslipChildTmp.Ordered    = _packingSlipLineSelection.parmCustPackingSlipTrans().Ordered;
+                        }
+                        salesPackingslipChildTmp.CDLineNum       = salesPackingslipChildTmp.Linenum();
+                        salesPackingslipChildTmp.ExternalItemId  = salesPackingslipChildTmp.Externalitemids();
+                        salesPackingSlipChildTmp.CDSerialNumberUpdated = NoYes::Yes;
+                        select firstonly Name from custpackingsliptransloc
+                            where custpackingsliptransloc.ItemId == inventtranslocal.ItemId;
+                        salesPackingslipChildTmp.Name            = custpackingsliptransloc.Name;
+                        salesPackingslipChildTmp.BC_SalesId = this.getBarcode(this.parmCustPackingSlipJour().SalesId); 
+                        salesPackingslipChildTmp.BC_PackingSlipId = this.getBarcode(_packingSlipLineSelection.parmCustPackingSlipTrans().PackingSlipId); //this.getBarcode("SPS010551");
+                        salesPackingslipChildTmp.BC_PurchaseOrder = this.getBarcode(this.parmCustPackingSlipJour().PurchaseOrder);
+                        salesPackingslipChildTmp.BC_ItemId = this.getBarcode(inventtranslocal.ItemId);
+                        salesPackingslipChildTmp.BC_ExternalItemId = this.getBarcode(salesPackingslipChildTmp.Externalitemids());
+                        salesPackingslipChildTmp.BC_CDCustomerShipNum = this.getBarcode(int2Str(salesPackingslipChildTmp.CDCustomerShipNum));
+
+
+                        salesPackingslipChildTmp.insert();
+                      //  recinsert.add(salesPackingslipChildTmp);
+                      //  recinsert.insertDatabase();
+                    }
+              
+                }
+                
+                ttscommit;
+            }
+          
+        }
+           
+        return salesPackingSlipTmp;
+
+        }
+
+    public str getBarcode(str _barCodeText)
+
+    {
+
+        Barcodecode128 barcode;
+        
+
+        //Barcode _barcode;
+
+        barcode = BarcodeCode128::construct();//Barcode::construct(BarcodeType::Code128);
+        
+        // // BarcodeEAN128::construct();
+        
+        barcode.string(true,_barCodeText);
+
+        barcode.encode();
+
+        return barcode.barcodeStr();
+
+    }
+
+}

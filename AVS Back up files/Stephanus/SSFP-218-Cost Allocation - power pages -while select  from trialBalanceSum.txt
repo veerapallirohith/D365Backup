@@ -1,0 +1,54 @@
+   while select * from trialBalanceSum
+            {
+                if(trialBalanceSum.DimensionValues[2] == '')
+                {
+                    costAllocationExtraction.DimensionValues[2] = 'Null';
+                }
+                else
+                {
+                    costAllocationExtraction.DimensionValues[2] = trialBalanceSum.DimensionValues[2];
+                }
+                if(trialBalanceSum.DimensionValues[4] == '')
+                {
+                    costAllocationExtraction.DimensionValues[4] = 'Null';
+                }
+                else
+                {
+                    costAllocationExtraction.DimensionValues[4] = trialBalanceSum.DimensionValues[4];
+                }
+                if(trialBalanceSum.DimensionValues[5] == '')
+                {
+                    costAllocationExtraction.DimensionValues[5] = 'Null';
+                }
+                else
+                {
+                    costAllocationExtraction.DimensionValues[5] = trialBalanceSum.DimensionValues[5];
+                }
+                costAllocationExtraction.DimensionValues[1] = trialBalanceSum.DimensionValues[1];
+                costAllocationExtraction.DimensionValues[3] = trialBalanceSum.DimensionValues[3];
+                costAllocationExtraction.DimensionValues[6] = trialBalanceSum.DimensionValues[6];
+                costAllocationExtraction.DimensionValues[7] = trialBalanceSum.DimensionValues[7];
+                costAllocationExtraction.DimensionValues[8] = trialBalanceSum.DimensionValues[8];
+                costAllocationExtraction.DimensionValues[9] = trialBalanceSum.DimensionValues[9];
+                costAllocationExtraction.DimensionValues[10] = trialBalanceSum.DimensionValues[10];
+                costAllocationExtraction.DimensionValues[11] = trialBalanceSum.DimensionValues[11];
+                costAllocationExtraction.LedgerDimension = trialBalanceSum.LedgerDimension;
+                costAllocationExtraction.PrimaryFocus =  trialBalanceSum.PrimaryFocus;
+                costAllocationExtraction.PrimaryFocusDescription =  trialBalanceSum.PrimaryFocusDescription;
+                costAllocationExtraction.AccountingDate = trialBalanceSum.AccountingDate;
+                costAllocationExtraction.PostingLayer = trialBalanceSum.PostingLayer;
+                costAllocationExtraction.TransactionType = trialBalanceSum.TransactionType;
+                costAllocationExtraction.IsClosingTransaction = trialBalanceSum.IsClosingTransaction;
+                costAllocationExtraction.AmountCredit = trialBalanceSum.AmountCredit;
+                costAllocationExtraction.AmountCreditTrans = trialBalanceSum.AmountCreditTrans;
+                costAllocationExtraction.AmountDebit = trialBalanceSum.AmountDebit;
+                costAllocationExtraction.AmountDebitTrans = trialBalanceSum.AmountDebitTrans;
+                costAllocationExtraction.ClosingAdjustments = trialBalanceSum.ClosingAdjustments;
+                costAllocationExtraction.ClosingTransactions = trialBalanceSum.ClosingTransactions;
+                costAllocationExtraction.ReportingAmountCredit = trialBalanceSum.ReportingAmountCredit;
+                costAllocationExtraction.ReportingAmountDebit = trialBalanceSum.ReportingAmountDebit;
+                costAllocationExtraction.ReportingClosingAdjustments = trialBalanceSum.ReportingClosingAdjustments;
+                costAllocationExtraction.ReportingClosingTransactions = trialBalanceSum.ReportingClosingTransactions;
+
+                costAllocationExtraction.insert();
+            }

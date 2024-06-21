@@ -1,0 +1,54 @@
+/// <summary>
+/// To add  FormLetter class for existing 
+/// </summary>
+[PrintMgmtDocumentTypeFactoryAttribute(PrintMgmtDocumentType::Quotation)]
+public class CD_customSalesFormLetterReport_SalesQuotation 
+     //extends salesformletterreport
+{
+
+
+  /// <summary>
+  /// The PrintSetupOriginalCopy enumeration value that specifies whether the Original or Copy destinations should be retrieved.
+  /// </summary>
+  /// <param name = "_printCopyOriginal">original</param>
+  /// <returns>Default printer settings</returns>
+    protected container getDefaultPrintJobSettings(PrintSetupOriginalCopy _printCopyOriginal)
+    {
+        if (_printCopyOriginal == PrintSetupOriginalCopy::Original)
+        {
+            return salesFormLetter::getPrinterSettingsFormletter(DocumentStatus::None,PrintSetupOriginalCopy::Original);
+        }
+        else
+        {
+            return salesFormLetter::getPrinterSettingsFormletter(DocumentStatus::None,PrintSetupOriginalCopy::Copy);
+        }
+    }
+
+   /// <summary>
+    /// This value is used to retrieve the appropriate Print Management settings for the report
+   /// </summary>
+   /// <returns>print managment enum value</returns>
+    public PrintMgmtDocumentType getPrintMgmtDocumentType()
+    {
+        return PrintMgmtDocumentType::Quotation;
+    }
+
+   /// <summary>
+    /// This value is used to retrieve the appropriate Print Management settings for the report.
+   /// </summary>
+    /// <returns>PrintMgmtHierarchyType enumeration value</returns>
+    protected PrintMgmtHierarchyType getPrintMgmtHierarchyType()
+    {
+        return PrintMgmtHierarchyType::Sales;
+    }
+
+  /// <summary>
+    /// This value is used to retrieve the appropriate Print Management settings for the report.
+  /// </summary>
+    /// <returns>PrintMgmtNodeType enumeration value</returns>
+    protected PrintMgmtNodeType getPrintMgmtNodeType()
+    {
+        return PrintMgmtNodeType::SalesQuotationTable;
+    }
+
+}

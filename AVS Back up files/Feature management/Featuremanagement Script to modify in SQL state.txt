@@ -1,0 +1,23 @@
+Select * from featuremanagementstate 
+where name='Dynamics.AX.Application.AssetPreventMultipleDepreciationFeature'
+Select * from FEATUREMANAGEMENTMETADATA 
+where label = '@FixedAssets:AssetPreventMultipleDepreciationInSamePeriodFeature'
+
+update featuremanagementstate
+set ISENABLED=0
+where NAME ='Dynamics.AX.Application.AssetPreventMultipleDepreciationFeature'
+
+update  FEATUREMANAGEMENTMETADATA
+set CANDISABLE=1
+where label = '@FixedAssets:AssetPreventMultipleDepreciationInSamePeriodFeature' 
+
+
+
+
+update featuremanagementstate
+set ISENABLED=0
+where NAME ='Dynamics.AX.Application.CLISavedViewsPerformanceUpgrade'
+
+update  FEATUREMANAGEMENTMETADATA
+set CANDISABLE=1
+where label = '@FormRunConfiguration:CLISavedViewsPerformanceUpgradeLabel'

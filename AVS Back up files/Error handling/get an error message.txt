@@ -1,0 +1,119 @@
+https://markedcode.com/index.php/2022/11/09/x-error-handling/
+
+
+
+X++ developers are often guilty of hard coding error messages that don’t fully convey the cause of the exception. This makes debugging to find the root cause much more difficult and frequent.
+
+The following is an example of bad error handling we need to fix:
+
+try
+{
+//logic
+}
+catch (Exception::Error)
+{
+  info("Process failed.")
+}
+This lets us know there was an error but does nothing to point us in the direction of what the specific error was. To help clarify the root cause of our problem, we can grab records from the Infolog. Then we can write the error to logs/display it to the user/etc.
+
+ SysInfoLogEnumerator    infoLogEnum;
+ SysInfologMessageStruct messageStruct;
+
+try
+{
+//logic
+}
+catch (Exception::Error)
+{
+  str error;
+  Exception exception;
+
+  infoLogEnum = SysInfologEnumerator::newData(infolog.cut());
+
+  while (infoLogEnum.moveNext())
+  {
+     messageStruct = new SysInfologMessageStruct(infoLogEnum.currentMessage());
+     exception     = infoLogEnum.currentException();
+
+     error = strFmt("%1 %2", error, messageStruct.message());
+  }
+
+  info(strFmt("%1", error));
+}
+Now we have all of our error messages in our variable ‘error’ which we can then handle appropriately to provide more accurate information than our previous example.
+
+Additional information: https://community.dynamics.com/ax/b/dynamicsaxsolutions/posts/capturing-infolog-messages
+
+This will get us most of the way there but we will run into an issue were errors are added to the info log prior to the logic in our try block.  These unrelated errors will still be logged in our catch logic. Saving unrelated errors causes confusion and increases the defaulting in parsing the exact error message. To get around this we can do the following:
+
+Add global variables to hold our error message and the count for the current infolog record.
+str errorMsg;
+int infologStartLine;
+2. Prior to our try block we can get the current infolog line count.
+
+infologStartLine = infologLine();
+3. We can add two new methods to grab the infolog messages. This is similar to the above logic but takes in to account the starting infolog line number and only gets new records.
+
+private str getInfologStr(int _infologStartLine)
+{
+  SysInfologEnumerator    enumerator;
+  SysInfologMessageStruct msgStruct;
+  str                     error;
+  container               infologData;
+
+  int infologCurrentLine = infologLine();
+
+  if (infologCurrentLine > _infologStartLine)
+  {
+    infologData = infolog.copy(_infologStartLine + 1, infologCurrentLine);
+  }
+
+  if (infologData)
+  {
+    enumerator = SysInfologEnumerator::newData(infologData);
+            
+    while (enumerator.moveNext())
+    {
+      msgStruct = new SysInfologMessageStruct(enumerator.currentMessage());
+      error = strfmt("@SYS324543", error, msgStruct.message());
+    }
+   }
+     return error;
+}
+
+private void addErrorMsg(str _errorMsg)
+{
+ errorMsg += _errorMsg;
+}
+4. Finally we can call our new methods from our catch block
+
+catch
+{
+   this.addErrorMsg(this.getInfologStr(infologStartLine));
+   error(strFmt("%1", errorMsg));
+}
+Keep reading about D365 tips and tricks here: https://markedcode.com/index.php/category/d365/
+
+D365X++. ERROR HANDLING
+
+Mark
+Website
+Related Posts
+X++ Stored Procedure Calls
+X++ Stored Procedure Calls
+JANUARY 24, 2024
+D365 BYDOB in a Tier1 VM
+D365 BYODB in Tier 1 Dev VM
+JANUARY 24, 2024
+Multithreading batch jobs in D365
+D365 Multithreading Batch Jobs
+JANUARY 24, 2024
+Write A Comment
+Name
+Email
+Website
+Enter your comment here..
+ Save my name, email, and website in this browser for the next time I comment.
+
+  
+ TOP

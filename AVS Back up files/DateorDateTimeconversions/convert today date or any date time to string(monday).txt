@@ -1,0 +1,87 @@
+ public static void main(Args _args)
+    {
+        utcdatetime    dt;
+        str         formattedDate;
+        str         dayOfWeek, daySuffix, month;
+        int         day, monthNum, year, hour, minute;
+        ;
+    
+        // Assume we have the datetime object as 'dt'
+        //dt = DateTimeUtil::newDateTime(2024, 5, 21, 9, 0, 0); // 21st May 2024 at 9:00am
+        date dtm = mkDate(21,5,2024);
+        dt = DateTimeUtil::newDateTime(dtm, 9);
+
+        // for today 
+        dt = DateTimeUtil::utcNow();
+        date dateOnly = DateTimeUtil::date(dt);
+        
+        // Get the day of the week, day, month, year, hour, and minute
+        // dayOfWeek = any2Str(dayOfWk(dateOnly));
+        day       =  DateTimeUtil::day(dateOnly);
+        monthNum  = DateTimeUtil::month(dateOnly);
+        year      = DateTimeUtil::year(dateOnly);
+        hour      = DateTimeUtil::hour(dt);
+        minute    = DateTimeUtil::minute(dt);
+        int i     = dayOfWk(dateOnly);
+        date dateum = date2Str(dateOnly,321,day,1,)
+        // Convert day of the week number to name
+        switch (i)
+        {
+            case 1: dayOfWeek = "Sunday"; break;
+            case 2: dayOfWeek = "Monday"; break;
+            case 3: dayOfWeek = "Tuesday"; break;
+            case 4: dayOfWeek = "Wednesday"; break;
+            case 5: dayOfWeek = "Thursday"; break;
+            case 6: dayOfWeek = "Friday"; break;
+            case 7: dayOfWeek = "Saturday"; break;
+        }
+
+        // Get the suffix for the day
+        if ((day mod 10 == 1) && (day != 11))
+        {
+            daySuffix = "st";
+        }
+        else if ((day mod 10 == 2) && (day != 12))
+        {
+            daySuffix = "nd";
+        }
+        else if ((day mod 10 == 3) && (day != 13))
+        {
+            daySuffix = "rd";
+        }
+        else
+        {
+            daySuffix = "th";
+        }
+
+        // Convert month number to name
+        switch (monthNum)
+        {
+            case 1: month = "January"; break;
+            case 2: month = "February"; break;
+            case 3: month = "March"; break;
+            case 4: month = "April"; break;
+            case 5: month = "May"; break;
+            case 6: month = "June"; break;
+            case 7: month = "July"; break;
+            case 8: month = "August"; break;
+            case 9: month = "September"; break;
+            case 10: month = "October"; break;
+            case 11: month = "November"; break;
+            case 12: month = "December"; break;
+        }
+    
+        // Format the string
+        formattedDate = strFmt('%1 %2%3 %4 %5 at %6:%7%8',
+                           dayOfWeek,
+                           day,
+                           daySuffix,
+                           month,
+                           year,
+                           hour == 0 ? 12 : hour > 12 ? hour - 12 : hour,
+                           minute < 10 ? '0' + int2str(minute) : int2str(minute),
+                           hour < 12 ? 'am' : 'pm');
+    
+        // Print the formatted date
+        info(formattedDate);
+    }

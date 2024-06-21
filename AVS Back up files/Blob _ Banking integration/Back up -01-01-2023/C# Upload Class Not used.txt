@@ -1,0 +1,73 @@
+using Microsoft.IdentityModel.Clients.ActiveDirectory;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Auth;
+using Microsoft.WindowsAzure.Storage.Blob;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IdentityModel.Tokens;
+using System.Linq;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using AuthenticationContext = Microsoft.IdentityModel.Clients.ActiveDirectory.AuthenticationContext;
+
+namespace STE_AzureBlobStorageLibrary
+{
+   /* public class STE_AzureBlobUploadLibrary
+    {
+        public static object tenantId { get; private set; }
+        public static object applicationId { get; private set; }
+        public static object clientSecret { get; private set; }
+
+        HttpClient httpClient = new HttpClient();
+        public STE_AzureBlobUploadLibrary(String test) {
+
+            }
+      
+        public  void UploadFile(STE_AzureBlobStorageHelperLibrary azureOperationHelper)
+        {
+            CloudBlobContainer blobContainer = CreateCloudBlobContainer(tenantId, applicationId,
+                                               clientSecret, azureOperationHelper.storageAccountName, azureOperationHelper.containerName,
+                                               azureOperationHelper.storageEndPoint);
+            blobContainer.CreateIfNotExistsAsync();
+            CloudBlockBlob blob = blobContainer.GetBlockBlobReference(azureOperationHelper.blobName);
+            blob.UploadFromFileAsync(azureOperationHelper.srcPath);
+        }
+
+        private static CloudBlobContainer CreateCloudBlobContainer(object tenantId, object applicationId, object clientSecret, string storageAccountName, string containerName, string storageEndPoint)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static CloudBlobContainer CreateCloudBlobContainer(string tenantId, string applicationId, string clientSecret, string storageAccountName,
+            string containerName, string storageEndPoint)
+        {
+            string accessToken = GetUserOAuthToken(tenantId, applicationId, clientSecret);
+            TokenCredential tokenCredential = new TokenCredential(accessToken);
+            StorageCredentials storageCredentials = new StorageCredentials(tokenCredential);
+            CloudStorageAccount cloudStorageAccount = new CloudStorageAccount(storageCredentials, storageAccountName, storageEndPoint, useHttps: true);
+            CloudBlobClient blobClient = cloudStorageAccount.CreateCloudBlobClient();
+            CloudBlobContainer blobContainer = blobClient.GetContainerReference(containerName);
+            return blobContainer;
+        }
+
+        static string GetUserOAuthToken(string tenantId, string applicationId, string clientSecret)
+        {
+            const string ResourceId = "https://storage.azure.com/";
+            const string AuthInstance = "https://login.microsoftonline.com/{0}/";
+
+            string authority = string.Format(CultureInfo.InvariantCulture, AuthInstance, tenantId);
+            AuthenticationContext authContext = new AuthenticationContext(authority);
+
+            var clientCred = new ClientCredential(applicationId, clientSecret);
+            AuthenticationResult result = authContext.AcquireTokenAsync(
+                                                ResourceId,
+                                                clientCred
+                                                ).Result;
+            return result.AccessToken;
+        }
+
+    } */
+}
+

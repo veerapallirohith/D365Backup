@@ -1,0 +1,1 @@
+https://stackoverflow.com/questions/46773090/zip-xml-file-in-memory-and-upload-to-azure-file-storage

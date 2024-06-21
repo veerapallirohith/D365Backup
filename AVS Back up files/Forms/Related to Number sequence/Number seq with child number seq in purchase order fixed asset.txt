@@ -1,0 +1,73 @@
+/// <summary>
+/// This class is used to update asset id in assett table from purch table
+/// </summary>
+[ExtensionOf(classStr(PurchInvoiceJournalPost))]
+final class STE_PurchInvoiceJournalPost_Extension
+{
+    /// <summary>
+    /// This method is used to update asset id in asset table as increment number in purchtable while creating the fixed asset
+    ///through purchase order
+    /// </summary>
+    /// <param name = "_vendInvoiceInfoLine">VendInvoiceInfoLine</param>
+    /// <param name = "_vendInvoiceInfoLine_Asset">VendInvoiceInfoLine_Asset</param>
+    /// <param name = "_assetGroup">AssetGroup</param>
+    /// <param name = "_assetParameters">AssetParameters</param>
+    /// <returns>assettableloc</returns>
+    protected AssetTable createFixedAssetRecord(VendInvoiceInfoLine _vendInvoiceInfoLine, VendInvoiceInfoLine_Asset _vendInvoiceInfoLine_Asset, AssetGroup _assetGroup, AssetParameters _assetParameters)
+    {
+        AssetTable assetTable;
+        AssetTable assetTableloc;
+        AssetBook  assetBookloc;
+        assetTable =   next createFixedAssetRecord(_vendInvoiceInfoLine,_vendInvoiceInfoLine_Asset,_assetGroup,_assetParameters);
+        PurchLine purchLine = purchLine::findInventTransId(_vendInvoiceInfoLine.InventTransId);
+        AssetGroup assetGroup = AssetGroup::find(purchLine.AssetGroup);
+
+
+        if(assetGroup.AutoNumberCheckbox == NoYes::Yes)
+        {
+            ttsbegin;
+            select firstonly forupdate  assetTableloc
+                where assetTableloc.AssetId == assetTable.AssetId;
+            {
+                purchLine.PurchLinechildList(purchLine.MainAssetId,purchLine);
+
+               
+                assetTableloc.AssetId            = purchLine.IncrementNumber;
+                assetTableloc.MainAssetId        = purchLine.MainAssetId;
+                assetTableloc.IncrementNumber    = purchLine.IncrementNumber;
+                assetTableloc.IncrementUpdate    = NoYes::Yes;
+                assetTableloc.doUpdate();
+            }
+            ttscommit;
+
+            ttsbegin;
+            while select  forupdate assetBookloc
+                where assetBookloc.AssetId == assetTable.AssetId
+            {
+                assetBookloc.AssetId = purchLine.IncrementNumber;
+                assetBookloc.doUpdate();
+            }
+            
+            ttscommit;
+        }
+
+
+        else if (assetGroup.AutoNumberCheckbox == NoYes::No)
+        {
+            ttsbegin;
+            select firstonly forupdate  assetTableloc
+                where assetTableloc.AssetId == assetTable.AssetId;
+            {
+                assetTableloc.AssetId         = assetTable.AssetId;
+                assetTableloc.IncrementNumber = assetTable.AssetId;
+                assetTableloc.doupdate();
+            }
+            ttscommit;
+
+        }
+
+        return assetTableloc;
+
+    }
+
+}

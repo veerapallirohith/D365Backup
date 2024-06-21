@@ -1,0 +1,37 @@
+https://www.theaxapta.com/2019/02/how-to-get-queryrange-from-query-object.html
+
+
+// to get range from query
+
+ qbd = queryRun.query().datasourcetable(tableNum(ProjTable));
+            filterProjGroup =query.findQueryFilter(qbd, fieldStr(ProjTable, ProjGroupId));
+       
+            if (filterProjGroup)
+            {
+                str projGroupFilter = filterProjGroup.value();
+           
+                if(projGroupFilter)
+                {
+               
+                    con=    str2con(projGroupFilter, ',');
+                    for(int i=1; i<=conlen(con); i++)
+                    {
+                        qbr4 = qbdsProj.addRange(fieldNum(ProjTable, ProjGroupId));
+                        qbr4.value(conPeek(con,i));
+                    }
+                }
+            }
+
+
+// to get range from query 
+ int countloc, totalRanges;
+            QueryBuildDataSource qbdsProjId = query.dataSourceTable(tableNum(ProjTable));
+       
+            qbds =  query.dataSourceNo(1);
+            totalRanges = qbds.rangeCount();
+            for(int r =1; r<= totalRanges; r++)
+            {
+                qbr =  qbds.range(r);
+                qbr4 = qbdsProj.addRange(fieldNum(ProjTable, ProjId));
+                qbr4.value(qbr.value());
+            }

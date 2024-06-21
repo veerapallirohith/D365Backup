@@ -1,0 +1,178 @@
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Blob;
+
+internal final class AzureBlobStorageFileReader
+{
+    #File
+
+    #define.delimiterField(',')
+    /// <summary>
+    /// Class entry point. The system will call this method when a designated menu
+    /// is selected or when execution starts and this class is set as the startup class.
+    /// </summary>
+    /// <param name = "_args">The specified arguments.</param>
+    public static void main(Args _args)
+    {
+        
+        CloudBlobContainer cloudBlobContainer;
+        AzureBlobStorageFileReader testAzureBlob  = new AzureBlobStorageFileReader();
+
+        cloudBlobContainer= testAzureBlob.connectToAzureStorageAccountBlob();
+
+ 
+
+        testAzureBlob.getBlobStorageFileName(cloudBlobContainer);
+
+        testAzureBlob.readFileValueFromBlob(cloudBlobContainer);
+
+    }
+
+    public CloudBlobContainer connectToAzureStorageAccountBlob()
+
+    {
+
+        CloudBlobClient         cloudBlobClient;
+
+        CloudBlobContainer      cloudBlobContainer;
+
+        CloudStorageAccount     cloudStorageAccount;
+
+ 
+
+        cloudStorageAccount =
+
+            CloudStorageAccount::Parse("DefaultEndpointsProtocol=https;AccountName=datalakestephanus;AccountKey=ke5wKSNuc89l5AhxE5IEKuUIV2CgfyhuD2JsGDUO+mKYUOp4pAKiUv3glnGOj7htkP5XjJ02AJ8g+AStAjgLkA==;EndpointSuffix=core.windows.net");
+
+
+
+        //  Parse() parameter is the access key. Refer point# 6 to get access key
+
+        cloudBlobClient = cloudStorageAccount.CreateCloudBlobClient();
+
+        CloudBlobContainer = cloudBlobClient.GetContainerReference("powerpagesdev"); // Container name
+
+ 
+
+        info(strFmt("Storage container Name: %1",CloudBlobContainer.Name));
+
+ 
+
+        return CloudBlobContainer;
+
+ 
+
+    }
+
+    public void getBlobStorageFileName(CloudBlobContainer  _cloudBlobContainer)
+
+    {
+
+        CloudBlobDirectory  cloudBlobDirectory;
+
+        container           fileCon;
+
+ 
+
+        CloudBlobDirectory = _cloudBlobContainer.GetDirectoryReference("TestFolder");//folder name
+
+ 
+
+        System.Collections.IEnumerable blobIEnumerable = CloudBlobDirectory.ListBlobs(false,0,null,null);
+
+        System.Collections.IEnumerator blobIEnumerator = blobIEnumerable.GetEnumerator();
+
+ 
+
+        List fileNames = new List(Types::String);
+
+        while(blobIEnumerator.MoveNext())
+
+        {
+
+            IListBlobItem item = blobIEnumerator.Current;
+
+            if(item is CloudBlockBlob)
+
+            {
+
+                CloudBlockBlob blob = item;
+
+                blob.FetchAttributes(null,null, null);
+
+                fileCon = str2con(blob.Name, "/");
+
+                fileNames.addStart(conPeek(fileCon,conLen(fileCon)));
+
+                info(strFmt("File name: %1",conPeek(fileCon,conLen(fileCon))));
+
+
+
+                // Depend on the business requirements "conPeek(fileCon,conLen(fileCon))" use to store values in the table
+
+ 
+
+            }
+
+ 
+
+        }
+
+    }
+
+    public void readFileValueFromBlob(CloudBlobContainer  _cloudBlobContainer)
+
+    {
+
+        System.IO.MemoryStream memoryStream;
+
+        TextStreamIo           textStreamIo;
+
+        container              rec;
+
+       
+
+        CloudBlobDirectory      cloudBlobDirectory = _cloudBlobContainer.GetDirectoryReference("TestFolder");//folder name
+
+        CloudBlockBlob          blob = cloudBlobDirectory.GetBlockBlobReference("AllocationDataEntity_1705471600713 (1).csv"); //file name
+
+       
+
+        memoryStream = new System.IO.MemoryStream();
+
+        blob.DownloadToStream(memoryStream, null, null, null);
+
+ 
+
+        textStreamIo = TextStreamIo::constructForRead(memoryStream);
+
+        textStreamIo.inFieldDelimiter(#delimiterField);
+
+        textStreamIo.inRecordDelimiter(#delimiterCRLF);
+
+ 
+
+        while (!textStreamIo.status())
+
+        {
+
+            rec = textStreamIo.read();
+
+ 
+
+            if (conLen(rec))
+
+            {
+
+                info(strFmt("First value: %1",conPeek(rec, 1)));  // Blob file data
+
+                info(strFmt("Second value: %1",conPeek(rec, 2)));
+
+                info(strFmt("Third value: %1",conPeek(rec, 3)));
+
+            }
+
+        }
+
+    }
+
+}

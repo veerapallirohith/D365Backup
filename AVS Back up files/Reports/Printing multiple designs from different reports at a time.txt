@@ -1,0 +1,81 @@
+/// <summary>
+/// This class is used to print  collection letter report
+/// </summary>
+internal final class STE_CustCollectionJourController extends CustCollectionJourcontroller
+{
+   
+    
+
+
+    public static STE_CustCollectionJourController construct()
+    {
+        return new STE_CustCollectionJourController();
+    }
+
+    public static void main(Args _args)
+    {
+        CustCollectionLetterJour            custCollectionLetterJour = _args.record();
+        FreeTextInvoiceContract             rdpContract = new FreeTextInvoiceContract();
+        SrsReportRunController              controller = new SrsReportRunController();
+        CustCollectionLetterTrans           custCollectionLetterTrans;
+        CustInvoiceJour                     custinvoiceJour;
+        SRSPrintDestinationSettings         srsPrintDestinationSettings;
+        Args args = new Args();
+        ttsbegin;
+        while select CollectionLetterNum,AccountNum,Invoice from  CustCollectionLetterTrans 
+            where CustCollectionLetterTrans.CollectionLetterNum == custCollectionLetterJour.CollectionLetterNum
+            && CustCollectionLetterTrans.AccountNum == custCollectionLetterJour.AccountNum
+            join custinvoiceJour
+            where  custinvoiceJour.invoiceid ==  CustCollectionLetterTrans.Invoice
+            && custinvoiceJour.InvoiceAccount ==  CustCollectionLetterTrans.AccountNum
+        {
+            controller.parmReportName(ssrsReportStr(STE_FreeTextInvoice, Report));
+
+            controller.parmExecutionMode(SysOperationExecutionMode::Synchronous);
+
+            controller.parmShowDialog(false);
+
+            rdpContract.parmCustInvoiceJourRecId(custinvoiceJour.RecId);
+        
+            controller.parmReportContract().parmRdpContract(rdpContract);
+            srsPrintDestinationSettings = controller.parmReportContract().parmPrintSettings();
+            controller.parmArgs(args);
+            controller.startOperation();
+        }
+        ttscommit;
+        SrsReportRunController formLetterController = STE_CustCollectionJourController::construct();
+        STE_CustCollectionJourController CollectionLettercontroller = formLetterController;
+        CollectionLettercontroller = new STE_CustCollectionJourController();
+        CollectionLettercontroller.parmReportName(PrintMgmtDocType::construct(PrintMgmtDocumentType::CustCollectionLetter).getDefaultReportFormat());
+        CollectionLettercontroller.parmArgs(_args);
+        CollectionLettercontroller.startOperation();
+        
+    }
+
+    /// <summary>
+    /// This method is used to call the collection letter reports based on condition
+    /// </summary>
+    public void outputReport()
+    {
+        SRSCatalogItemName reportDesign;
+        CustCollectionLetterJour custCollectionLetterJour = args.record();
+        switch(custCollectionLetterJour.CollectionLetterCode)
+        {
+            case CustCollectionLetterCode::CollectionLetter1:
+                reportDesign = ssrsReportStr(STE_CustCollectionJour, Report);
+                break;
+            case CustCollectionLetterCode::CollectionLetter2:
+                reportDesign = ssrsReportStr(STE_CustCollectionJour, Report_CLetter2);
+                break;
+            case CustCollectionLetterCode::CollectionLetter3:
+                reportDesign = ssrsReportStr(STE_CustCollectionJour, Report_CLetter3);
+                break;
+        }
+       
+        this.parmReportName(reportDesign);
+        this.parmReportContract().parmReportName(reportDesign);
+        formLetterReport.parmReportRun().settingDetail().parmReportFormatName(reportDesign);
+        super();
+    }
+
+}

@@ -1,0 +1,17 @@
+/// <summary>
+/// TO add the custom report designs to standard reports.
+/// </summary>
+class CD_mycustPrintMgmtDocTypeHandlerExt
+{
+    [SubscribesTo(classStr(PrintMgmtDocType), delegateStr(PrintMgmtDocType, getDefaultReportFormatDelegate))]
+    public static void getDefaultReportFormatDelegate(PrintMgmtDocumentType _docType, EventHandlerResult _result)
+    {
+        switch(_docType)
+        {
+            case PrintMgmtDocumentType::Quotation:
+                _result.result(ssrsReportStr(CDSalesQuotation, Report));
+                break;
+        }
+    }
+
+}

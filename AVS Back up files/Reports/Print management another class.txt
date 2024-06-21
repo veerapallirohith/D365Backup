@@ -1,0 +1,26 @@
+/// <summary>
+/// This is extension PrintMgmtReportFormatPopulator class
+/// </summary>
+[ExtensionOf(classStr(PrintMgmtReportFormatPopulator))]
+internal final class STE_PrintMgmtReportFormatPopulator_Extension
+{
+    /// <summary>
+    /// Adds records to the <c>PrintMgmtReportFormat</c> table.
+    /// </summary>
+    /// <param name = "_deleteAll">boolean</param>
+    /// <param name = "_showConfirmation">boolean</param>
+    public void populate(boolean _deleteAll , boolean _showConfirmation)
+    {
+        #PrintMgmtSetup
+        // populate the standard application solutions
+        next populate(_deleteAll, _showConfirmation);
+ 
+   
+        // design options available for PrintMgmtDocumentType::SalesFreeTextInvoice
+        this.addOther(PrintMgmtDocumentType::SalesFreeTextInvoice,
+                    ssrsReportStr(STE_FreeTextInvoice, Report),
+                    ssrsReportStr(STE_FreeTextInvoice, Report),
+                    #NoCountryRegionId);
+    }
+
+}

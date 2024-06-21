@@ -1,0 +1,25 @@
+// <summary>
+    ///
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
+    [FormControlEventHandler(formControlStr(SalesEditLines, OK), FormControlEventType::Clicked)]
+    public static void OK_OnClicked(FormControl sender, FormControlEventArgs e)
+    {
+   
+        FormCommandButtonControl  callerButton = sender as FormCommandButtonControl;  //Retrieves the button
+        FormRun form = sender.formRun(); //Gets the running form
+// you might get error if you use callerButton.formRun
+        //Get the salesId that was selected in  form
+        FormDataSource salesParmTable_ds = form.dataSource(formDataSourceStr(SalesEditLines, SalesParmTable)) as FormDataSource;
+        SalesParmTable salesParmTable = salesParmTable_ds.cursor();
+
+        SalesTable salesTable=salesParmTable.salesTable();
+
+        if(salesTable.SalesStatus==SalesStatus::Invoiced)
+        {
+         //code
+
+        }
+
+    }

@@ -1,0 +1,15 @@
+ttsbegin;
+                                    delete_from projProposalJourLoca where projProposalJourLoca.ProposalId == projProposalJourLocal.ProposalId;
+                                    NumberSequenceReference numberSequenceReference;
+                                    numberSequenceReference = ProjParameters::numRefProjProposalId();
+                                    NumberSequenceTable  numberSequenceTable;
+			            proposalIdEDT proposalIdEDT = this.proposalid;
+                                    if(numberSequenceReference)
+                                    {
+                                        numberSequenceTable = numberSequenceTable::find(numberSequenceReference.NumberSequenceId);
+                                        if (numberSequenceTable.Continuous)
+                                        {
+                                            NumberSeq::release(numberSequenceTable.NumberSequence, proposalIdEDT);
+                                        }
+                                    }
+                                    ttscommit;

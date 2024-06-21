@@ -1,0 +1,7 @@
+ MenuFunction menufunction = new MenuFunction(menuItemDisplayStr(STF_CostAllocationExtraction), MenuItemType::Display);
+            Args args = new Args(formStr(STF_CostAllocationExtractionData));
+            args.menuItemName('STF_CostAllocationExtraction');
+            FormRun formrun = new formrun(args);
+            formrun =  new MenuFunction(menuItemDisplayStr(STF_CostAllocationExtraction), MenuItemType::Display).create(args);
+            FormStringControl postingLayer = formrun.design().controlName(formControlStr(STF_CostAllocationExtractionData, PostingLayers));
+        FormStringControl dimensionSetName = formrun.design().controlName(formControlStr(STF_CostAllocationExtractionData, DimensionSetName));

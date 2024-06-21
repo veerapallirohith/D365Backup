@@ -1,0 +1,9 @@
+try
+{
+    customTable.insert();
+}
+catch (Exception::DuplicateKeyException)
+{
+    //clears the last infolog message, which is created by trying to insert a duplicate
+    infolog.clear(Global::infologLine() - 1);
+}

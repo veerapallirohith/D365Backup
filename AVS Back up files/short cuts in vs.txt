@@ -1,0 +1,6 @@
+ctrl+B+H = build in vs
+
+Ctrl+K+H = comment code
+
+Debugger attcah = ctrl+Alt+p
+reattcah     = shilt+Alt+p

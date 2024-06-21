@@ -1,0 +1,121 @@
+https://strabo.partners/staging/9871/dynamics-365-multi-select-enum-lookup/
+
+
+Recently I had the need to create a lookup for a field in a grid where multiple values could be selected, and the backing data source was an enum.
+
+The X++ ApplicationFoundation model provides the `SysLookupMultiSelectCtrl` control, which handles a lot of the work to create the lookup UI, allow multi selection, and return back a delimited string of all the selected values. Traditionally this control is used with a query (referencing at table) as the backing data source for the values to be displayed, not an enum as is needed in this case. There is the option to construct with a `QueryRun` object, which is the approach I took here.
+
+Tmp Table
+The first thing to create is an in-memory temporary table that will serve as the data source for the dropdown. This table only needs one string column, long enough to hold the label for any value in the enum being used.
+
+Once the table is created, I added one public static method to return a QueryRun to a caller, this is what the form using the lookup will call.
+
+buildQueryRun
+This method creates a new query, adds the temporary table as a data source, and the one column on the table as a selection field. It then generates a queryRun from the query, and calls the `prepareData` to populate the table with values from the enum, and sets the cursor to the generated instance.
+
+
+internal static QueryRun buildQueryRun(EnumId _enumId)
+{
+    Query query = new Query();
+
+    QueryBuildDataSource qbds = query.addDataSource(tableNum(EnumLookupTmp));
+    qbds.addSelectionField(fieldNum(EnumLookupTmp, EnumValue));
+
+    QueryRun queryRun = new QueryRun(query);
+    queryRun.setCursor(EnumLookupTmp::prepareData(_enumId));
+
+    return queryRun;
+}
+
+
+prepareData
+The prepare data method uses the `DictEnum` class to create a row in the temporary table for each value in the enum, using the value label as the data in the column. Finally returning the populated table instance.
+
+
+private static SBCEnumLookupTmp prepareData(EnumId _enumId)
+{
+    SBCEnumLookupTmp lookupTmp;
+    DictEnum enum = new DictEnum(_enumId);
+
+    for (int i = 0; i < enum.values(); i++)
+    {
+        lookupTmp.EnumValue = enum.value2Label(i);
+        lookupTmp.insert();
+    }
+
+    return lookupTmp;
+}
+
+
+Form
+Now that the infrastructure has been setup to generate a temporary table with values based on an enum, the multi select lookup can be implemented on the form.
+
+Declaration
+In the class declaration for the form, I added the multi select lookup control (two of them in my case as two columns in the grid need the functionality), and the `#Characters` macro. This will be used to define the string separator later
+
+
+[Form]
+public class MyForm extends FormRun
+{
+    #Characters
+    SysLookupMultiSelectCtrl multiSelectControl;
+Init
+In the init() method of the form, the lookup variables decared earlier are initialized as multi select controls using the `constructWithQueryRun()` option. This method takes the current form instance, the form controls (which need to be set to AutoDeclare), and the queryRun that the temporary table defined earlier creates.
+public void init()
+{
+    super();
+
+    multiSelectControl = SysLookupMultiSelectCtrl::constructWithQueryRun(
+        this,
+        FormControlName,
+        EnumLookupTmp::buildQueryRun(enumNum(MyEnum)));
+}
+
+
+Data source active
+Since these controls are going in a grid, their state needs to be updated each time a row in the grid changes. In the `active()` method of the grid data source, each control is set to the current value from that row in the grid. This could be nothing for a new grid, or could be the delimited string if values have previously been selected (Created;Shipped;Deleted) for example.
+
+The `.set()` method on the initialized control is used to set the state of the control using the data from the datasource row. It expects a container of values, so a container is created using `str2con` and the string value from the data source row. Note: the `#SEMICOLON` delimiter must be used, as the multi select control expects that is the delimiter.
+
+
+[DataSource]
+class MyDataSource
+{
+    public int active()
+    {
+        int ret;
+
+        ret = super();
+
+        multiSelectControl.set(str2con(MyDataSource.BackingField, #SEMICOLON));
+
+        return ret;
+    }
+
+}
+
+
+Control modified
+Finally, when the control is modified, we need to get the selected values out of the multi select control, and write them to the data source.
+
+The `.getSelectFieldValues()’ method will return a container of all the values the user selected, and we can use `con2str` to create a string to store on the data source.
+
+
+[Control("String")]
+class FormControlName
+{
+    public boolean modified()
+    {
+        boolean ret;
+
+        ret = super();
+
+        FormControlName = con2Str(multiSelectControl.getSelectedFieldValues(), #SEMICOLON);
+
+        return ret;
+    }
+
+}
+
+Wrap up
+And that’s all that’s needed. With a bit of custom code, some of which (the temporary table) can be reused, you can have a multi select enum dropdown for users.

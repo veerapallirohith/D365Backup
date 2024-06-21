@@ -1,0 +1,16 @@
+public void modified()
+    {
+        FormDataObject formDataObject = any2Object(this) as FormDataObject;
+        FormDataSource formDataSource = formDataObject.datasource();
+        ForecastSales    forecastsales;
+        next modified();
+        forecastsales = formDataSource.cursor();
+        if(forecastSales.ProjId)
+        {
+            if(ProjTable::find(forecastSales.ProjId).type != ProjType::Internal)
+            {
+                forecastSales.SalesPrice  = 0;
+                forecastSales.Amount      = 0;
+            }
+        }
+    }

@@ -1,0 +1,31 @@
+/// <summary>
+///  Populates the PrintMgmtReportFormat table used for print management with the MyProject documents.
+/// </summary>
+[ExtensionOf(classStr(PrintMgmtReportFormatPopulator))]
+public final class CD_ClassPrintMgmtReportFormatPopulator_Extension
+{
+    #ISOCountryRegionCodes
+    #PrintMgmtSetup
+
+    /// <summary>
+    ///  Purchasing documents
+    /// </summary>
+    protected void addDocuments()
+    {
+        
+        this.customAddSalesDocuments();
+
+        next addDocuments();
+    }
+
+    /// <summary>
+    /// Adds sales records to the PrintMgmtReportFormat table.
+    /// </summary>
+    
+    public void customAddSalesDocuments()
+    {
+        this.addOther(PrintMgmtDocumentType::Quotation, ssrsReportstr(CDSalesQuotation, Report), ssrsReportStr(CDSalesQuotation, Report), #NoCountryRegionId);
+       
+    }
+
+}

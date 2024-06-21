@@ -1,0 +1,6 @@
+if update method exists in table level use these  
+cust.skipDatabaseLog(true);
+        cust.skipDataMethods(true);
+        cust.skipEvents(true);
+
+        update_recordset cust setting BankAccount = '123';

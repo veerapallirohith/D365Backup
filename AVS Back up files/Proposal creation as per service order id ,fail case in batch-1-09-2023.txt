@@ -1,0 +1,238 @@
+ //public void run()
+    //{
+    //    DGMA_PSATmpProjProposalTrans         tmpProjProposalTransInit;
+    //    try
+    //    {
+    //        delete_from tmpProjProposalTransInit;
+    //    }
+
+    //    catch (Exception::Error)
+    //    {
+
+    //        throw error("@SYS18447");
+    //    }
+    //    next run();
+    //    #define.menuNameText('DGMA')
+    //    DGMA_ProjInvoiceProposalPeriodicMenuDataTmp batchHistory;
+
+    //    select firstonly batchHistory where batchHistory.User == curUserId();
+    //    if(batchHistory.MenuName == #menuNameText && batchHistory.User == curUserId())
+    //    {
+
+    //        SMAServiceOrderLine             smaServiceOrderLineLocal;
+    //        PSATmpProjProposalTrans         tmpProjProposalTrans = this.tmpProjProposalTrans;
+    //        ProjProposalJour                 projProposalJour = this.projProposalJour;
+    //        ProjProposalJour                 projProposalJourLoc = this.projProposalJour;
+    //        ProjProposalJour                 projProposalJourLocal,projProposalJourLoca;
+    //        PSAProjProposalProj              psaProjProposalProj;
+    //        PSAProjProposalProj              psaProjProposalProjLoc;
+    //        ProjProposalItem                 projProposalItem, projProposalItemLoc;
+    //        boolean                          loop,AmountVal;
+    //        real                             invoicedNow;
+    //        ProjInvoiceJour                   projInvoiceJour;
+    //        DGMA_PSATmpProjProposalTrans     PSATmpProjProposalTransCopy,PSATmpProjProposalTransCopyLocal;
+    //        ProjFormLetter          projFormLetter;
+    //        PsaProjAndContractInvoiceController psaController = new PSAProjAndContractInvoiceController();
+    //        select firstonly psaProjProposalProjLoc where psaProjProposalProjLoc.ProjProposalId == projProposalJourLoc.proposalId;
+    //        ProjProposalId  proposalIdEDT = psaProjProposalProjLoc.ProjProposalId;
+    //        ProjOpsFinancialsLogger logger = ProjOpsFinancialsLogger::createLogger(classStr(ProjInvoiceProposalInsertLines));
+    //        const str LoggerRetryExceptionMsg = '%1 retries exceeded max limit for %2 method.';
+    //        using (SysInstrumentationActivityContext activityContext = logger.projOpsFinActivity().invProposalInsertLinesRunContext())
+    //        {
+    //            try
+    //            {
+    //                QueryRun queryRun = new QueryRun(this.getTmpProjProposalTrans());
+    //                queryRun.setCursor(tmpProjProposalTrans);
+
+    //                value =0;
+
+
+    //                while(queryRun.next())
+    //                {
+
+    //                    if(loop == false)
+    //                    {
+    //                        tmpProjProposalTrans = queryRun.get(tableNum(PSATmpProjProposalTrans));
+    //                        /*tmpProjProposalTrans.RefTableId = 2258 refers to ProjItemTransSale table */
+    //                        if(tmpProjProposalTrans.RefTableId == tableNum(ProjItemTransSale))
+    //                        {
+    //                            while select PSATmpProjProposalTransCopyLocal
+    //                            {
+    //                                select firstonly projInvoiceJour where projInvoiceJour.DGMA_ServiceOrderId == PSATmpProjProposalTransCopyLocal.ServiceOrderId;
+    //                                if(!projInvoiceJour)
+    //                                {
+    //                                    select firstonly projProposalItem where projProposalItem.DGMA_ServiceOrderId == PSATmpProjProposalTransCopyLocal.ServiceOrderId;
+    //                                    {
+    //                                        if(projProposalItem)
+    //                                        {
+    //                                            select firstonly projProposalJourLocal where projProposalJourLocal.ProposalId == psaProjProposalProjLoc.ProjProposalId;
+    //                                            {
+    //                                                select firstonly forupdate projProposalItemLoc where projProposalItemLoc.ProjTransId == PSATmpProjProposalTransCopyLocal.RefTransId;
+    //                                                {
+    //                                                    if(projProposalItemLoc)
+    //                                                    {
+    //                                                        ttsbegin;
+    //                                                        projProposalItemLoc.ProposalId = projProposalItem.ProposalId;
+    //                                                        projProposalItemLoc.update();
+    //                                                        ttscommit;
+    //                                                    }
+
+    //                                                }
+    //                                            }
+    //                                        }
+    //                                    }
+    //                                }
+    //                            }
+    //                            if(projProposalJourLocal)
+    //                            {
+    //                                ttsbegin;
+    //                                delete_from projProposalJourLoca where projProposalJourLoca.ProposalId == projProposalJourLocal.ProposalId;
+    //                                NumberSequenceReference numberSequenceReference;
+    //                                numberSequenceReference = ProjParameters::numRefProjProposalId();
+    //                                NumberSequenceTable  numberSequenceTable;
+    //                                if(numberSequenceReference)
+    //                                {
+    //                                    numberSequenceTable = numberSequenceTable::find(numberSequenceReference.NumberSequenceId);
+    //                                    if (numberSequenceTable.Continuous)
+    //                                    {
+    //                                        NumberSeq::release(numberSequenceTable.NumberSequence, proposalIdEDT);
+    //                                    }
+    //                                }
+    //                                ttscommit;
+    //                                SysInfoAction_Formrun   infoAction;
+    //                                infolog.clear();
+    //                                info(strFmt("@DGMA_Label:InvoiceProposalUpdated", projProposalItemLoc.ProposalId), '', infoAction);
+    //                            }
+
+    //                            while select RefTransid,ServiceOrderId from PSATmpProjProposalTransCopy
+    //                            {
+    //                                ttsbegin;
+    //                                update_recordset projProposalItemLoc setting DGMA_ServiceOrderId = PSATmpProjProposalTransCopy.ServiceOrderId
+    //                        where projProposalItemLoc.ProjTransId == PSATmpProjProposalTransCopy.RefTransId;
+    //                                ttscommit;
+    //                            }
+    //                        }
+
+
+    //                        while select ServiceOrderId from PSATmpProjProposalTransCopy
+    //                group by ServiceOrderId
+    //                    order by ServiceOrderId asc
+    //                  where loop == false
+
+    //                        {
+    //                            value += 1;
+    //                            if(value != 1)
+    //                            {
+    //                                NumberSequenceReference numberSequenceReference;
+    //                                str activityNumber;
+    //                                numberSequenceReference = NumberSeqReference::findReference(extendedTypeNum(ProjProposalId));
+    //                                if (numberSequenceReference)
+    //                                {
+    //                                    activityNumber = NumberSeq::newGetNum(numberSequenceReference).num();
+    //                                }
+
+    //                                psaProjProposalProj.ProjProposalId = activityNumber;
+    //                                psaProjProposalProj.ProjId = projProposalJour.ProjInvoiceProjId;
+    //                                psaProjProposalProj.Invoiced = psaProjProposalProjLoc.Invoiced;
+    //                                psaProjProposalProj.insert();
+
+    //                                projProposalJour.ProposalId = activityNumber;
+    //                                projProposalJour.ProjInvoiceId = PSATmpProjProposalTransCopy.ProjId;
+    //                                projProposalJour.insert();
+    //                                // this.DisplayProposalId(projProposalJour);
+
+    //                                ttsbegin;
+    //                                update_recordset projProposalItemLoc setting ProposalId = activityNumber
+    //                            where projProposalItemLoc.ProposalId == psaProjProposalProjLoc.ProjProposalId
+    //                            && projProposalItemLoc.DGMA_ServiceOrderId == PSATmpProjProposalTransCopy.ServiceOrderId;
+    //                                ttscommit;
+    //                                this.setProjProposalJourPost(tmpProjProposalTrans);
+
+    //                            }
+    //                        }
+    //                        loop = true;
+
+    //                        if( AmountVal == false)
+    //                        {
+    //                            infolog.clear();
+    //                            while select ServiceOrderId from PSATmpProjProposalTransCopy
+    //                            group by ServiceOrderId
+    //                            {
+    //                                select firstonly PSATmpProjProposalTransCopyLocal where PSATmpProjProposalTransCopyLocal.ServiceOrderId == PSATmpProjProposalTransCopy.ServiceOrderId;
+    //                                while select ProjSalesPrice,Qty,serviceorderid from smaServiceOrderLineLocal
+    //                                where smaServiceOrderLineLocal.ServiceOrderId == PSATmpProjProposalTransCopyLocal.ServiceOrderId
+    //                                {
+    //                                    invoicedNow += smaServiceOrderLineLocal.ProjSalesPrice * smaServiceOrderLineLocal.qty;
+    //                                }
+    //                                select firstonly projProposalItem where projProposalItem.ProjTransId == PSATmpProjProposalTransCopyLocal.RefTransId;
+    //                                select firstonly projProposalJourLoca where projProposalJourLoca.ProposalId == projProposalItem.ProposalId;
+
+    //                                if(projProposalItem)
+    //                                {
+    //                                    ttsbegin;
+    //                                    update_recordset ProjProposalJourLoc setting InvoiceAmount = invoicedNow,
+    //                                        DGMA_ServiceOrderId = projProposalItem.DGMA_ServiceOrderId
+    //                                   where   ProjProposalJourLoc.ProposalId == projProposalItem.ProposalId;
+    //                                    ttscommit;
+
+    //                                    ttsbegin;
+    //                                    update_recordset psaProjProposalProj setting InvoicedNow = invoicedNow
+    //                      where    psaProjProposalProj.ProjProposalId == projProposalItem.ProposalId;
+    //                                    ttscommit;
+    //                                    invoicedNow =0;
+
+    //                                    /* Below code is used to post the Invoice Proposal and send invoice through E mail */
+    //                                    if(batchHistory.IncludeNegativeAmount == NoYes::Yes)
+    //                                    {
+    //                                        projFormLetter = ProjFormLetter::construct(DocumentStatus::ProjectInvoice);
+    //                                        projFormLetter.createParmLine(projProposalJourLoca);
+    //                                        projFormLetter.run();
+
+
+    //                                        this.DisplayProposalId(projProposalJourLoca);
+    //                                    }
+    //                                    else if (batchHistory.IncludeNegativeAmount == NoYes::No)
+    //                                    {
+    //                                        if(projProposalJourLoca.InvoiceAmount >= 0)
+    //                                        {
+
+    //                                            projFormLetter = ProjFormLetter::construct(DocumentStatus::ProjectInvoice);
+    //                                            projFormLetter.createParmLine(projProposalJourLoca);
+    //                                            projFormLetter.run();
+
+    //                                            this.DisplayProposalId(projProposalJourLoca);
+    //                                        }
+    //                                    }
+
+    //                                    if(batchHistory.SendInvoiceToMail == NoYes::Yes)
+    //                                    {
+    //                                        MenuFunction menuFunction = new MenuFunction(menuItemOutputStr(ProjInvoiceOriginalPrint),Menuitemtype::Output);
+    //                                        Args args = new Args(menuFunction);
+    //                                        select firstonly  projInvoiceJour where projInvoiceJour.ProposalId == projProposalJourLoca.ProposalId;
+    //                                        args.record(projInvoiceJour);
+    //                                        menuFunction.run(args);
+    //                                    }
+
+    //                                }
+    //                            }
+    //                            AmountVal = true;
+    //                        }
+    //                    }
+    //                    ttsbegin;
+    //                    delete_from PSATmpProjProposalTransCopy;
+    //                    ttscommit;
+    //                }
+
+    //            }
+
+    //            catch (Exception::Error)
+    //            {
+    //                logger.logError(strFmt(LoggerRetryExceptionMsg, 'ExceptionError', 'ProjInvoiceProposalInsertLines.run()'));
+
+    //                throw error("@SYS18447");
+    //            }
+
+
+    //        }
+    //    }
+    //}

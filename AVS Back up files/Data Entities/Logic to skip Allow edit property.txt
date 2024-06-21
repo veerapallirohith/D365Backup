@@ -1,0 +1,19 @@
+ /// <summary>
+    /// Thos method is used to skip allow edit propoerty
+    /// </summary>
+    /// <param name = "_entityCtx">DocuRefEntity</param>
+    /// <param name = "_dataSourceCtx">DocuRefEntity</param>
+    public void mapEntityToDataSource(DataEntityRuntimeContext _entityCtx, DataEntityDataSourceRuntimeContext _dataSourceCtx)
+    {
+        if(_entityCtx.getDatabaseOperation() == DataEntityDatabaseOperation::Insert && _dataSourceCtx.name() == tableStr(DocuRefEntity))
+        {
+            _dataSourceCtx.skipDataMethods(true);
+        }
+        if (_dataSourceCtx.name() == dataEntityDataSourceStr(HcmWorkerAttachmentsEntity, DocuRefEntity))
+        {
+            DocuRefEntity entity = _dataSourceCtx.getBuffer();
+            entity.fieldExternallySet(fieldNum(DocuRefEntity, RefCompanyId), false);
+        }
+
+        super(_entityCtx, _dataSourceCtx);
+    }

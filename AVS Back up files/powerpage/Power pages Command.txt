@@ -1,0 +1,9 @@
+cd\
+cd .\powerpage\
+pac auth create -u https://operations-ste-weur-uat-01.crm4.dynamics.com/
+pac paportal list
+D:\powerpage> pac paportal download --path D:\powerpage\ -id fe3a1a63-226b-ed11-9561-0022487fed95 -o
+
+
+for reverse upload from local vs:
+pac paportal upload --path D:\powerpage\stephanus-kostenleistungsrechnung---stephanusd365klr

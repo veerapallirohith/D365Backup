@@ -1,0 +1,7 @@
+NumberSequenceReference numberSequenceReference;
+                str activityNumber;
+                numberSequenceReference = NumberSeqReference::findReference(extendedTypeNum(smmActivityNumber));
+                if (numberSequenceReference)
+                {
+                    activityNumber = NumberSeq::newGetNum(numberSequenceReference).num();
+		}

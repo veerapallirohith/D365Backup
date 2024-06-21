@@ -1,0 +1,124 @@
+/// blog links 
+
+https://www.linkedin.com/pulse/x-pack-unpack-extension-classes-using-%C3%B6rvar-sigurgeirsson/
+
+https://learn.microsoft.com/en-us/dynamics365/fin-ops-core/dev-itpro/extensibility/extend-runbase-class
+
+
+
+
+/// <summary>
+/// This class is extended on business purpose of adding new field
+/// </summary>
+[ExtensionOf(classStr(ProjInvoiceProposalPeriodic))]
+internal final class DGMA_ProjInvoiceProposalPeriodic_Extension
+{
+    public DialogField                 includeInvoiceAmount;
+    public DialogField                  sendInvoiceToMail;
+    public NoYesId includeNegativeAmountLoc;
+    public NoYesId sendInvoiceLoc;
+    #define.CurrentVersion(1)
+    #localMacro.CurrentList
+    includeNegativeAmountLoc,
+    sendInvoiceLoc
+    #endMacro
+
+    /// <summary>
+    /// This method is used to add new include invoice amount field
+    /// </summary>
+    /// <returns>dialogRunBase</returns>
+    Object dialog()
+    {
+       
+        DialogGroup     selectTransactionsGroup;
+        DialogGroup     sendInvoice;
+        DGMA_ProjInvoiceProposalPeriodicMenuDataTmp  TmpTable;
+        #define.menuNameText('DGMA')
+        next dialog();
+        select firstonly TmpTable;
+        if(TmpTable.MenuName == #menuNameText)
+        {
+            sendInvoice = dialogRunBase.addGroup("@DGMA_Label:SendInvoice");
+            sendInvoiceToMail = dialogRunBase.addfieldValue(extendedTypeStr(NoYesId),"@DGMA_Label:SendInvoiceToMail");
+            sendInvoiceToMail.value(sendInvoiceLoc);
+            selectTransactionsGroup = dialogRunBase.addGroup("@DGMA_Label:IncludeNegativeAmount");
+            includeInvoiceAmount = dialogRunBase.addfieldValue(extendedTypeStr(DGMA_NoYesId),"@DGMA_Label:IncludeNegativeAmount");
+            includeInvoiceAmount.value(includeNegativeAmountLoc);
+        }
+        return dialogRunBase;
+    }
+
+    /// <summary>
+    /// This method is used to get the user selected data
+    /// </summary>
+    /// <returns>ret</returns>
+    boolean getFromDialog()
+    
+    {
+        boolean ret;
+        ret = next getFromDialog();
+        
+        DGMA_ProjInvoiceProposalPeriodicMenuDataTmp  TmpTable;
+        if(this.isInBatch())
+        {
+            Batch batchInstance = this.parmCurrentBatch();
+            BatchHeader batchHeader = BatchHeader::getCurrentBatchHeader();
+            TmpTable.BatchJobIdLocal = batchInstance.BatchJobId;
+            select forupdate TmpTable where TmpTable.User == curUserId() && TmpTable.BatchJobIdLocal == batchInstance.BatchJobId;
+        }
+        else
+        {
+            select forupdate TmpTable where TmpTable.User == curUserId();
+        }
+        if(TmpTable.MenuName == 'DGMA')
+        {
+            includeNegativeAmountLoc = includeInvoiceAmount.value();
+            sendInvoiceLoc = sendInvoiceToMail.value();
+        }
+        return ret;
+    }
+
+    public container pack()
+    {
+        container packedClass = next Pack();
+        return SysPackExtensions::appendExtension(packedClass, classStr(DGMA_ProjInvoiceProposalPeriodic_Extension), this.myPack());
+    }
+
+    private boolean myUnpack(container packedClass)
+    {
+        Integer version = RunBase::getVersion(packedClass);
+        switch (version)
+        {
+            case #CurrentVersion:
+                [version, #currentList] = packedClass;
+                break;
+            default:
+                return false;
+        }
+        return true;
+    }
+
+    private container myPack()
+    {
+        return [#CurrentVersion, #CurrentList];
+    }
+
+    boolean unpack(container packedClass)
+    {
+        boolean result=next unpack(packedClass);
+        Integer         version        = conPeek(packedClass,1);
+        container       packedQuery;
+
+        if (result)
+        {
+            container myState = SysPackExtensions::findExtension(packedClass, classStr(DGMA_ProjInvoiceProposalPeriodic_Extension));
+            //Also unpack the extension
+            if (!this.myUnpack(myState))
+            {
+                result = false;
+            }
+        }
+        return result;
+    }
+
+}

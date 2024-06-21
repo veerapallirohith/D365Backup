@@ -1,0 +1,3 @@
+ FormDataSource               formDs = this;
+        FormStringControl          InvoiceStatusControl = formDs.formRun().design().controlName(formControlStr(ProjTransEmpl, TNL_InvoiceStatus));
+        ProjEmplTrans empl = this.cursor();

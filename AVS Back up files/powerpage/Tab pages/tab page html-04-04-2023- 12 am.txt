@@ -1,0 +1,289 @@
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="//cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
+<link rel="stylesheet" href="//cdn.datatables.net/1.13.2/css/jquery.dataTables.min.css" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<div style="box-sizing: border-box; background-color: #777;"><button onclick="openPage('Overview', this)"
+    id="defaultOpen" class="tablink" style="box-sizing: border-box;">Overview</button><button
+    onclick="openPage('Rule', this)" class="tablink" style="box-sizing: border-box;">Rule</button><button
+    onclick="openPage('Destination', this)" class="tablink" style="box-sizing: border-box;">Destination</button></div>
+
+
+
+    
+
+  
+<div id="Overview" class="tabcontent" style="box-sizing: border-box;">
+  <h3 style="box-sizing: border-box;">Overview</h3>
+
+  <div class="avs-table-responsiveRule">
+    
+    <table id="trulesallocation" class="table table-striped avs-table">
+      <thead>
+        <tr>
+          <th style="text-align:center;" >RuleId</th>
+          <th style="text-align:center;" >Description</th>
+          <th style="text-align:center;">Company</th>
+          <th style="text-align:center;width:130px;">Add line <button type="button" id="addrowbtn" data-func="dt-add"
+              class="btn btn-xs dt-add" style="background-color:#76b726">
+              <span class="glyphicon glyphicon-plus" aria-hidden="true" style="color:white"></span>
+            </button></th>
+        </tr>
+      </thead>
+      <tbody>
+        <td><input type="text" id="crf71_ruleid" class="form-control">
+        </td>
+        <td><input type="text" id="crf71_description" class="form-control">
+        </td>
+        <td><select id="crf71_company" class="form-control">
+          <option style="box-sizing: border-box;"></option>
+        <option value="1" style="box-sizing: border-box;">S31</option>
+        <option value="0" style="box-sizing: border-box;">S42</option>
+        <option value="0" style="box-sizing: border-box;">S00</option>
+        <option value="0" style="box-sizing: border-box;">Dat</option>
+        </select>
+        </td>
+        <td><button type="button" class="btn add-row btn-xs dt-edit" style="margin-right:16px;">
+            <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
+          </button>
+          <button type="button" class="btn btn-danger btn-xs dt-delete">
+            <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+          </button>
+        </td>
+      </tbody>
+    </table>
+  </div>
+  <!-- <div style="box-sizing: border-box;"><button id="saveButton" class="avs-button mt-1">Save</button></div> -->
+
+  
+</div>
+<div id="Rule" class="tabcontent">
+  <h3 style="box-sizing: border-box;">Rule</h3>
+  {% fetchxml options %}
+  <fetch>
+    <entity name='stringmap'>
+      <attribute name='attributevalue' />
+      <attribute name='value' />
+      <filter>
+        <condition attribute='objecttypecode' operator='eq' value='10920' />
+        <condition attribute='attributename' operator='eq' value='crf71_company' />
+        <condition attribute='langid' operator='eq' value='1031' />
+      </filter>
+      <order attribute='displayorder' />
+    </entity>
+  </fetch>
+  {% endfetchxml %}
+  {% assign resultset = options.results.entities %}
+
+
+  <div class="form-inputs">
+    <div class="avs-flex avs-flex-d-col"><label for="" style="box-sizing: border-box;">Rule ID</label><input
+        id="crf71_numberseq" type="text" class="avs-input-field" />
+    </div>
+    <div class="avs-flex avs-flex-d-col"><label for="" style="box-sizing: border-box;">Description</label><input
+        id="crf71_description" type="text" class="avs-input-field" />
+    </div>
+    <div class="avs-flex avs-flex-d-col"><label for="" style="box-sizing: border-box;">Company</label><select
+        id="crf71_company" class="avs-input-field">
+        {% for option in resultset %}
+        <option value="{{option.attributevalue}}">{{option.value}}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="avs-flex avs-flex-d-col" style="box-sizing: border-box; display: flex; flex-direction: column;"><label
+        for="" style="box-sizing: border-box;">LedgerAccount From</label><select id="crf71_ledgeraccountfrom"
+        class="avs-input-field"></select>
+    </div>
+    <div class="avs-flex avs-flex-d-col" style="box-sizing: border-box; display: flex; flex-direction: column;"><label
+        for="" style="box-sizing: border-box;">LedgerAccount To</label><select id="crf71_ledgeraccountto"
+        class="avs-input-field"></select>
+    </div>
+    <div class="avs-flex avs-flex-d-col" style="box-sizing: border-box; display: flex; flex-direction: column;">
+      <label for="" style="box-sizing: border-box;">Method</label><select name="" id="crf71_basis"
+        class="avs-input-field">
+        <option style="box-sizing: border-box;"></option>
+        <option value="1" style="box-sizing: border-box;">Percentage</option>
+        <option value="0" style="box-sizing: border-box;">Basis</option>
+      </select>
+    </div>
+    <div class="avs-flex avs-flex-d-col col_basis none"
+      style="box-sizing: border-box; display: flex; flex-direction: column;"><label for=""
+        style="box-sizing: border-box;">Basis ID</label><select id="crf71_Basisid" class="avs-input-field"></select>
+    </div>
+    <div class="avs-flex avs-flex-d-col" style="box-sizing: border-box; display: flex; flex-direction: column;">
+      <label for="" style="box-sizing: border-box;">Active</label><span style="box-sizing: border-box;"><label for="yes"
+          style="box-sizing: border-box;">Yes</label><input type="radio" value="1" name="status" id="active_yes"
+          style="box-sizing: border-box;" /><label for="no" style="box-sizing: border-box;">No</label><input
+          type="radio" name="status" checked="" id="active_no" value="0" style="box-sizing: border-box;" /></span>
+    </div>
+  </div>
+    <br>
+    <div class="avs-table-responsive">
+      <table id="trulesallocation" class="table table-striped avs-table">
+        <thead>
+          <tr>
+            <th style="text-align:center;" id="methodName">Percentage</th>
+            <th style="text-align:center;">Destination Dimension</th>
+            <th style="text-align:center;width:130px;">Add line <button type="button" id="addrowbtn" data-func="dt-add"
+                class="btn btn-xs dt-add" style="background-color:#76b726">
+                <span class="glyphicon glyphicon-plus" aria-hidden="true" style="color:white"></span>
+              </button></th>
+          </tr>
+        </thead>
+        <tbody>
+          <td><input type="Number" id="crf71_basis_percentage" oninput="checkPercentage()" class="form-control">
+          </td>
+          <td><select id="crf71_destination_dimension" class="form-control"></td>
+          <td><button type="button" class="btn add-row btn-xs dt-edit" style="margin-right:16px;">
+              <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="btn btn-danger btn-xs dt-delete">
+              <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+            </button>
+          </td>
+        </tbody>
+      </table>
+    </div>
+    <h6 style="color:red" id="error"></h6>
+    <h6 style="color:red" id="companyError"></h6>
+    <h6 style="color:red" id="ledgerFromError"></h6>
+
+
+    <!-- <div style="box-sizing: border-box;"><button id="saveButton" class="avs-button mt-1">Save</button></div> -->
+  </div>
+
+
+
+<script>
+  function openPage(pageName, elmnt) {
+    var i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+      tabcontent[i].style.display = "none";
+    }
+    tablinks = document.getElementsByClassName("tablink");
+    for (i = 0; i < tablinks.length; i++) {
+      tablinks[i].style.backgroundColor = "";
+    }
+    document.getElementById(pageName).style.display = "block";
+    elmnt.style.backgroundColor = '#2f5fef';
+  }
+
+  // Get the element with id="defaultOpen" and click on it
+  document.getElementById("defaultOpen").click();
+</script>
+<!-- <div class="row sectionBlockLayout text-left"
+  style="box-sizing: border-box; display: flex; flex-wrap: wrap; margin: 0px; min-height: auto; padding: 8px;">
+  <div class="container" style="box-sizing: border-box; padding: 0px; display: flex; flex-wrap: wrap;">
+    <div class="col-md-12 columnBlockLayout"
+      style="box-sizing: border-box; flex-grow: 1; display: flex; flex-direction: column; min-width: 300px;"></div>
+  </div> -->
+</div>
+
+<div id="Destination" class="tabcontent" style="box-sizing: border-box;">
+  <h3 style="box-sizing: border-box;">Destination</h3>
+  {% fetchxml options %}
+  <fetch>
+    <entity name='stringmap'>
+      <attribute name='attributevalue' />
+      <attribute name='value' />
+      <filter>
+        <condition attribute='objecttypecode' operator='eq' value='10920' />
+        <condition attribute='attributename' operator='eq' value='crf71_company' />
+        <condition attribute='langid' operator='eq' value='1031' />
+      </filter>
+      <order attribute='displayorder' />
+    </entity>
+  </fetch>
+  {% endfetchxml %}
+  {% assign resultset = options.results.entities %}
+
+  <div class="form-inputs">
+    <div class="avs-flex avs-flex-d-col" style="box-sizing: border-box; display: flex; flex-direction: column;"><label
+        for="" style="box-sizing: border-box;">Cost Center</label><select id="crf71_costcenter"
+        class="avs-input-field"></select>
+    </div>
+    <div class="avs-flex avs-flex-d-col" style="box-sizing: border-box; display: flex; flex-direction: column;"><label
+        for="" style="box-sizing: border-box;">Leistungen</label><select id="crf71_leistungen"
+        class="avs-input-field"></select>
+    </div>
+    <div class="avs-flex avs-flex-d-col" style="box-sizing: border-box; display: flex; flex-direction: column;"><label
+        for="" style="box-sizing: border-box;">StellenartUndCharakteristik</label><select
+        id="crf71_stellenartundcharakteristik" class="avs-input-field"></select>
+    </div>
+    <div class="avs-flex avs-flex-d-col" style="box-sizing: border-box; display: flex; flex-direction: column;"><label
+        for="" style="box-sizing: border-box;">CostCenterOffset</label><select id="crf71_costcenterOffset"
+        class="avs-input-field"></select>
+    </div>
+    <div class="avs-flex avs-flex-d-col" style="box-sizing: border-box; display: flex; flex-direction: column;"><label
+        for="" style="box-sizing: border-box;">LeistungenOffset</label><select id="crf71_leistungenOffset"
+        class="avs-input-field"></select>
+    </div>
+    <div class="avs-flex avs-flex-d-col" style="box-sizing: border-box; display: flex; flex-direction: column;"><label
+        for="" style="box-sizing: border-box;">StellenartUndCharakteristikOffset</label><select
+        id="crf71_stellenartundcharakteristikOffset" class="avs-input-field"></select>
+    </div>
+    <div style="box-sizing: border-box;"><button id="saveButton" class="avs-button mt-1">Save</button></div>
+  </div>
+
+</div>
+<!-- Modal -->
+<div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Information!</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Data Added Successfully
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- <div class="row sectionBlockLayout text-left"
+  style="box-sizing: border-box; display: flex; flex-wrap: wrap; margin: 0px; min-height: auto; padding: 8px;">
+  <div class="container" style="box-sizing: border-box; padding: 0px; display: flex; flex-wrap: wrap;">
+    <div class="col-md-12 columnBlockLayout"
+      style="box-sizing: border-box; flex-grow: 1; display: flex; flex-direction: column; min-width: 300px;"></div>
+  </div> -->
+</div>
+<script>
+  function checkPercentage(value = 100) {
+    const percentageInputs = document.querySelectorAll(
+      "#crf71_basis_percentage"
+    );
+    let totalPercentage = 0;
+    let subTotalPercentage = 0;
+    percentageInputs.forEach((element) => {
+      totalPercentage += +element.value;
+    });
+    subTotalPercentage = 100 - totalPercentage;
+    if (totalPercentage === value) {
+      $('#error').text("You can submit the form");
+      $('#error').css("color", "green");
+      //$("active_yes").attr('checked', true);
+      document.getElementById("active_yes").checked = true;
+      return true
+    } else {
+      document.getElementById("active_no").checked = true;
+      if (totalPercentage > 100) {
+        $('#error').text(`Please enter the value equals to 100%`);
+        $('#error').css("color", "Red")
+      }
+      else {
+        $('#error').text(`Total percentage  should be equal to 100 . remaining percentage is ${(subTotalPercentage).toFixed(2)}`);
+        $('#error').css("color", "orange")
+        return false
+      }
+    }
+  }
+
+</script>

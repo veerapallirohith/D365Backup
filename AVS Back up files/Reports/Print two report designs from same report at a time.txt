@@ -1,0 +1,79 @@
+/// <summary>
+/// CD - This is an extended controller class for Sales order document to control execution flow based on the parameters passed in to print Sales order packing slip report
+/// </summary>
+class CDSalesPackingSlipController extends SalesPackingSlipController
+{
+    public static CDSalesPackingSlipController construct()
+    {
+        #ISOCountryRegionCodes
+        GlobalizationInstrumentationHelper::featureRunByCountryRegionCodes(
+                    [ [#isoIT, GlobalizationConstants::FeatureReferenceIT00020] ],
+                    funcName()
+                );
+
+        return new CDSalesPackingSlipController();
+    }
+
+    protected void dialogShow()
+    {
+        if (useReportViewerForm && runOnBlockMode_TH)
+        {
+            if (dialog is SysOperationDialog)
+            {
+                SysOperationDialog sysOperationDialog = dialog as SysOperationDialog;
+                sysOperationDialog.run();
+            }
+            else
+            {
+                FormRun formRun = dialog as formRun;
+                formRun.run();
+            }
+            this.dialogPostRun();
+            dialog.wait();
+        }
+        else
+        {
+            super();
+        }
+    }
+
+    protected void dialogClose()
+    {
+        //super();
+    }
+
+    /// <summary>
+    /// Initailzes the controller, sets the print management, assigns parameter values and runs the SRS report.
+    /// </summary>
+    /// <param name="_args">
+    /// The <c>Args</c> object.
+    /// </param>
+    public static void main(Args _args)
+    {
+        SrsReportRunController      formLetterController = CDSalesPackingSlipController::construct();
+        SrsReportRunController      formLetterController1 = CDSalesPackingSlipController::construct();
+
+
+        CDSalesPackingSlipController controller2 = formLetterController;
+        CDSalesPackingSlipController controller1 = formLetterController1;
+        controller1.initArgs(_args, ssrsReportStr(CDSalesPackingSlip,Report));
+        controller2.initArgs(_args, ssrsReportStr(CDSalesPackingSlip,LabelReport));
+        controller2.startOperation();
+    }
+
+    protected void outputReport()
+    {
+        SRSCatalogItemName  reportDesign,reportdesign2;
+        reportdesign = ssrsReportStr(CDSalesPackingSlip,LabelReport);
+        reportDesign2 = ssrsReportStr(CDSalesPackingSlip,Report);
+        this.parmReportName(reportDesign2);
+        this.parmReportContract().parmReportName(reportDesign2);
+        formletterReport.parmReportRun().settingDetail().parmReportFormatName(reportdesign2);
+        super();
+        this.parmReportName(reportdesign);
+        this.parmReportContract().parmReportName(reportdesign);
+        formletterReport.parmReportRun().settingDetail().parmReportFormatName(reportDesign);
+        super();   
+    }
+
+}

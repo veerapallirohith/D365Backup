@@ -1,0 +1,26 @@
+/// <summary>
+/// This is a delegate handler class used to override standard reports
+/// </summary>
+internal final class STE_PrintMgmtDelegatesHandler_DelegateEventHandler
+{
+   /// <summary>
+   /// This method is used to override standard reports and get custom reports.
+   /// </summary>
+    /// <param name = "_docType">PrintMgmtDocumentType</param>
+    /// <param name = "_result">EventHandlerResult</param>
+    [SubscribesTo(classStr(PrintMgmtDocType), delegateStr(PrintMgmtDocType, getDefaultReportFormatDelegate))]
+    public static void PrintMgmtDocType_getDefaultReportFormatDelegate(PrintMgmtDocumentType _docType, EventHandlerResult _result)
+    {
+        switch (_docType)
+        {
+            case PrintMgmtDocumentType::SalesFreeTextInvoice:
+                _result.result(ssrsReportStr(STE_FreeTextInvoice, Report));
+                break;
+               
+            case PrintMgmtDocumentType::CustCollectionLetter:
+                _result.result(ssrsReportStr(STE_CustCollectionJour, Report));
+                break;
+        }
+    }
+
+}

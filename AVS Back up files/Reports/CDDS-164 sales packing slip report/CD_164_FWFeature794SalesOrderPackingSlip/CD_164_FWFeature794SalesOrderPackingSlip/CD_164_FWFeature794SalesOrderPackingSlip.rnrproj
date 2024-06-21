@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <BuildTasksDirectory Condition=" '$(BuildTasksDirectory)' == ''">$(MSBuildProgramFiles32)\MSBuild\Microsoft\Dynamics\AX</BuildTasksDirectory>
+    <Model>CD_Customization</Model>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <OutputPath>bin</OutputPath>
+    <SchemaVersion>2.0</SchemaVersion>
+    <GenerateCrossReferences>True</GenerateCrossReferences>
+    <RunAppCheckerRules>False</RunAppCheckerRules>
+    <LogAppcheckerDiagsAsErrors>False</LogAppcheckerDiagsAsErrors>
+    <ProjectGuid>{3369eedd-d8aa-46b9-9729-82c12a5ca6ff}</ProjectGuid>
+    <Name>CD_164_FWFeature794SalesOrderPackingSlip</Name>
+    <RootNamespace>CD_164_FWFeature794SalesOrderPackingSlip</RootNamespace>
+    <SccProjectName>SAK</SccProjectName>
+    <SccProvider>SAK</SccProvider>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccLocalPath>SAK</SccLocalPath>
+    <StartupType>Class</StartupType>
+    <StartupObject>
+    </StartupObject>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <Configuration>Debug</Configuration>
+    <DBSyncInBuild>False</DBSyncInBuild>
+    <GenerateFormAdaptors>False</GenerateFormAdaptors>
+    <Company>
+    </Company>
+    <Partition>initial</Partition>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DataEntityExpandParentChildRelations>False</DataEntityExpandParentChildRelations>
+    <DataEntityUseLabelTextAsFieldName>False</DataEntityUseLabelTextAsFieldName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="Classes\" />
+    <Folder Include="Label Files\" />
+    <Folder Include="Reports\" />
+    <Folder Include="Table Extensions\" />
+    <Folder Include="Tables\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="AxClass\CdProjInvoiceProposalInsertLines_Extension">
+      <SubType>Content</SubType>
+      <Name>CdProjInvoiceProposalInsertLines_Extension</Name>
+      <Link>Classes\CdProjInvoiceProposalInsertLines_Extension</Link>
+    </Content>
+    <Content Include="AxClass\CDSalesPackingSlipController">
+      <SubType>Content</SubType>
+      <Name>CDSalesPackingSlipController</Name>
+      <Link>Classes\CDSalesPackingSlipController</Link>
+    </Content>
+    <Content Include="AxClass\CDSalesPackingSlipDP_Extension">
+      <SubType>Content</SubType>
+      <Name>CDSalesPackingSlipDP_Extension</Name>
+      <Link>Classes\CDSalesPackingSlipDP_Extension</Link>
+    </Content>
+    <Content Include="AxClass\CD_SalespackingslipDP2_Extension">
+      <SubType>Content</SubType>
+      <Name>CD_SalespackingslipDP2_Extension</Name>
+      <Link>Classes\CD_SalespackingslipDP2_Extension</Link>
+    </Content>
+    <Content Include="AxLabelFile\CD_Label_en-US">
+      <SubType>Content</SubType>
+      <Name>CD_Label_en-US</Name>
+      <Link>Label Files\CD_Label_en-US</Link>
+    </Content>
+    <Content Include="AxReport\CDSalesPackingSlip">
+      <SubType>Content</SubType>
+      <Name>CDSalesPackingSlip</Name>
+      <Link>Reports\CDSalesPackingSlip</Link>
+    </Content>
+    <Content Include="AxReport\CDSalesPackingSlipCopy">
+      <SubType>Content</SubType>
+      <Name>CDSalesPackingSlipCopy</Name>
+      <Link>Reports\CDSalesPackingSlipCopy</Link>
+    </Content>
+    <Content Include="AxTableExtension\CustPackingSlipJour.CD_Customization">
+      <SubType>Content</SubType>
+      <Name>CustPackingSlipJour.CD_Customization</Name>
+      <Link>Table Extensions\CustPackingSlipJour.CD_Customization</Link>
+    </Content>
+    <Content Include="AxTableExtension\CustPackingSlipTrans.CD_Customization">
+      <SubType>Content</SubType>
+      <Name>CustPackingSlipTrans.CD_Customization</Name>
+      <Link>Table Extensions\CustPackingSlipTrans.CD_Customization</Link>
+    </Content>
+    <Content Include="AxTableExtension\InventTrans.CD_Customization">
+      <SubType>Content</SubType>
+      <Name>InventTrans.CD_Customization</Name>
+      <Link>Table Extensions\InventTrans.CD_Customization</Link>
+    </Content>
+    <Content Include="AxTableExtension\SalesPackingSlipDetailsTmp.ExtensionCD">
+      <SubType>Content</SubType>
+      <Name>SalesPackingSlipDetailsTmp.ExtensionCD</Name>
+      <Link>Table Extensions\SalesPackingSlipDetailsTmp.ExtensionCD</Link>
+    </Content>
+    <Content Include="AxTable\CD_SalesPackingSlipChildDetailsTmp">
+      <SubType>Content</SubType>
+      <Name>CD_SalesPackingSlipChildDetailsTmp</Name>
+      <Link>Tables\CD_SalesPackingSlipChildDetailsTmp</Link>
+    </Content>
+    <Content Include="CD_Label.en-US.label.txt">
+      <SubType>Content</SubType>
+      <Name>CD_Label.en-US.label.txt</Name>
+      <DependentUpon>AxLabelFile\CD_Label_en-US</DependentUpon>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.Common.targets" />
+  <Import Project="$(BuildTasksDirectory)\Microsoft.Dynamics.Framework.Tools.BuildTasks.targets" />
+</Project>

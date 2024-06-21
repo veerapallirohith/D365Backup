@@ -1,0 +1,45 @@
+/// <summary>
+/// This is a class extension of form class 
+/// </summary>
+[ExtensionOf(formStr(AssetProposalDepreciation))]
+public final class STE_AssetProposalDepreciation_Extension 
+{
+
+    public STE_AssetTableFormTransactionDate transactionDateTable;
+    /// <summary>
+   /// This method to fetch the Transactiondate control and assign it to AssetTableForm TransactionDate table amortization date field
+   /// </summary>
+   /// <returns>vartransactiondate</returns>
+    public STE_AssetTransactionDate getTransactionDate()
+    {
+        date varTransactionDate;
+        varTransactionDate = any2Date(TransactionDate.datevalue());
+        delete_from transactionDateTable where transactionDateTable.UserId == curUserId();
+
+        transactionDateTable.AmoritizationDate = varTransactionDate;
+        transactionDateTable.UserId            = curUserId();
+        transactionDateTable.insert();
+        return varTransactionDate;
+    }
+
+    /// <summary>
+    /// This is a set method
+    /// </summary>
+    /// <param name = "_transactiondate">AssetTransactionDate</param>
+    public void settransactionDate(STE_AssetTransactionDate _transactiondate)
+    {
+        TransactionDate.datevalue(_transactiondate);
+    }
+
+    /// <summary>
+    /// this is a get method for TO date control
+    /// </summary>
+    /// <returns>ToDateControl</returns>
+    public AssetTransDate getDepreciationToDate()
+    {
+        next getDepreciationToDate();
+        this.getTransactionDate();
+        return ToDateControl.dateValue();
+    }
+
+}

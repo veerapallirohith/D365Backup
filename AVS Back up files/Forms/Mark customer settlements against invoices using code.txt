@@ -1,0 +1,43 @@
+ while select ProjInvoiceJour order by RecId desc where ProjInvoiceJour.dgma_serviceOrderID == serviceOrderLine.ServiceOrderId
+            {
+              
+                select firstonly invCustTrans
+            where invCustTrans.AccountNum == custTable.AccountNum &&
+                invCustTrans.Invoice == projInvoiceJour.ProjInvoiceId;
+
+
+                select firstonly custTransOpen
+            where custTransOpen.RefRecId == invCustTrans.RecId
+               && custTransOpen.AccountNum  == invCustTrans.AccountNum;
+               
+                if (invCustTrans.RecId && custTransOpen.RecId)
+                {
+                    custmanager = custvendopentransmanager::construct(_journalTrans);
+                    custmanager.updatetransmarked(custtransopen,true);
+                    ttsbegin;
+                    custvendtransdata = custvendtransdata::construct(invcusttrans);
+                    custvendtransdata.markforsettlement(_journalTrans);
+                    ttscommit;
+                }
+                    //To update in ledgerJournal trans
+                    ttsBegin;
+                    _journalTrans.selectForUpdate(true);
+                    _journalTrans.AmountCurCredit   = custTransOpen.AmountCur - custTransOpen.PossibleCashDisc;
+                    _journalTrans.SettleVoucher    = SettlementType::SelectedTransact;
+                    _journalTrans.Voucher = _voucher;
+                    _journalTrans.TransactionType = any2Enum('15');
+                    _journalTrans.TaxGroup = projInvoiceJour.TaxGroupId;
+                    _journalTrans.PostingProfile = projInvoiceJour.PostingProfile;
+                    _journalTrans.PaymMode = 'CHECK';
+                    _journalTrans.Payment = projInvoiceJour.Payment;
+                    _journalTrans.OffsetDefaultDimension = 22565421982;
+                    _journalTrans.MarkedInvoiceCompany = projInvoiceJour.DataAreaId;
+                    _journalTrans.MarkedInvoiceRecId = projInvoiceJour.RecId;
+                    _journalTrans.ExchRate = projInvoiceJour.ExchRate;
+                    _journalTrans.due = projInvoiceJour.DueDate;
+                    _journalTrans.DefaultDimension = projInvoiceJour.DefaultDimension;
+                    _journalTrans.BankTransType = any2Enum('1');
+                    _journalTrans.Approved = NoYes::Yes;
+                    _journalTrans.update();
+                    ttsCommit;
+                }

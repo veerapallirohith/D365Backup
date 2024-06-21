@@ -1,0 +1,222 @@
+(function (webapi, $) {
+  function safeAjax(ajaxOptions) {
+    var deferredAjax = $.Deferred();
+
+    shell
+      .getTokenDeferred()
+      .done(function (token) {
+        // add headers for AJAX
+        if (!ajaxOptions.headers) {
+          $.extend(ajaxOptions, {
+            headers: {
+              __RequestVerificationToken: token,
+            },
+          });
+        } else {
+          ajaxOptions.headers["__RequestVerificationToken"] = token;
+        }
+        $.ajax(ajaxOptions)
+          .done(function (data, textStatus, jqXHR) {
+            validateLoginSession(data, textStatus, jqXHR, deferredAjax.resolve);
+          })
+          .fail(deferredAjax.reject); //AJAX
+      })
+      .fail(function () {
+        deferredAjax.rejectWith(this, arguments); // on token failure pass the token AJAX and args
+      });
+
+    return deferredAjax.promise();
+  }
+  webapi.safeAjax = safeAjax;
+})((window.webapi = window.webapi || {}), jQuery);
+
+$(document).ready(() => {
+  // Calling LedgerNew
+  $.ajax({
+    type: "GET",
+    url: "/_api/crf71_ste_rulesallocationoverviews?$select=crf71_ruleid,crf71_description,crf71_company,crf71_method,crf71_ste_rulesallocationoverviewid",
+    contentType: "application/json",
+    success: function (ledgerNewData) {
+      console.log(ledgerNewData);
+      for (let i = 0; i < ledgerNewData.value.length; i++) {
+        $("#crf71_ste_rulesallocationoverview tbody").append(
+          `<tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700" >
+          
+          <td>
+          <input
+            type="radio"
+            id="${ledgerNewData.value[i].crf71_ste_rulesallocationoverviewid}"
+            class="detectSelection"
+            name="ruleid"
+            data-name="${ledgerNewData.value[i].crf71_ruleid}"
+
+          />
+            </td>
+                    <td>${ledgerNewData.value[i].crf71_ruleid}</td>
+                    <td>${ledgerNewData.value[i].crf71_description}</td>
+                    <td>${ledgerNewData.value[i].crf71_company}</td>
+                    <td>${ledgerNewData.value[i].crf71_method}</td>
+                  </tr>`
+        );
+      }
+    },
+  });
+  //   Detecting Changes
+
+  //   Adding Rule
+  $("#saveRuleLine").on("click", () => {
+    webapi.safeAjax({
+      type: "POST",
+      url: `/_api/crf71_ste_rulesallocationoverviews`,
+      contentType: "application/json",
+      data: JSON.stringify({
+        crf71_description: $("#descriptionOverView").val(),
+        crf71_company: $("#companyOverView").val(),
+        crf71_method: $("#MethodOverView").val(),
+      }),
+      success: function (res) {
+        console.log(res);
+        window.location.reload();
+      },
+      error: function (error) {
+        alert("Something went wrong. Please contact administrator");
+      },
+    });
+  });
+  // Adding Select style
+  // $("#crf71_ledgeraccountfrom").select2();
+  // $("#crf71_ledgeraccountto").select2();
+  // $("#crf71_company").select2();
+  // $("#crf71_costcenter").select2();
+  // $("#crf71_costcenterOffset").select2();
+  // $("#crf71_leistungen").select2();
+  // $("#crf71_leistungenOffset").select2();
+  // $("#crf71_stellenartundcharakteristik").select2();
+  // $("#crf71_stellenartundcharakteristikOffset").select2();
+  // $("#crf71_basis").select2();
+
+  $.ajax({
+    type: "GET",
+    url: `/_api/crf71_ste_mainaccounts?$select=crf71_name,crf71_ste_mainaccountid`,
+    contentType: "application/json",
+    success: function (mainAccountData) {
+      //$('#crf71_ledgeraccountfrom').children().remove()
+      for (let i = 0; i < mainAccountData.value.length; i++) {
+        $("#crf71_ledgeraccountfrom").append(
+          `<option value="${mainAccountData.value[i].crf71_ste_mainaccountid}">${mainAccountData.value[i].crf71_name}</option>`
+        );
+        $("#crf71_ledgeraccountto").append(
+          `<option value="${mainAccountData.value[i].crf71_ste_mainaccountid}">${mainAccountData.value[i].crf71_name}</option>`
+        );
+      }
+      $("#crf71_ledgeraccountfrom").val("");
+      $("#crf71_ledgeraccountto").val("");
+    },
+    error: (error) => {
+      /*alert("Something went wrong. Please contact administrator")*/
+    },
+  });
+  $.ajax({
+    type: "GET",
+    url: `/_api/crf71_ste_dimensionattributevalueksts?$select=crf71_name, crf71_ste_dimensionattributevaluekstid`,
+    contentType: "application/json",
+    success: function (Data) {
+      $("#crf71_costcenter").children().remove();
+      for (let i = 0; i < Data.value.length; i++) {
+        $("#crf71_costcenter").append(
+          `<option value="${Data.value[i].crf71_ste_dimensionattributevaluekstid}">${Data.value[i].crf71_name}</option>`
+        );
+      }
+      $("#crf71_costcenter").val("");
+    },
+    error: (error) => {
+      /*alert("Something went wrong. Please contact administrator")*/
+    },
+  });
+
+  $.ajax({
+    type: "GET",
+    url: `/_api/crf71_ste_dimensionattributevalueleis?$select=crf71_dimensioncode, crf71_ste_dimensionattributevalueleiid`,
+    contentType: "application/json",
+    success: function (Data) {
+      $("#crf71_leistungen").children().remove();
+      for (let i = 0; i < Data.value.length; i++) {
+        $("#crf71_leistungen").append(
+          `<option value="${Data.value[i].crf71_ste_dimensionattributevalueleiid}">${Data.value[i].crf71_dimensioncode}</option>`
+        );
+      }
+      $("#crf71_leistungen").val("");
+    },
+    error: (error) => {
+      /*alert("Something went wrong. Please contact administrator")*/
+    },
+  });
+
+  $.ajax({
+    type: "GET",
+    url: `/_api/crf71_ste_dimensionattributevaluestchs?$select=crf71_dimensioncode, crf71_ste_dimensionattributevaluestchid`,
+    contentType: "application/json",
+    success: function (Data) {
+      $("#crf71_stellenartundcharakteristik").children().remove();
+      for (let i = 0; i < Data.value.length; i++) {
+        $("#crf71_stellenartundcharakteristik").append(
+          `<option value="${Data.value[i].crf71_ste_dimensionattributevaluestchid}">${Data.value[i].crf71_dimensioncode}</option>`
+        );
+      }
+      $("#crf71_stellenartundcharakteristik").val("");
+    },
+    error: (error) => {
+      /*alert("Something went wrong. Please contact administrator")*/
+    },
+  });
+  var table = $("#trulesallocation").DataTable();
+  var Desttable = $("#trulesallocationDestination").DataTable();
+  //   Somehting
+  $("#trulesallocation tbody").on(
+    "click",
+    "span.glyphicon-remove",
+    function () {
+      table.row($(this).parents("tr")).remove().draw();
+    }
+  );
+
+  $("#trulesallocationDestination tbody").on(
+    "click",
+    "span.glyphicon-remove",
+    function () {
+      Desttable.row($(this).parents("tr")).remove().draw();
+    }
+  );
+
+  $("#crf71_rule").prop("disabled", true);
+  $("#addrowbtn").click(function () {
+    debugger;
+    //t.row.add( [1,2,3] ).draw();
+    var rowHtml = $("#trulesallocation").find("tr")[1].outerHTML;
+    table.row.add($(rowHtml)).draw();
+    var data = table.rows().data();
+    linesno = data.length;
+    console.log(linesno);
+    // checkPercentage();
+    console.log(data);
+    console.log("The table has " + data.length + " records");
+  });
+
+
+  $("#Destaddrowbtn").click(function () {
+    //t.row.add( [1,2,3] ).draw();
+    debugger;
+    var rowHtmlDest = $("#trulesallocationDestination").find("tr")[1].outerHTML;
+    Desttable.row.add($(rowHtmlDest)).draw();
+    var dataDest = table.rows().data();
+    //linesno = dataDest.length;
+    //console.log(linesno);
+    // checkPercentage();
+    console.log(dataDest);
+    console.log("The table has " + dataDest.length + " records");
+  });
+
+  // $("#addNewLine").on("click", () => {
+  //   $("#multipleForm").append($(".newForm").html());
+  // });
+});

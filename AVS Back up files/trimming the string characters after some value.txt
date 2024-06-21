@@ -1,0 +1,24 @@
+int a;
+        str trimmedString;
+        ProjProposalJour projProposalJour =  projProposalJour::find(this.ProjProposalId, true);
+        if(!projProposalJour.DGMA_ProjId)
+        {  
+            a = strFind(this.ProjId,'_',1,strLen(this.ProjId));
+            trimmedString =  strDel(this.ProjId,a,strLen(this.ProjId) - a + 1)   ;
+            ttsbegin;
+            if(trimmedString)
+            {
+                
+                projProposalJour.DGMA_ProjId = trimmedString;
+                projProposalJour.update();
+               
+            }
+            else
+            {
+               
+                projProposalJour.DGMA_ProjId = this.ProjId;
+                projProposalJour.update();
+               
+            }
+            ttscommit;
+        }

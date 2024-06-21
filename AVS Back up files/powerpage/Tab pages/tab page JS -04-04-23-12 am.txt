@@ -1,0 +1,709 @@
+
+function openCity(cityName, elmnt, color) {
+  // Hide all elements with class="tabcontent" by default */
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName("tabcontent");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+
+  // Remove the background color of all tablinks/buttons
+  tablinks = document.getElementsByClassName("tablink");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].style.backgroundColor = "";
+  }
+
+  // Show the specific tab content
+  document.getElementById(cityName).style.display = "block";
+
+  // Add the specific color to the button used to open the tab content
+  elmnt.style.backgroundColor = color;
+}
+
+// Get the element with id="defaultOpen" and click on it
+document.getElementById("defaultOpen").click();
+
+var linesno, legernewid, idgenerated = 0;
+var validated = 0;
+
+var Rulesonetable = $("#Rulestableone").DataTable;
+$(document).ready(() => {
+  var basicpercentage, destinationdimension, compvalue, ledgeraccfromvalue, ledgeracctovalue, costcentervalue, ccoffsetvalue, leistugenvalue, leistugenoffsetvalue, stellenvalue, stellenoffsetvalue, basisvalue, destinationdimensionvalue;
+
+  $('#loading').show();
+  $("#crf71_ledgeraccountfrom").select2();
+  $("#crf71_ledgeraccountto").select2();
+  $("#crf71_company").select2();
+  $("#crf71_costcenter").select2();
+  $("#crf71_costcenterOffset").select2();
+  $("#crf71_leistungen").select2();
+  $("#crf71_leistungenOffset").select2();
+  $("#crf71_stellenartundcharakteristik").select2();
+  $("#crf71_stellenartundcharakteristikOffset").select2();
+  $("#crf71_basis").select2();
+  //$("#crf71_destination_dimension").select2();
+  // Important for CREATE, UPDATE, DELETE
+  (function (webapi, $) {
+    function safeAjax(ajaxOptions) {
+      var deferredAjax = $.Deferred();
+
+      shell
+        .getTokenDeferred()
+        .done(function (token) {
+          // add headers for AJAX
+          if (!ajaxOptions.headers) {
+            $.extend(ajaxOptions, {
+              headers: {
+                __RequestVerificationToken: token,
+              },
+            });
+          } else {
+            ajaxOptions.headers["__RequestVerificationToken"] = token;
+          }
+          $.ajax(ajaxOptions)
+            .done(function (data, textStatus, jqXHR) {
+              validateLoginSession(
+                data,
+                textStatus,
+                jqXHR,
+                deferredAjax.resolve
+              );
+            })
+            .fail(deferredAjax.reject); //AJAX
+        })
+        .fail(function () {
+          deferredAjax.rejectWith(this, arguments); // on token failure pass the token AJAX and args
+        });
+
+      return deferredAjax.promise();
+    }
+    webapi.safeAjax = safeAjax;
+  })((window.webapi = window.webapi || {}), jQuery);
+
+  const params = new URLSearchParams(window.location.search);
+
+  const ledgerNewId = params.get("id");
+
+  let formData = {};
+
+  // Initializing DataTable
+  var table = $("#trulesallocation").DataTable();
+
+  /*$(
+    ".avs-input-field:not(#crf71_basis_percentage, #crf71_destination_dimension)"
+  ).prop("disabled", true);*/
+  $("#crf71_numberseq").prop("disabled", true);
+  $("#crf71_ruleid").prop("disabled", true);
+  // debugger;
+  $.ajax({
+    type: "GET",
+    url: `/_api/crf71_ste_mainaccounts?$select=crf71_name,crf71_ste_mainaccountid`,
+    contentType: "application/json",
+    success: function (mainAccountData) {
+      //$('#crf71_ledgeraccountfrom').children().remove()
+      for (let i = 0; i < mainAccountData.value.length; i++) {
+        $("#crf71_ledgeraccountfrom").append(
+          `<option value="${mainAccountData.value[i].crf71_ste_mainaccountid}">${mainAccountData.value[i].crf71_name}</option>`
+        );
+      }
+      $("#crf71_ledgeraccountfrom").val("");
+    },
+    error: (error) => {
+      /*alert("Something went wrong. Please contact administrator")*/
+    },
+  });
+
+  $.ajax({
+    type: "GET",
+    url: `/_api/crf71_ste_mainaccounts?$select=crf71_name,crf71_ste_mainaccountid`,
+    contentType: "application/json",
+    success: function (mainAccountData) {
+      $("#crf71_ledgeraccountto").children().remove();
+      for (let i = 0; i < mainAccountData.value.length; i++) {
+        // debugger;
+        $("#crf71_ledgeraccountto").append(
+          `<option value="${mainAccountData.value[i].crf71_ste_mainaccountid}" >${mainAccountData.value[i].crf71_name}</option>`
+        );
+      }
+      $("#crf71_ledgeraccountto").val("");
+    },
+    error: (error) => {
+      /*alert("Something went wrong. Please contact administrator")*/
+    },
+  });
+
+  $.ajax({
+    type: "GET",
+    url: `/_api/crf71_ste_mainaccounts?$select=crf71_name,crf71_ste_mainaccountid`,
+    contentType: "application/json",
+    success: function (mainAccountData) {
+      $("#crf71_destination_dimension").children().remove();
+      for (let i = 0; i < mainAccountData.value.length; i++) {
+        $("#crf71_destination_dimension").append(
+          `<option value="${mainAccountData.value[i].crf71_ste_mainaccountid}">${mainAccountData.value[i].crf71_name}</option>`
+        );
+      }
+      $("#crf71_destination_dimension").val("");
+    },
+    error: (error) => {
+      /*alert("Something went wrong. Please contact administrator")*/
+    },
+  });
+
+  /*$.ajax({
+    type: "GET",
+    url: `/_api/crf71_ste_mainaccounts?$select=crf71_name,crf71_ste_mainaccountid`,
+    contentType: "application/json",
+    success: function (mainAccountData) {
+      $("#basis_destination_dimension").children().remove();
+      for (let i = 0; i < mainAccountData.value.length; i++) {
+        $("#basis_destination_dimension").append(
+          `<option value="${mainAccountData.value[i].crf71_ste_mainaccountid}">${mainAccountData.value[i].crf71_name}</option>`
+        );
+      }
+      $("#basis_destination_dimension").val("");
+    },
+    error: (error) => {
+      /*alert("Something went wrong. Please contact administrator")
+    },
+  });*/
+
+  $.ajax({
+    type: "GET",
+    url: `/_api/crf71_ste_dimensionattributevalueksts?$select=crf71_name, crf71_ste_dimensionattributevaluekstid`,
+    contentType: "application/json",
+    success: function (Data) {
+      $("#crf71_costcenter").children().remove();
+      for (let i = 0; i < Data.value.length; i++) {
+        $("#crf71_costcenter").append(
+          `<option value="${Data.value[i].crf71_ste_dimensionattributevaluekstid}">${Data.value[i].crf71_name}</option>`
+        );
+      }
+      $("#crf71_costcenter").val("");
+    },
+    error: (error) => {
+      /*alert("Something went wrong. Please contact administrator")*/
+    },
+  });
+
+  $.ajax({
+    type: "GET",
+    url: `/_api/crf71_ste_dimensionattributevalueleis?$select=crf71_dimensioncode, crf71_ste_dimensionattributevalueleiid`,
+    contentType: "application/json",
+    success: function (Data) {
+      $("#crf71_leistungen").children().remove();
+      for (let i = 0; i < Data.value.length; i++) {
+        $("#crf71_leistungen").append(
+          `<option value="${Data.value[i].crf71_ste_dimensionattributevalueleiid}">${Data.value[i].crf71_dimensioncode}</option>`
+        );
+      }
+      $("#crf71_leistungen").val("");
+    },
+    error: (error) => {
+      /*alert("Something went wrong. Please contact administrator")*/
+    },
+  });
+
+  $.ajax({
+    type: "GET",
+    url: `/_api/crf71_ste_dimensionattributevaluestchs?$select=crf71_dimensioncode, crf71_ste_dimensionattributevaluestchid`,
+    contentType: "application/json",
+    success: function (Data) {
+      $("#crf71_stellenartundcharakteristik").children().remove();
+      for (let i = 0; i < Data.value.length; i++) {
+        $("#crf71_stellenartundcharakteristik").append(
+          `<option value="${Data.value[i].crf71_ste_dimensionattributevaluestchid}">${Data.value[i].crf71_dimensioncode}</option>`
+        );
+      }
+      $("#crf71_stellenartundcharakteristik").val("");
+    },
+    error: (error) => {
+      /*alert("Something went wrong. Please contact administrator")*/
+    },
+  });
+
+  $.ajax({
+    type: "GET",
+    url: `/_api/crf71_ste_basismasters?$select=crf71_name`,
+    contentType: "application/json",
+    success: function (Data) {
+      $("#crf71_Basisid").children().remove();
+      for (let i = 0; i < Data.value.length; i++) {
+        $("#crf71_Basisid").append(
+          `<option value="${Data.value[i].crf71_name}">${Data.value[i].crf71_name}</option>`
+        );
+      }
+      $("#crf71_Basisid").val("");
+    },
+    error: (error) => {
+      /*alert("Something went wrong. Please contact administrator")*/
+    },
+  });
+
+
+  $.ajax({
+    type: "GET",
+    url: `/_api/crf71_ste_dimensionattributevalueksts?$select=crf71_name, crf71_ste_dimensionattributevaluekstid`,
+    contentType: "application/json",
+    success: function (Data) {
+      $("#crf71_costcenterOffset").children().remove();
+      for (let i = 0; i < Data.value.length; i++) {
+        $("#crf71_costcenterOffset").append(
+          `<option value="${Data.value[i].crf71_ste_dimensionattributevaluekstid}">${Data.value[i].crf71_name}</option>`
+        );
+      }
+      $("#crf71_costcenterOffset").val("");
+    },
+    error: (error) => {
+      /*alert("Something went wrong. Please contact administrator")*/
+    },
+  });
+
+  $.ajax({
+    type: "GET",
+    url: `/_api/crf71_ste_dimensionattributevalueleis?$select=crf71_dimensioncode, crf71_ste_dimensionattributevalueleiid`,
+    contentType: "application/json",
+    success: function (Data) {
+      $("#crf71_leistungenOffset").children().remove();
+      for (let i = 0; i < Data.value.length; i++) {
+        $("#crf71_leistungenOffset").append(
+          `<option value="${Data.value[i].crf71_ste_dimensionattributevalueleiid}">${Data.value[i].crf71_dimensioncode}</option>`
+        );
+      }
+      $("#crf71_leistungenOffset").val("");
+    },
+    error: (error) => {
+      /*alert("Something went wrong. Please contact administrator")*/
+    },
+  });
+
+  $.ajax({
+    type: "GET",
+    url: `/_api/crf71_ste_dimensionattributevaluestchs?$select=crf71_dimensioncode, crf71_ste_dimensionattributevaluestchid`,
+    contentType: "application/json",
+    success: function (Data) {
+      $("#crf71_stellenartundcharakteristikOffset").children().remove();
+      for (let i = 0; i < Data.value.length; i++) {
+        $("#crf71_stellenartundcharakteristikOffset").append(
+          `<option value="${Data.value[i].crf71_ste_dimensionattributevaluestchid}">${Data.value[i].crf71_dimensioncode}</option>`
+        );
+      }
+      $("#crf71_stellenartundcharakteristikOffset").val("");
+    },
+    error: (error) => {
+      /*alert("Something went wrong. Please contact administrator")*/
+    },
+  });
+  $('#loading').hide();
+
+  $("#trulesallocation tbody").on(
+    "click",
+    "span.glyphicon-remove",
+    function () {
+      table.row($(this).parents("tr")).remove().draw();
+    }
+  );
+
+  $("#addrowbtn").click(function () {
+    //t.row.add( [1,2,3] ).draw();
+    var rowHtml = $("#trulesallocation").find("tr")[1].outerHTML;
+    table.row.add($(rowHtml)).draw();
+    var data = table.rows().data();
+    linesno = data.length;
+    console.log(linesno);
+    // checkPercentage();
+    console.log(data)
+    console.log("The table has " + data.length + " records");
+  });
+
+  //   $("#saveButton").on("click", (e) => {
+  //     if(!checkPercentage()){
+  // // Display ERROR msg
+  //     }
+  //     else{
+  //       $('#loading').show();
+  //       saverulelines();
+  //     }
+
+  //   });
+  $("#saveButton").on("click", (e) => {
+    $('#loading').show();
+    validatefields()
+    saverulelines();
+  });
+
+  $('#crf71_basis_dropdown').hide()
+
+  $("#crf71_basis").on("change", (e) => {
+    if (e.target.value == 0) {
+      $('.avs-table-responsive').addClass("none");
+      $('.col_basis').removeClass("none");
+      $(".basis-dd").select2();
+      $("#crf71_Basisid").select2();
+      $('#addrowbtn').hide()
+    }
+    else {
+      $('.col_basis').addClass("none");
+      $('.avs-table-responsive').removeClass("none");
+      $('#addrowbtn').show()
+    }
+  })
+
+
+
+
+
+  //
+  function customLookUp(elementName, elementID, api_endpoint, label, value) {
+    const costElement = `<select name="${elementName}" 
+    id="${elementID}" class="lookup form-control"
+    onchange="setIsDirty(this.id);" onkeypress="javascript:return LengthError(this, event);"></select>`;
+
+    let constCentreElement = $(`input#${elementID}`);
+    constCentreElement.parent().html(costElement);
+    let constCentreNewElement = $(`select#${elementID}`);
+    constCentreNewElement.html(`<option value="">Loading...</option>`);
+
+    $.ajax({
+      type: "GET",
+      url: "/_api/" + api_endpoint,
+      contentType: "application/json",
+      success: function (res) {
+        constCentreNewElement.html(`<option value="">${label}</option>`);
+        for (let i = 0; i < res.value.length; i++) {
+          constCentreNewElement.append(
+            `<option value="${res.value[i][value]}">${res.value[i][value]}</option>`
+          );
+        }
+      },
+      error: function (error) {
+        console.error(error);
+      },
+    });
+  }
+
+ 
+  function updateAllStatusToTrue() {
+    $("#saveButton").prop("disabled", true);
+    $.ajax({
+      type: "GET",
+      url: `/_api/crf71_ledgernews?$select=crf71_active&$filter=crf71_numberseq eq '${formData.numberseq}'`,
+      contentType: "application/json",
+      success: function (ledgerNewData) {
+        let ledgerNewDataValue = ledgerNewData.value;
+        for (let i = 0; i < ledgerNewDataValue.length; i++) {
+          webapi.safeAjax({
+            type: "PATCH",
+            url: `/_api/crf71_ledgernews(${ledgerNewDataValue[i].crf71_ledgernewid})`,
+            contentType: "application/json",
+            data: JSON.stringify({
+              crf71_active: true,
+            }),
+            success: function (res) {
+              console.log(res);
+            },
+            /*error:function(error){
+              alert("Something went wrong. Please contact administrator")
+            }*/
+          });
+        }
+      },
+    });
+  }
+
+
+
+  // Check percentage
+  function checkPercentage(value = 100) {
+    const percentageInputs = document.querySelectorAll(
+      "#crf71_basis_percentage"
+    );
+    let totalPercentage = 0;
+    let subTotalPercentage = 0;
+    percentageInputs.forEach((element) => {
+      totalPercentage += +element.value;
+    });
+    console.log(totalPercentage);
+    subTotalPercentage = 100 - totalPercentage;
+    if (totalPercentage === value) {
+      $('#error').text("You can submit the form");
+      $('#error').css("color", "green");
+      //$("active_yes").attr('checked', true);
+      document.getElementById("active_yes").checked = true;
+      return true
+    } else {
+      document.getElementById("active_no").checked = true;
+      if (totalPercentage > 100) {
+        $('#error').text(`Total percentage should be equal to 100 . Please enter the value equals to 100%`);
+        $('#error').css("color", "Red")
+      }
+      else {
+        $('#error').text(`Total percentage  should be equal to 100 . remaining percentage is ${(subTotalPercentage).toFixed(2)}`);
+        $('#error').css("color", "orange")
+        return false
+      }
+    }
+  }
+});
+
+//function saveformdata(){
+
+const saveformdata = () => {
+  saveformdata: {
+    var recordObj = JSON.stringify({
+      //crf71_basispercentage: $("#crf71_basis_percentage").val(),
+      crf71_basispercentage: basicpercentage,
+
+      crf71_description: $("#crf71_description").val(),
+      crf71_company: compvalue,
+      crf71_basis: basisvalue,
+      statecode: 1,
+      "crf71_LedgerAccountFrom@odata.bind": "/crf71_ste_mainaccounts(" + ledgeraccfromvalue + ")",
+      "crf71_LedgerAccountTo@odata.bind": "/crf71_ste_mainaccounts(" + ledgeracctovalue + ")",
+      "crf71_CostCenter@odata.bind": "/crf71_ste_dimensionattributevalueksts(" + costcentervalue + ")",
+
+      "crf71_Leistungen@odata.bind": "/crf71_ste_dimensionattributevalueleis(" + leistugenvalue + ")",
+      "crf71_StellenartUndCharakteristik@odata.bind": "/crf71_ste_dimensionattributevaluestchs(" + stellenvalue + ")",
+      "crf71_CostCenterOffset@odata.bind": "/crf71_ste_dimensionattributevalueksts(" + ccoffsetvalue + ")",
+      "crf71_LeistungenOffset@odata.bind": "/crf71_ste_dimensionattributevalueleis(" + leistugenoffsetvalue + ")",
+      "crf71_StellenartUndCharakteristikOffset@odata.bind": "/crf71_ste_dimensionattributevaluestchs(" + stellenoffsetvalue + ")",
+      "crf71_OffsetLedger@odata.bind": "/crf71_ste_mainaccounts(" + destinationdimension + ")",
+      crf71_active: $("input[name=status]:checked").val() === "1" ? true : false
+    });
+    webapi.safeAjax({
+      type: "POST",
+      url: "/_api/crf71_ledgernews",
+      contentType: "application/json",
+      data: recordObj,
+      success: function (res, status, xhr) {
+        console.log("entityID: " + xhr.getResponseHeader("entityid"));
+        //print id of newly created table record
+        legernewid = xhr.getResponseHeader("entityid");
+        console.log(legernewid);
+        if (linesno >= 2) {
+          excludefirst();
+        }
+        $('#loading').hide();
+        $('#exampleModalCenter').modal('show');
+        window.location.reload();
+      
+      }
+    });
+  }
+};
+
+function savewithruleid(legernewid, basicpercentage, destinationdimension) {
+  debugger;
+  $.ajax({
+    type: "GET",
+    url: "/_api/crf71_ledgernews?$select=crf71_numberseq&$filter=crf71_ledgernewid eq '" + legernewid + "' ",
+    contentType: "application/json",
+    success: function (ledgerNewData) {
+      let Numsequence = ledgerNewData.value[0].crf71_numberseq;
+      webapi.safeAjax({
+        type: "POST",
+        url: "/_api/crf71_ledgernews",
+        contentType: "application/json",
+        data: JSON.stringify({
+
+          crf71_basispercentage: basicpercentage,
+          crf71_numberseq: Numsequence,
+          crf71_description: $("#crf71_description").val(),
+          crf71_company: compvalue,
+          crf71_basis: basisvalue,
+          statecode: 1,
+          "crf71_LedgerAccountFrom@odata.bind": "/crf71_ste_mainaccounts(" + ledgeraccfromvalue + ")",
+          "crf71_LedgerAccountTo@odata.bind": "/crf71_ste_mainaccounts(" + ledgeracctovalue + ")",
+          "crf71_CostCenter@odata.bind": "/crf71_ste_dimensionattributevalueksts(" + costcentervalue + ")",
+
+          "crf71_Leistungen@odata.bind": "/crf71_ste_dimensionattributevalueleis(" + leistugenvalue + ")",
+          "crf71_StellenartUndCharakteristik@odata.bind": "/crf71_ste_dimensionattributevaluestchs(" + stellenvalue + ")",
+          "crf71_CostCenterOffset@odata.bind": "/crf71_ste_dimensionattributevalueksts(" + ccoffsetvalue + ")",
+          "crf71_LeistungenOffset@odata.bind": "/crf71_ste_dimensionattributevalueleis(" + leistugenoffsetvalue + ")",
+          "crf71_StellenartUndCharakteristikOffset@odata.bind": "/crf71_ste_dimensionattributevaluestchs(" + stellenoffsetvalue + ")",
+          "crf71_OffsetLedger@odata.bind": "/crf71_ste_mainaccounts(" + destinationdimension + ")",
+          crf71_active: $("input[name=status]:checked").val() === "1" ? true : false
+        }),
+        success: function (res) {
+          console.log(res);
+          $('#loading').hide();
+          $('#exampleModalCenter').modal('show');
+          window.location.href = "/Rules-Extraction-Details";
+        }
+      });
+
+    }
+  });
+}
+
+// test
+function saverulelines() {
+  console.log("SAVING");
+  debugger;
+  //let basicpercentage,destinationdimension;
+  // if(validated==0){
+  if ($("#crf71_basis option:selected")[0].value == 0) {
+    basicpercentage = $("#crf71_Basisid option:selected")[0].text == "null" ? "" : $("#crf71_Basisid option:selected")[0].text
+  }
+  else {
+    basicpercentage = $("#trulesallocation tbody>tr").first()[0].cells[0].children[0].value == "null" ? "" : $("#trulesallocation tbody>tr").first()[0].cells[0].children[0].value;
+  }
+  if ($("#crf71_basis option:selected")[0].value == 0) {
+    destinationdimension = $("#crf71_ledgeraccountfrom option:selected")[0].value == "null" ? "" : $("#crf71_ledgeraccountfrom option:selected")[0].value;
+  }
+  else {
+    destinationdimension = $("#trulesallocation tbody>tr").first()[0].cells[1].children[0].value == "null" ? "" : $("#trulesallocation tbody>tr").first()[0].cells[1].children[0].value;
+  }
+  console.log(linesno);
+  console.log(basicpercentage);
+  saveformdata();
+}
+//}
+function excludefirst() {
+  //debugger;
+  for (var i = 1; i < linesno; i++) {
+    basicpercentage = $("#trulesallocation tbody>tr")[i].cells[0].children[0].value == "null" ? "" : $("#trulesallocation tbody>tr")[i].cells[0].children[0].value;
+    destinationdimension = $("#trulesallocation tbody>tr")[i].cells[1].children[0].value == "null" ? "" : $("#trulesallocation tbody>tr")[i].cells[1].children[0].value;
+    savewithruleid(legernewid, basicpercentage, destinationdimension);
+    console.log(basicpercentage)
+  }
+}
+
+//function validatefields(){
+const validatefields = () => {
+  validatefields: {
+    var e = document.getElementById("crf71_company");
+    compvalue = e.value;
+    if (compvalue.length == '') {
+      $('#loading').hide();
+      //$("#saveButton").prop("disabled", true);
+      // $('#error').text("Please fill the Company");
+      // $('#error').css("color", "Red");
+      break validatefields;
+
+    }
+
+    var f = document.getElementById("crf71_ledgeraccountfrom");
+    ledgeraccfromvalue = f.value;
+    if (ledgeraccfromvalue.length == '') {
+      $('#loading').hide();
+      //$("#saveButton").prop("disabled", true);
+      // $('#error').text("Please fill the ledgeraccountfrom");
+      // $('#error').css("color", "Red");
+      break validatefields;
+
+    }
+
+    var g = document.getElementById("crf71_ledgeraccountto");
+    ledgeracctovalue = g.value;
+    if (ledgeracctovalue.length == '') {
+      $('#loading').hide();
+      //$("#saveButton").prop("disabled", true);
+      // $('#error').text("Please fill the ledgeraccountTo");
+      // $('#error').css("color", "Red");
+      break validatefields;
+
+    }
+
+    var h = document.getElementById("crf71_costcenter");
+    costcentervalue = h.value;
+    if (costcentervalue.length == '') {
+      $('#loading').hide();
+      //$("#saveButton").prop("disabled", true);
+      // $('#error').text("Please fill the costcentervalue");
+      // $('#error').css("color", "Red");
+      break validatefields;
+
+    }
+
+    var i = document.getElementById("crf71_costcenterOffset");
+    ccoffsetvalue = i.value;
+    if (ccoffsetvalue.length == '') {
+      $('#loading').hide();
+      //$("#saveButton").prop("disabled", true);
+      // $('#error').text("Please fill the costcenterOffset");
+      // $('#error').css("color", "Red");
+      break validatefields;
+
+    }
+
+    var j = document.getElementById("crf71_leistungen");
+    leistugenvalue = j.value;
+    if (leistugenvalue.length == '') {
+      $('#loading').hide();
+      //$("#saveButton").prop("disabled", true);
+      // $('#error').text("Please fill the leistungen");
+      // $('#error').css("color", "Red");
+      break validatefields;
+
+    }
+
+    var k = document.getElementById("crf71_leistungenOffset");
+    leistugenoffsetvalue = k.value;
+    if (leistugenoffsetvalue.length == '') {
+      $('#loading').hide();
+      //$("#saveButton").prop("disabled", true);
+      // $('#error').text("Please fill the leistungenOffset");
+      // $('#error').css("color", "Red");
+      break validatefields;
+
+    }
+
+    var l = document.getElementById("crf71_stellenartundcharakteristik");
+    stellenvalue = l.value;
+    if (stellenvalue.length == '') {
+      $('#loading').hide();
+      //$("#saveButton").prop("disabled", true);
+      // $('#error').text("Please fill the stellenartundcharakteristik");
+      // $('#error').css("color", "Red");
+      break validatefields;
+
+    }
+
+    var M = document.getElementById("crf71_stellenartundcharakteristikOffset");
+    stellenoffsetvalue = M.value;
+    if (stellenoffsetvalue.length == '') {
+      $('#loading').hide();
+      //$("#saveButton").prop("disabled", true);
+      // $('#error').text("Please fill the stellenartundcharakteristikOffset");
+      // $('#error').css("color", "Red");
+      break validatefields;
+
+    }
+
+    var n = document.getElementById("crf71_basis");
+    basisvalue = n.value;
+    if (basisvalue.length == '') {
+      $('#loading').hide();
+      //$("#saveButton").prop("disabled", true);
+     // $('#error').text("Please select the method");
+     // $('#error').css("color", "Red");
+      break validatefields;
+
+    }
+
+    if ($("#crf71_basis option:selected")[0].value == 1) {
+      var o = document.getElementById("crf71_destination_dimension");
+      destinationdimensionvalue = o.value;
+      if (destinationdimensionvalue.length == '') {
+        $('#loading').hide();
+        //$("#saveButton").prop("disabled", true);
+        //$('#error').text("Please fill the destinationdimensionvalue");
+        //$('#error').css("color", "Red");
+        break validatefields;
+
+      }
+    }
+    validated = 1;
+  }
+}
+
+
+
+
+//---------------------------------------
+
+
+
+//---------------------------------------------
+

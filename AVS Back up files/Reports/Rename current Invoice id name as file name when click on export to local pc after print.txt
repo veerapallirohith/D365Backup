@@ -1,0 +1,43 @@
+blog link :
+
+https://community.dynamics.com/forums/thread/details/?threadid=1bc0f90a-5e89-4846-9469-ea009cda6a57
+
+
+
+
+[ExtensionOf(classStr(SrsReportRunController))]
+internal final class DGMA_SrsReportRunController_Extension
+{
+    public LabelType parmDialogCaption(LabelType _dialogCaption)
+
+    {
+        LabelType           reportDialogCaption;
+
+        Args                    args;
+
+        ProjInvoiceJour  ProjInvoiceJour;
+
+        Name                  rdpName;
+
+        reportDialogCaption = next parmDialogCaption(_dialogCaption);
+        psaContractLineInvoiceDP psaContractLineInvoiceDP;
+
+        if (this.getReportContract().parmRdpName() == 'psaContractLineInvoiceDP')
+
+        {
+
+            args = this.parmArgs();
+
+            ProjInvoiceJour = args.record();
+
+            if(ProjInvoiceJour)
+
+            {
+                reportDialogCaption = strFmt('%1', ProjInvoiceJour.ProjInvoiceId); // Set the file name
+            }
+        }
+
+        return reportDialogCaption;
+
+    }
+}

@@ -1,0 +1,58 @@
+/// <summary>
+/// This class is used to pass the files from F&O to Azure blob storage
+/// </summary>
+using Microsoft.Azure;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Blob;
+using STE_AzureBlobStorageLibrary;
+internal final class STE_ERDocuManagementEvents_Handler_Old
+{
+    InteropPermission      Permission;
+    System.Exception       Exception;
+          
+    /// <summary>
+    /// This method is used to pass the files from F&O to blob storage
+    /// </summary>
+    /// <param name="_args">ERDocuManagementAttachingFileEventArgs</param>
+    [SubscribesTo(classStr(ERDocuManagementEvents), staticDelegateStr(ERDocuManagementEvents, attachingFile))]
+    public static void ERDocuManagementEvents_attachingFile(ERDocuManagementAttachingFileEventArgs _args)
+    {
+        STE_AzureBlobStorageLocation    azureBlobStorageLocation,azureBlobStorageLocationLoc;
+
+        select firstonly azureBlobStorageLocation;
+        str _StorageAccountName = azureBlobStorageLocation.BlobStoragePath;    
+        str _Container =   azureBlobStorageLocation.BlobContainer;              
+        str _SASKey =azureBlobStorageLocation.SasToken;
+        str _BlobName = _args.getAttachmentName(); 
+        System.IO.Stream _stream = _args.getStream();
+       
+        DocuType docuType = DocuType::find (_args.getDocuTypeId());
+        _args.markAsHandled();
+        var stream = _args.getStream();
+        if (stream.CanSeek)
+        {
+            stream.Seek(0, System.IO.SeekOrigin::Begin);
+        }
+
+        select count(RecId) from azureBlobStorageLocationLoc;
+        int countvar = azureBlobStorageLocationLoc.RecId;
+        
+        if(countvar >1)
+        {
+            delete_from azureBlobStorageLocation;
+        }
+        
+        STE_AzureBlobStorageLibrary.STE_AzureBlobStorageHelperLibrary helperclass = new   STE_AzureBlobStorageLibrary.STE_AzureBlobStorageHelperLibrary();
+   
+        if(stream.canseek == true)
+        {
+        helperclass.saveFileInBlob(_StorageAccountName,_Container, _SASKey, _BlobName , stream);
+      
+        }
+        if(helperclass.mesg == 'false')
+        {
+            error('Operation Failed :This request is not authorized to perform this operation using this permission ,Please make sure that containername is correct ,Blob storage location is correct and before genearting SAS token provide Add,Read,Write,Create permissions and SAS token should generate for HTTPS and HTTP Allowed protocols in blobstorage');
+        }
+    }
+
+}

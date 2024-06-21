@@ -1,0 +1,56 @@
+https://strabo.partners/staging/9871/dynamics-365-multi-select-enum-lookup/
+
+
+
+create a inmemory table 
+
+in table write this method 
+
+internal static QueryRun buildQueryRun(EnumId _enumId)
+{
+    Query query = new Query();
+
+    QueryBuildDataSource qbds = query.addDataSource(tableNum(EnumLookupTmp));
+    qbds.addSelectionField(fieldNum(EnumLookupTmp, EnumValue));
+
+    QueryRun queryRun = new QueryRun(query);
+    queryRun.setCursor(EnumLookupTmp::prepareData(_enumId));
+
+    return queryRun;
+}
+
+then this method 
+
+internal static QueryRun buildQueryRun(EnumId _enumId)
+{
+    Query query = new Query();
+
+    QueryBuildDataSource qbds = query.addDataSource(tableNum(EnumLookupTmp));
+    qbds.addSelectionField(fieldNum(EnumLookupTmp, EnumValue));
+
+    QueryRun queryRun = new QueryRun(query);
+    queryRun.setCursor(EnumLookupTmp::prepareData(_enumId));
+
+    return queryRun;
+}
+
+
+then in the form class declare these globally
+
+ #Characters
+    SysLookupMultiSelectCtrl multiSelectControl;
+
+
+then form init 
+
+public void init()
+{
+    super();
+
+    multiSelectControl = SysLookupMultiSelectCtrl::constructWithQueryRun(
+        this,
+        FormControlName,
+        EnumLookupTmp::buildQueryRun(enumNum(MyEnum)));
+}
+
+form control should be String

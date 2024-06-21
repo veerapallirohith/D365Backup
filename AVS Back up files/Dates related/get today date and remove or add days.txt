@@ -1,0 +1,4 @@
+ utcdatetime currDate = DateTimeUtil::getSystemDateTime();
+     
+       
+        date ValidTo = DateTimeUtil::date(currDate)-1;

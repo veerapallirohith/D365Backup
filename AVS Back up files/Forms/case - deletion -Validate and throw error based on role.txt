@@ -1,0 +1,23 @@
+ [FormDataSourceEventHandler(formDataSourceStr(CaseDetail, CaseDetailBase), FormDataSourceEventType::ValidatedDelete),
+        SuppressBPWarning("BPParameterNotUsed", "Parameter required")]
+     
+     public static void CaseDetailBase_OnValidatedDelete(FormDataSource sender, FormDataSourceEventArgs e)
+     {
+        SecurityRole        role;
+        SecurityUserRole    userRole;
+        str                 adminRole = '-SYSADMIN-';
+
+        select  firstonly AotName from role
+         exists join userRole
+            where role.RecId     == userRole.SecurityRole
+                && userRole.User == curUserId()
+            && role.AotName  == adminRole;
+      
+        if(!role.AotName)
+        {
+
+            throw Error("@CD_Label:AccessDenied");
+          
+        }
+       
+     }

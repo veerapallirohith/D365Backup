@@ -1,0 +1,122 @@
+https://www.linkedin.com/pulse/performing-odata-actions-finance-operations-using-postman-sheokand/
+
+
+0 notifications total
+
+Skip to search
+
+Skip to main content
+Close jump menu
+Search
+new feed updates notifications
+Home
+My Network
+Jobs
+Messaging
+8
+8 new notifications
+Notifications
+Rohith Veerapalli
+Me
+
+For Business
+Try Premium for free
+Create your own newsletter
+Start your own discussion with a newsletter on LinkedIn. Share what you know and build your thought leadership with every new edition.
+
+Try it out
+
+Performing OData actions in Finance and operations using Postman
+Navdeep Sheokand
+Navdeep Sheokand
+Software Development Lead @ HSO | ERP Expert, Dynamics 365
+5 articles 
+Follow
+April 9, 2021
+
+Open Immersive Reader
+In this article , I would provide some examples of how you can perform CRUD operations from Postman. I am using Postman just for simplicity and you can easily relate to any external app that can trigger OData actions.
+
+A Prerequisite for using this sample is to setup Postman with your F&O environment. The steps are listed in one of my previous articles here
+
+
+Read operation :
+
+Read operations are the simplest to use and you just have to fire a Get request on the OData endpoint. Here is an example of such a request
+
+{{resource}}/data/Customers?$top=3
+"resource" in this case is an environment variable that I have used in Postman. You could replace it with your F&O instance URL if are not willing to use any environmental variable.
+
+The $top=3 is a filter that will return only top 3 records.
+
+To get this working you need to supply the Authorization key in the request header with value being the bearer Token that you must have acquired during the authentication part as mentioned in the previous article.
+
+No alt text provided for this image
+In case if you are interested in finding a record using a Key , you may fire a Get request like the one below
+
+Get {{resource}}/data/SalesOrderPools(dataAreaId='demf',PoolId='NVDP2')
+This will return a SalesPool record with SalesPoolId = 'NVDP2'. Off course the Authorization key must be present in the header as in the previous request.
+
+
+
+Create operation :
+
+To create a record in SalesPool table we need to send the following request to the OData endpoint. The request must contain the Authorization key as stated in examples above.
+
+Post {{resource}}/data/SalesOrderPools
+The SalesOrderPools is the public name of the entity that encapsulates the SalesPool table in F&O. In case if you want to create a record in CustTable , you would change the above Post request to use the Public entity Name encapsulating the CustTable.
+
+The body contains the data to be created. As shown a record will be created in Company "Demf" with a PoolId "NVDP2"
+
+No alt text provided for this image
+Update operation : The update operations are achieved using the Patch request as shown below. The patch request must contain the criteria for the records to be updated.
+
+Patch {{resource}}/data/SalesOrderPools(PoolId='NVDP2',dataAreaId='demf')
+In the request above , the PoolId "NVDP2" in company 'Demf' is getting updated. The body section contains the fields that need to be updated. The header must include the authorization key just like any other request. The Patch request would update the PoolName field to the value specified in the body section.
+
+No alt text provided for this image
+Delete operations : Delete operation are achieved using Delete request as shown below.
+
+DELETE {{resource}}/data/SalesOrderPools(PoolId='NVDP2',dataAreaId='demf')
+This request is similar to the update request except you don't have to specify anything in the body section.
+
+So having covered the CRUD operations we may now want to call a Service exposed by F&O.
+
+Service operations :
+
+Let's take an example where we are interested in invoking the getDimensionsAll operation on the service DimensionService which is listed under FinancialDimensionServices group.
+
+First we start by firing the Get request to know about the input parameters and return type of the method. Not that the URL is chaned from /data/ in previous examples to /api/services/
+
+Get  {{resource}}/api/services/FinancialDimensionServices/DimensionService/getDimensionsAll
+If we see the response, the input parameter array is empty which means that the method do not take any arguments and it returns an array of type "DimensionContract" which shall be a serializable data type.
+
+No alt text provided for this image
+Invoking a post request would return a response like the one below. As you can see it contains all the list of dimensions that are available in the F&O instance.
+
+No alt text provided for this image
+A slightly different example could be the GetProjectCategories method on ProjectWebService service which accepts an input parameter. As you can see in the picture below the Get request confirms that the method takes two argument namely "company" and "projectId".
+
+No alt text provided for this image
+The body section can be kept blank for the Get request. The response of a Post request using the arguments would result in listing of the Categories that are available on ProjectId "DEMF-001356" in company "DEMF"
+
+No alt text provided for this image
+
+
+
+
+
+
+
+
+Report this
+Published by
+Navdeep Sheokand
+Navdeep Sheokand
+Software Development Lead @ HSO | ERP Expert, Dynamics 365
+Published • 2y
+5 articles
+
+Follow
+Triggering #OData action in #d365fo using #postman
+

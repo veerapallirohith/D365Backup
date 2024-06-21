@@ -1,0 +1,280 @@
+/// <summary>
+/// This is a extension class of free text invoice dp class
+/// </summary>
+[ExtensionOf(classStr(FreeTextInvoiceDP))]
+internal final class STE_FreeTextInvoiceDP_Extension
+{
+    public boolean         changeDisplaySign = true;
+    /// <summary>
+    /// This method is used to assign data for free text invoice report
+    /// </summary>
+    /// <param name = "_custInvoiceJour">CustInvoiceJour</param>
+    /// <param name = "_companyInfo">CompanyInfo</param>
+    protected void populateFreeTextInvoiceHeaderFooterTmp(CustInvoiceJour _custInvoiceJour, CompanyInfo _companyInfo)
+
+    {
+        BankAccountTable bankAccountTable  = BankAccountTable::find(_companyInfo.Bank);
+        CustInvoiceTable custInvoiceTable;
+        CustTable custTable = custTable::find(_custInvoiceJour.InvoiceAccount);
+        CustPaymModeTable custPaymModeTable = custPaymModeTable::find(custTable.PaymMode);
+        CustBankAccount custBankAccount ;
+        DataArea dataArea;
+        LogisticsPostalAddress logisticsPostalAddress;
+        DirPartyTable dirPartyTable;
+        ContactPerson contactPerson;
+        CustInvoiceLine custInvoiceLine;
+        dirPartyPostalAddressView dirPartyPostalAddressView;
+        str newinc;
+
+        #define.MyBezText1('Die Zahlung für diese Rechnung wird über die folgenden Konten frühestens ausgeführt am')
+        #define.MyBezText2('Bitte überweisen Sie den Rechnungsbetrag nicht, wir ziehen ihn vom uns genannten Konto ein.')
+        #define.MyBezLegalEntityName('Zahlungsempfänger:%1')
+        #define.MyBezSTEIBan('IBAN des Zahlungspflichtigen:%1')
+        #define.MyBezSwiftNo('SWIFT-Code des Zahlungspflichtigen:%1')
+        #define.MyBezIban('Mandatsreferenz:%1')
+        #define.MySteCustomerName('Name des Zahlungspflichtigen:%1')
+        #define.MyBankaccountIban('ID des Zahlungsempfängers:%1')
+        #define.MyVatnum('USt-IdNr:%1')
+        #define.MyIban('IBAN:%1')
+        #define.MySwift('BIC:%1')
+        #define.MyCustomerName('Geschäftskonto:%1')
+        #define.MyRechnungtext1('Bitte überweisen Sie den Rechnungsbetrag bis zum')
+        #define.MyRechnungtext2('unter Angabe der Rechnungsnummer auf das folgende Geschäftskonto:')
+        #define.MyRechnungLegalEntityName('Kontoinhaber:%1')
+        #define.MyFooterText('Mitglied im Diakonischen Werk Berlin-Brandenburg-schlesische Oberlausitz')
+        #define.MyLabelBez('BEZ')
+        #define.MyLabelRechnung('Rechnung')
+        #define.MyS42('S42')
+        #define.S42VatNum('DE322174905')
+        #define.S31VatNum('DE137177632')
+        #define.DEU('DEU')
+        next populateFreeTextInvoiceHeaderFooterTmp(_custInvoiceJour, _companyInfo);
+        ttsbegin;
+        
+        select firstonly custBankAccount
+            where custBankAccount.CustAccount == custTable.AccountNum;
+        
+        str contstore = custBankAccount.AccountNum;
+        str inde = strDel(contstore,strLen(contstore)-2,3) ;
+        if(contstore != '')
+        {
+            newinc = inde + 'XXX';
+        }
+
+        str newinc2;
+        str iban1 = custBankAccount.BankIBAN;
+        str inde2 = strDel(iban1,strLen(iban1)-2,3);
+        if(inde2 != '' && iban1 != '')
+        {
+            newinc2 = inde2 + 'XXX';
+        }
+
+        select firstonly custInvoiceTable
+             where custInvoiceTable.InvoiceId == _custInvoiceJour.InvoiceId
+            && custInvoiceTable.InvoiceAccount == _custInvoiceJour.InvoiceAccount
+              join dataarea
+            where dataArea.id == _companyInfo.DataArea;
+        {
+           
+            if(companyInfo.dataArea == #MyS42)
+            {
+                freeTextInvoiceHeaderFooterTmp.vatnum   = #MyVatnum +' '+ #S42VatNum;
+            }
+            else
+            {
+                freeTextInvoiceHeaderFooterTmp.vatnum   = #MyVatnum+' '+ #S31VatNum;
+            }
+            freeTextInvoiceTmp.STE_Duedate = custInvoiceTable.DueDate;
+            freeTextInvoiceHeaderFooterTmp.companyname = custInvoiceTable.Name;
+            freeTextInvoiceHeaderFooterTmp.STE_PaymMode = custPaymModeTable.PaymMode;
+            freeTextInvoiceHeaderFooterTmp.STE_LegalEntity = dataArea.name;
+            freeTextInvoiceHeaderFooterTmp.STE_LegalEntityId = _companyInfo.DataArea;
+            if(_companyInfo.DataArea != #MyS42)
+            {
+                freeTextInvoiceHeaderFooterTmp.STE_FooterText = #MyFooterText;
+            }
+        }
+        select firstonly  logisticsPostalAddress
+            join dirPartyTable
+            where logisticsPostalAddress.Location == dirPartyTable.PrimaryAddressLocation
+            && dirPartyTable.RecId == custTable.Party;
+        {
+            if(logisticsPostalAddress.CountryRegionId == #DEU)
+            {
+                freeTextInvoiceHeaderFooterTmp.STE_CompanyAddress = logisticsPostalAddress.Street +' '+logisticsPostalAddress.StreetNumber + '\n'+logisticsPostalAddress.ZipCode +' '+ logisticsPostalAddress.City;
+            }
+            else
+            {
+                freeTextInvoiceHeaderFooterTmp.STE_CompanyAddress = logisticsPostalAddress.Address;
+            }
+        }
+        select firstonly dirPartyPostalAddressView
+                where dirPartyPostalAddressView.Party == companyInfo.RecId;
+        {
+            if(dirPartyPostalAddressView.CountryRegionId == #DEU)
+            {
+                freeTextInvoiceHeaderFooterTmp.CompanyAddress = dirPartyPostalAddressView.Street +' '+ dirPartyPostalAddressView.StreetNumber +'\n'+ dirPartyPostalAddressView.ZipCode +' '+ dirPartyPostalAddressView.City;
+            }
+        }
+        
+        custInvoiceLine = custInvoiceLine::findByParentRecId(custInvoiceTable.RecId);
+       
+        freeTextInvoiceHeaderFooterTmp.STE_IBan_Footer = #MyIban +' '+ bankAccountTable.IBAN;
+        freeTextInvoiceHeaderFooterTmp.STE_Swift_Footer = #MySwift +' '+ bankAccountTable.SWIFTNo;
+        freeTextInvoiceHeaderFooterTmp.STE_CustomerName = #MyCustomerName +' '+ bankAccountTable.BankGroupId;
+
+        select firstonly dirPartyTable
+            join contactPerson
+            where contactPerson.Party == dirPartyTable.RecId
+            && contactPerson.CustAccount == custTable.AccountNum;
+        {
+            freeTextInvoiceHeaderFooterTmp.ContactPersonName = dirPartyTable.Name;
+        }
+
+        if( freeTextInvoiceHeaderFooterTmp.STE_PaymMode == #MyLabelBez || custPaymModeTable.IsSEPA == NoYes::Yes && custPaymModeTable.AccountType == LedgerJournalACType::Bank )
+        {
+            str text6 = #MyBezText1;
+            str text7 = date2Str (custinvoiceTable.DueDate,  123,    DateDay::Digits2,   DateSeparator::Dot,       DateMonth::Digits2,DateSeparator::Dot, DateYear::Digits4 );
+            str text8 = text6 + ' ' + text7;
+            freeTextInvoiceTmp.STE_TExtField2 = #MyBezText2;
+            freeTextInvoiceTmp.STE_TextField = text8;
+            freeTextInvoiceTmp.STE_LegalEntityName = #MyBezLegalEntityName + ' ' + dataArea.name;
+            freeTextInvoiceHeaderFooterTmp.STE_Iban = #MyBezSTEIBan +' '+ newinc2;
+            freeTextInvoiceHeaderFooterTmp.STE_SwiftNumber = #MyBezSwiftNo +' ' + custBankAccount.SWIFTNo;
+            freeTextInvoiceHeaderFooterTmp.Iban = #MyBezIban + ' '+ newinc;
+            freeTextInvoiceTmp.STE_CustomerName = #MySteCustomerName +' '+ freeTextInvoiceHeaderFooterTmp.companyname;
+            freeTextInvoiceTmp.STE_IBan_BankAccountTable = #MyBankaccountIban +' '+ bankAccountTable.IBAN;
+        }
+        
+        else if( freeTextInvoiceHeaderFooterTmp.STE_PaymMode == #MyLabelBez || custPaymModeTable.IsSEPA == NoYes::Yes )
+        {
+            str text6 = #MyBezText1;
+            str text7 = date2Str (custinvoiceTable.DueDate,  123,    DateDay::Digits2,   DateSeparator::Dot,       DateMonth::Digits2,DateSeparator::Dot, DateYear::Digits4 );
+            str text8 = text6 + '    ' + text7;
+            freeTextInvoiceTmp.STE_TExtField2 = #MyBezText2;
+            freeTextInvoiceTmp.STE_TextField = text8;
+            freeTextInvoiceTmp.STE_LegalEntityName = #MyBezLegalEntityName +' '+ dataArea.name;
+            freeTextInvoiceHeaderFooterTmp.STE_Iban = #MyBezSTEIBan +' '+ newinc2;
+            freeTextInvoiceHeaderFooterTmp.STE_SwiftNumber = #MyBezSwiftNo +' '+ custBankAccount.SWIFTNo;
+            freeTextInvoiceHeaderFooterTmp.Iban = #MyBezIban +' ' + newinc;
+            freeTextInvoiceTmp.STE_CustomerName = #MySteCustomerName +' '+ freeTextInvoiceHeaderFooterTmp.companyname;
+            freeTextInvoiceTmp.STE_IBan_BankAccountTable = #MyBankaccountIban +' '+ bankAccountTable.IBAN;
+        }
+
+        else  if(freeTextInvoiceHeaderFooterTmp.STE_PaymMode == #MyLabelRechnung || custPaymModeTable.AccountType == LedgerJournalACType::Bank)
+        {
+            str text4 =  date2Str (custInvoiceTable.DueDate,  123,    DateDay::Digits2,   DateSeparator::Dot,       DateMonth::Digits2,DateSeparator::Dot, DateYear::Digits4 );
+        
+            str text5 = #MyRechnungtext1 +' '+ text4+' '+ #MyRechnungtext2;
+            freeTextInvoiceTmp.STE_TextField = text5;
+            freeTextInvoiceHeaderFooterTmp.STE_SwiftNumber = bankAccountTable.BankGroupId;
+            FreeTextInvoiceTmp.STE_CustomerName =   #MySwift +' '+ bankAccountTable.SWIFTNo;
+            freeTextInvoiceTmp.STE_IBan_BankAccountTable = #MyIban +' '+ bankAccountTable.IBAN;
+            freeTextInvoiceTmp.STE_LegalEntityName = #MyRechnungLegalEntityName+' '+ dataArea.name;
+        }
+       
+        ttscommit;
+    }
+
+    private int taxChangeDisplaySign(TaxDirection _taxDirection, TaxReverseCharge _taxReverseCharge = NoYes::No, boolean _changeSignForReverseCharge = true)
+        
+    {
+        if (changeDisplaySign && (_taxReverseCharge == NoYes::No || _changeSignForReverseCharge))
+        {
+            return Tax::changeDisplaySign(_taxDirection);
+        }
+        else
+        {
+            return 1;
+        }
+    }
+
+    /// <summary>
+    /// This method in in inserts data into free text invoice tmp table
+    /// </summary>
+    /// <param name = "_custInvoiceJour">CustInvoiceJour</param>
+    /// <param name = "_custInvoiceTrans">CustInvoiceTrans</param>
+    /// <param name = "_taxSpec">TaxSpec</param>
+    /// <param name = "_custPaymSchedLine">CustPaymSchedLine</param>
+    /// <param name = "_prepaymentCustTrans">CustTrans</param>
+    /// <param name = "_prepaymentTaxTrans">TaxTrans</param>
+    protected void populateFreeTextInvoiceTmp(
+        CustInvoiceJour _custInvoiceJour,
+        CustInvoiceTrans _custInvoiceTrans,
+        TaxSpec _taxSpec,
+        CustPaymSchedLine _custPaymSchedLine,
+        CustTrans _prepaymentCustTrans,
+        TaxTrans _prepaymentTaxTrans)
+    {
+        TaxTrans taxTrans;
+        TaxTable taxTable;
+        container textNote;
+        str linenum;
+        DocuRef docuref;
+        #define.MyNotes('Text from the note attached to the invoice line')
+        next  populateFreeTextInvoiceTmp(_custInvoiceJour,_custInvoiceTrans, _taxSpec,_custPaymSchedLine, _prepaymentCustTrans,_prepaymentTaxTrans);
+
+        ttsbegin;
+        CustInvoiceLine    custInvoiceLine = custInvoiceLine::findBySourceDocumentLine(_custInvoiceTrans.SourceDocumentLine);
+        freeTextInvoiceTmp.STE_LineAmount =  custInvoiceLine.AmountCur;
+
+        select firstonly taxTrans
+            where taxTrans.voucher == _custInvoiceJour.LedgerVoucher
+            && taxTrans.TransDate  == _custInvoiceJour.InvoiceDate
+          && taxTrans.SourceRecId  == _custInvoiceTrans.RecId;
+        {
+            taxTable=  taxTable::find(taxTrans.TaxCode);
+        
+            freeTextInvoiceTmp.Taxcode = taxTrans.TaxCode;
+            freeTextInvoiceTmp.TaxAmount = taxtable.showTaxValue();
+            freeTextInvoiceTmp.STE_TaxValue =  this.displaySourceRegulateAmountCur(taxTrans);
+            freeTextInvoiceTmp.LineAmount  = _custInvoiceTrans.LineAmount +  this.displaySourceRegulateAmountCur(taxTrans);
+        }
+
+        select firstonly  docuRef
+              where docuRef.RefCompanyId  == custInvoiceLine.DataAreaId &&
+                          docuRef.RefTableId    == custInvoiceLine.TableId &&
+                          docuRef.RefRecId      == custInvoiceLine.RecId;
+        {
+            if(docuRef.Notes)
+            {
+                linenum = #MyNotes + any2Str(custInvoiceLine.LineNum);
+                textNote += linenum +':' + '\n' + docuRef.Notes;
+            }
+        }
+        freeTextInvoiceTmp.STE_Notes = con2Str(textnote);
+        ttscommit;
+    }
+
+    /// <summary>
+    /// This is a display method used to calculate tax value
+    /// </summary>
+    /// <param name = "_taxTrans">TaxTrans</param>
+    /// <returns>_taxTrans</returns>
+    display TaxRegulationAmountCur displaySourceRegulateAmountCur(TaxTrans _taxTrans)
+    {
+        changeDisplaySign = this.doChangeDisplaySign(_taxTrans);
+        return _taxTrans.SourceRegulateAmountCur * this.taxChangeDisplaySign(_taxTrans.TaxDirection, _taxTrans.ReverseCharge_W, Tax::changeSignForReverseCharge(_taxTrans));
+    }
+
+    /// <summary>
+    /// This method is used for tax calculation
+    /// </summary>
+    /// <param name = "_taxTrans">TaxTrans</param>
+    /// <returns>doChange</returns>
+    private boolean doChangeDisplaySign(TaxTrans _taxTrans)
+    {
+        #isoCountryRegionCodes
+        container          regionCodes;
+        boolean doChange = changeDisplaySign;
+        regionCodes += #isoCZ;
+
+        if (SysCountryRegionCode::isLegalEntityInCountryRegion([#isoCZ]) && _taxTrans.IntracomVAT)
+        {
+            doChange = false;
+        }
+
+        return doChange;
+    }
+
+}

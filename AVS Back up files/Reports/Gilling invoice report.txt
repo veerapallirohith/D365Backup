@@ -1,0 +1,183 @@
+/// <summary>
+/// This is a Dp class to print gilling report 
+/// </summary>
+[
+SRSReportQueryAttribute(queryStr(CDGillingReportQry)),
+SRSReportParameterAttribute(classstr(CDGillingInvoiceContract_New))]
+class CDGilligInvoiceDP_New extends SRSReportDataProviderBase
+{
+    CDGilligInvoiceReportTmpNew       gilligInvoiceReportTmp;
+    CDGillingInvoiceContract_New      contract;
+    CustPurchaseOrder                 custPurchaseOrder;
+    
+    
+    [SRSReportDataSetAttribute(tableStr(CDGilligInvoiceReportTmpNew))]
+    public CDGilligInvoiceReportTmpNew getCDGilligInvoiceReportTmp()
+    {
+        select * from gilligInvoiceReportTmp;
+        return gilligInvoiceReportTmp;
+    }
+
+    private void getReportParameters()
+    {
+       // CDGillingInvoiceContract_New CDGillingInvoiceContract_New = this.parmDataContract();
+        //custPurchaseOrder = CDGillingInvoiceContract_New.parmCustPurchaseOrder();
+           
+    }
+
+    public void processReport()
+    {
+        CustInvoiceJour         custInvoiceJour;
+        ProjInvoiceJour         projInvoiceJour;
+        SalesTable              salesTable;
+        //  QueryBuildDatasource    qbds ;
+        
+        
+        contract = this.parmDataContract() as CDGillingInvoiceContract_New;
+        this.getReportParameters();
+        Query qry = this.parmQuery();
+        //RecordInsertList gilligList = new RecordInsertList(tableNum(CDGilligInvoiceReportTmpNew), true, true, true, true, false, gilligInvoiceReportTmp);
+        
+
+        QueryRun qryRun = new QueryRun(qry);
+        
+        while  (qryRun.next())
+        {
+            custInvoiceJour = qryRun.get(tableNum(custInvoiceJour));
+            projInvoiceJour = qryRun.get(tableNum(ProjInvoiceJour));
+            
+            if(custInvoiceJour)
+            {
+                salesTable =null;
+                salesTable = SalesTable::find(custInvoiceJour.SalesId);
+                gilligInvoiceReportTmp.clear();
+                gilligInvoiceReportTmp.InvoiceId        = custInvoiceJour.InvoiceId;
+                gilligInvoiceReportTmp.InvoiceDate      = custInvoiceJour.InvoiceDate;
+                gilligInvoiceReportTmp.PONumber         = salesTable.PurchOrderFormNum;
+                gilligInvoiceReportTmp.PORelNumber      = salesTable.CDPurchOrderFormRelNum;
+                gilligInvoiceReportTmp.Freight          = custInvoiceJour.SumMarkup;
+                gilligInvoiceReportTmp.Qty              = 0;
+                gilligInvoiceReportTmp.SalesTax         = (select sum(TaxAmount) from CustInvoiceTrans
+                                                                where CustInvoiceTrans.InvoiceId == custInvoiceJour.InvoiceId).TaxAmount;
+                
+                gilligInvoiceReportTmp.InvoiceTotal     = custInvoiceJour.InvoiceAmount;
+                gilligInvoiceReportTmp.GilligItem       = '';
+                gilligInvoiceReportTmp.VendorItem       = '';
+                gilligInvoiceReportTmp.POLineNumber     = 0;
+                gilligInvoiceReportTmp.StartFlag        = 1;
+                gilligInvoiceReportTmp.insert();
+         
+                CustInvoiceTrans    custInvoiceTrans;
+                SalesLine           salesLine;
+                if(salesTable)
+                {
+                    salesLine = null;
+                    while select custInvoiceTrans
+                        where custInvoiceTrans.InvoiceId == custInvoiceJour.InvoiceId
+                    {
+                        select firstonly CustomerLineNum,ItemId,ExternalItemId,PurchOrderFormNum from salesLine
+                            where salesLine.InventTransId == custInvoiceTrans.InventTransId
+                            &&    salesLine.salesId  == custInvoiceTrans.SalesId ;
+                        gilligInvoiceReportTmp.clear();
+                        gilligInvoiceReportTmp.InvoiceId        = custInvoiceJour.InvoiceId;
+                        gilligInvoiceReportTmp.POLineNumber     = custInvoiceTrans.CustomerLineNum;
+                        gilligInvoiceReportTmp.PONumber         = salesTable.PurchOrderFormNum;
+                        gilligInvoiceReportTmp.VendorItem       = custInvoiceTrans.ItemId;
+                        gilligInvoiceReportTmp.Description      = salesLine.itemName();
+                        gilligInvoiceReportTmp.GilligItem       = salesLine.ExternalItemId;
+                        gilligInvoiceReportTmp.StartFlag        = 0;
+                       // gilligInvoiceReportTmp.Qty              = salesLine.SalesQty;
+                        gilligInvoiceReportTmp.Qty              = custInvoiceTrans.Qty;
+                        gilligInvoiceReportTmp.UOM              = salesLine.SalesUnit;
+                       // gilligInvoiceReportTmp.Unitprice        = salesLine.SalesPrice;
+                        gilligInvoiceReportTmp.Unitprice        = custInvoiceTrans.SalesPrice;
+                        gilligInvoiceReportTmp.PORelNumber      = salesTable.CustomerRef;
+                       // gilligInvoiceReportTmp.ExtPrice         = salesLine.LineAmount;
+                        gilligInvoiceReportTmp.extprice        = custInvoiceTrans.LineAmount;
+                        gilligInvoiceReportTmp.Freight          = 0;
+                        gilligInvoiceReportTmp.SalesTax         = 0;
+                        gilligInvoiceReportTmp.InvoiceTotal     = 0;
+                        gilligInvoiceReportTmp.InvoiceDate      = custInvoiceTrans.InvoiceDate;
+                        gilligInvoiceReportTmp.insert();
+                       
+                    }
+                }
+            }
+            if (projInvoiceJour)
+            {
+
+                SalesLine                saleslineLocal;
+                // ProjInvoiceItemTrans    projInvoiceItemTrans;
+              
+                // PROJINVOICEITEMTRANS    projInvoiceItemTransLocal;
+                ProjInvoiceItem  projInvoiceItem;
+                {
+                    while select projInvoiceItem
+                         where projInvoiceItem.ProjInvoiceId == projInvoiceJour.ProjInvoiceId
+                    {
+
+                        select firstonly CustomerLineNum,ItemId,ExternalItemId,PurchOrderFormNum from saleslineLocal
+                         where saleslineLocal.InventTransId == projInvoiceItem.InventTransId
+                              &&    saleslineLocal.salesId  == projInvoiceItem.SalesId ;
+                    }
+                }
+
+                salesTable =null;
+                salesTable = SalesTable::find(projInvoiceItem.SalesId);
+                gilligInvoiceReportTmp.clear();
+                gilligInvoiceReportTmp.InvoiceId        = projInvoiceJour.ProjInvoiceId;
+                gilligInvoiceReportTmp.InvoiceDate      = projInvoiceJour.InvoiceDate;
+                gilligInvoiceReportTmp.PONumber         = saleslineLocal.PurchOrderFormNum;
+                gilligInvoiceReportTmp.PORelNumber      = salesTable.CDPurchOrderFormRelNum;
+                gilligInvoiceReportTmp.Freight          = projInvoiceJour.SumMarkup;
+                gilligInvoiceReportTmp.Qty              = 0;
+                gilligInvoiceReportTmp.SalesTax         = (select sum(TaxAmount) from PROJINVOICEITEMTRANS
+                                                        where PROJINVOICEITEMTRANS.ProjInvoiceId == projInvoiceJour.ProjInvoiceId).TaxAmount;
+                
+                gilligInvoiceReportTmp.InvoiceTotal     = projInvoiceJour.InvoiceAmount;
+            
+                gilligInvoiceReportTmp.POLineNumber     = 0;
+                gilligInvoiceReportTmp.GilligItem       = '';
+                gilligInvoiceReportTmp.VendorItem       = '';
+                gilligInvoiceReportTmp.StartFlag        = 1;
+                gilligInvoiceReportTmp.insert();
+                
+               
+                ProjInvoiceItemTrans    projInvoiceItemTrans;
+               
+                while select projInvoiceItemTrans
+                    where projInvoiceItemTrans.ProjInvoiceId == projInvoiceJour.ProjInvoiceId
+                {
+                    gilligInvoiceReportTmp.InvoiceId        = projInvoiceItemTrans.ProjInvoiceId;
+                   
+                    //added by Monalisa for project invoice
+                    select firstonly CustomerLineNum,ItemId,ExternalItemId,PurchOrderFormNum from saleslineLocal
+                    where saleslineLocal.InventTransId == projInvoiceItemTrans.InventTransId
+                    &&    saleslineLocal.salesId  == projInvoiceItemTrans.SalesId ;
+                    if(saleslineLocal)
+                    {
+                        gilligInvoiceReportTmp.VendorItem       = saleslineLocal.ItemId;
+                        gilligInvoiceReportTmp.Description      =  saleslineLocal.itemName();
+                        gilligInvoiceReportTmp.GilligItem       = saleslineLocal.ExternalItemId;
+                        gilligInvoiceReportTmp.POLineNumber     = saleslineLocal.CustomerLineNum;
+                        gilligInvoiceReportTmp.StartFlag        = 0;
+                        gilligInvoiceReportTmp.PONumber         = saleslineLocal.PurchOrderFormNum;
+                        gilligInvoiceReportTmp.Qty              = projInvoiceItemTrans.Qty;
+                        gilligInvoiceReportTmp.UOM              = projInvoiceItemTrans.SalesUnit;
+                        gilligInvoiceReportTmp.Unitprice        = projInvoiceItemTrans.SalesPrice;
+                        gilligInvoiceReportTmp.PORelNumber      = salesTable.CDPurchOrderFormRelNum;
+                        gilligInvoiceReportTmp.ExtPrice         = projInvoiceItemTrans.LineAmount;
+                        gilligInvoiceReportTmp.Freight          = 0;
+                        gilligInvoiceReportTmp.SalesTax         = 0;
+                        gilligInvoiceReportTmp.InvoiceTotal     = 0;
+                        gilligInvoiceReportTmp.insert();
+                      
+                    }
+                }
+                
+            }
+        }
+
+    }
+
+}

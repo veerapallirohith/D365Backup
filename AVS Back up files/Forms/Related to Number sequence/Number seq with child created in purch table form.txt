@@ -1,0 +1,111 @@
+/// <summary>
+/// This class is used to make purch table form , controls enabled , allow edit true based on condition
+/// </summary>
+internal final class STE_PurchTableForm_EventHandler
+{
+
+       
+       
+    
+
+    /// <summary>
+    /// This method is to make asset edition true when asset group have value
+    /// </summary>
+    /// <param name="sender">purchLine_ds</param>
+    /// <param name="e">FormControlEventArgs</param>
+    [FormControlEventHandler(formControlStr(PurchTable, FixedAssets_AssetGroup), FormControlEventType::Modified),
+        SuppressBPWarning('BPParameterNotUsed', 'False positive')]
+    public static void FixedAssets_AssetGroup_OnModified(FormControl sender, FormControlEventArgs e)
+    {
+        FormRun             element                 = sender.formRun(); //form element
+        FormControl         purchLine_MainAssetId   = element.design(0).controlName('PurchLine_MainAssetId');
+        FormCheckBoxControl purchLine_AssetAddition = element.design(0).controlname('PurchLine_AssetAddition');
+        FormStringControl   fixedAssets_AssetGroup  = element.design(0).controlname('FixedAssets_AssetGroup');
+
+        if(fixedAssets_AssetGroup.valueStr())
+        {
+            purchLine_AssetAddition.enabled(true);
+            if(purchLine_AssetAddition.value() == NoYes::Yes)
+            {
+                purchLine_MainAssetId.enabled(true);
+                
+            }
+        }
+        else
+        {
+            purchLine_AssetAddition.enabled(false);
+        }
+    }
+
+    /// <summary>
+    /// This method is used to make main asset id enabled when asset addition control is set to yes 
+    /// </summary>
+    /// <param name="sender">purchLine_ds</param>
+    /// <param name="e">FormControlEventArgs</param>
+    [FormControlEventHandler(formControlStr(PurchTable, PurchLine_AssetAddition), FormControlEventType::Modified),
+        SuppressBPWarning('BPParameterNotUsed', 'False positive')]
+    public static void PurchLine_AssetAddition_OnModified(FormControl sender, FormControlEventArgs e)
+    {
+        
+        FormDataSource      purchLine_ds  = sender.formRun().dataSource('purchLine');
+        FormRun             element       = sender.formRun(); //form element
+        FormControl         purchLine_MainAssetId   = element.design(0).controlName('PurchLine_MainAssetId');
+        FormCheckBoxControl   purchLine_AssetAddition  = element.design(0).controlname('PurchLine_AssetAddition');
+        PurchLine purchLine = purchLine_ds.cursor();
+        
+        if(purchLine_AssetAddition.value() == NoYes::Yes)
+        {
+            purchLine_MainAssetId.enabled(true);
+        }
+        else
+        {
+            purchLine.MainAssetId = '';
+        }
+        
+    }
+
+    /// <summary>
+    /// This method is used to filter the main asset id based on asset group selection in purchase orders fixed asset tab
+    /// </summary>
+    /// <param name="sender">FormControl</param>
+    /// <param name="e">FormControlEventArgs</param>
+    [FormControlEventHandler(formControlStr(PurchTable, PurchLine_MainAssetId), FormControlEventType::Lookup),
+         SuppressBPWarning('BPParameterNotUsed', 'False positive')]
+    public static void PurchLine_MainAssetId_OnLookup(FormControl sender, FormControlEventArgs e)
+    {
+        FormRun                             element;
+        FormControl                         formCtrl;
+        Query                               query;
+        QueryBuildDataSource                markupTrans1;
+        SysTableLookup                      sysTableLookup;
+        QueryBuildRange                     range1;
+        container values;
+        element  = sender.formRun();
+        formCtrl = element.design().controlName(formControlStr(purchtable,  FixedAssets_AssetGroup));
+        sysTableLookup = SysTableLookup::newParameters(tableNum(assettable), sender);
+        
+        AssetTable          assetTable;
+        str groupidvalue = formCtrl.valueStr();
+        query = new Query();
+        markupTrans1 = query.addDataSource(tableNum(AssetTable));
+        
+        sysTableLookup.addLookupfield(fieldNum(AssetTable, assetid));
+        sysTableLookup.addLookupfield(fieldNum(AssetTable, assetgroup));
+        sysTableLookup.addLookupfield(fieldNum(AssetTable, name));
+
+        while select * from assetTable
+            where assetTable.MainAssetId == ''
+            && assetTable.AssetGroup == groupidvalue
+        {
+            values+= assetTable.AssetId;
+        }
+        //below code is used to get the filtered lookup based on the other field value.
+        range1  = markupTrans1.addRange(fieldNum(AssetTable,AssetId));
+        range1.value(con2Str(values));
+        sysTableLookup.parmQuery(query);
+        sysTableLookup.performFormLookup();
+        FormControlCancelableSuperEventArgs event = e as FormControlCancelableSuperEventArgs;
+        event.CancelSuperCall();
+    }
+
+}

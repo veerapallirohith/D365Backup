@@ -1,0 +1,1 @@
+https://learn.microsoft.com/en-us/power-pages/admin/migrate-site-configuration?tabs=CLI#transfer-website-metadata

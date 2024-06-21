@@ -1,0 +1,9 @@
+ PurchReqLine reqLine ;
+       
+            select firstonly reqLine where reqLine.RecId == purchReqLine.RecId;
+            PurchReqTotals PurchReqTotals;
+            PurchReqTotals = PurchReqTotals::construct(purchReqTable, PurchUpdate::All);
+            PurchReqTotals.calc();
+            PurchReqTotals.tax().sourceSingleLine(true,true);
+            Amount = PurchReqTotals.tax().totalTaxAmountSingleLine(reqLine.TableId,reqLine.RecId);
+            totalAmount += Amount + reqLine.LineAmount;

@@ -1,0 +1,14 @@
+ [FormControlEventHandler(formControlStr(ProjForecastItemCopy, ForecastSales_StartDate), FormControlEventType::Modified),
+        SuppressBPWarning('BPParameterNotUsed', 'False positive')]
+    public static void ForecastSales_StartDate_OnModified(FormControl sender, FormControlEventArgs e)
+    {
+        FormDataSource          forecastSales_ds   = sender.dataSourceObject();
+        ForecastSales           forecastSales      = forecastSales_ds.cursor();
+        if(forecastSales.ProjId)
+        {
+            if(ProjTable::find(forecastSales.ProjId).type != ProjType::Internal)
+            {
+                forecastSales.SalesPrice  = 0;
+            }
+        }
+    }

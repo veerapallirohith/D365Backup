@@ -1,0 +1,41 @@
+DimensionAttributeValue dimAtrrCCValue,dimAtrrDepValue,dimAttrIGValue,dimAtrrBUValue,dimAtrrFAValue;
+            DimensionAttributeValueContract dimensionAttributeValueContract;
+            DimensionAttribute dimAtrrCC,dimAtrrDep,dimAttrIG,dimAtrrBU,dimAtrrFA;
+            DimensionAttributeValueSetStorage davss;
+            DefaultDimensionView    defaultDimensionView;
+            DIMENSIONATTRIBUTE      dimensionAttribute;
+            DimensionAttributeValueDerivedDimensions  _derivedDimension;
+ 
+            davss = new DimensionAttributeValueSetStorage();
+            dimAtrrCC = DimensionAttribute::findByName('CostCenter');
+            dimAtrrDep = DimensionAttribute::findByName('Department');
+            dimAtrrBU  = DimensionAttribute::findByName('BusinessUnit');
+            dimAtrrFA = DimensionAttribute::findByName('FixedAsset');
+            dimAtrrCCValue = DimensionAttributeValue::findByDimensionAttributeAndValue(dimensionAttribute::findByName('CostCenter'),'10ABERD');
+ 
+            select defaultDimensionView
+                            join dimensionAttribute where dimensionAttribute.RecId == defaultDimensionView.DimensionAttributeId
+                            join _derivedDimension where _derivedDimension.DefaultDimension == defaultDimensionView.DefaultDimension &&
+                            defaultDimensionView.NAME == 'CostCenter'
+&&  defaultDimensionView.DisplayValue == dimAtrrCCValue.DisplayValue;
+ 
+            if(!defaultDimensionView.DefaultDimension)
+            {
+                throw Error(strfmt('The cost center (%1) does not have dimension setup.','10ABERD'));
+            }
+ 
+            dimAtrrDepValue = DimensionAttributeValue::findByDimensionAttributeAndValue(dimAtrrDep,DimensionAttributeValue::find(_derivedDimension.DerivedDimensionAttributeValue1).DisplayValue,true, true);
+            dimAtrrBUValue = DimensionAttributeValue::findByDimensionAttributeAndValue(dimAtrrBU,DimensionAttributeValue::find(_derivedDimension.DerivedDimensionAttributeValue2).DisplayValue,true, true);
+            dimAtrrFAValue = DimensionAttributeValue::findByDimensionAttributeAndValue(dimAtrrFA,'21-MW08RKF',true,true);
+            davss.addItem(dimAtrrCCValue);
+            davss.addItem(dimAtrrDepValue);
+            davss.addItem(dimAtrrFAValue);
+
+ 
+ 
+            if(dimAtrrBUValue)
+            {
+                davss.addItem(dimAtrrBUValue);
+            }
+            int64  defaultDimension = davss.save();
+            Info(any2Str(defaultDimension));

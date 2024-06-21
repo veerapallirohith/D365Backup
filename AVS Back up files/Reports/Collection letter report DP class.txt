@@ -1,0 +1,240 @@
+/// <summary>
+/// This class is used to over ride standard report and print custom report
+/// </summary>
+[ExtensionOf(classStr(CustCollectionJourDP))]
+internal final class STE_CustCollectionJourDP_Extension
+{
+    public STE_CustCollectionJourTmp ste_CustCollectionJourTmp;
+  
+
+    /// <summary>
+    ///    Gets the <c>CustCollectionJourTmp</c> table data.
+    /// </summary>
+    /// <returns>
+    ///    The <c>CustCollectionJourTmp</c> table data.
+    /// </returns>
+    [
+        SRSReportDataSetAttribute(tableStr(STE_CustCollectionJourTmp))
+    ]
+    public STE_CustCollectionJourTmp getSTE_CustCollectionJourTmp()
+    {
+        select ste_CustCollectionJourTmp;
+        return ste_CustCollectionJourTmp;
+    }
+
+    /// <summary>
+    /// This method is used to insert data into ste_cust collection jour tmp table
+    /// </summary>
+    /// <param name = "_custCollectionLetterJour">CustCollectionLetterJour</param>
+    /// <param name = "_custTable">CustTable</param>
+    /// <param name = "_custCollectionLetterTrans">CustCollectionLetterTrans</param>
+    /// <param name = "_formLetterRemarks">FormLetterRemarks</param>
+    /// <param name = "_taxSpec">TaxSpec</param>
+    /// <param name = "_postingsUntil">TransDate</param>
+    protected void populateCustCollectionJourTmp(
+            CustCollectionLetterJour _custCollectionLetterJour,
+            CustTable _custTable,
+            CustCollectionLetterTrans _custCollectionLetterTrans,
+            FormLetterRemarks _formLetterRemarks,
+            TaxSpec _taxSpec,
+            TransDate _postingsUntil)
+    {
+        RecordInsertList            recordInsertList;
+        recordInsertList = new RecordInsertList(tableNum(STE_CustCollectionJourTmp));
+        CustInvoiceTable             custinvoicetable;
+        CustInvoiceLine              custInvoiceLine;
+        CustTrans                    custTransLoc;
+        BankAccountTable             bankAccountTable  = BankAccountTable::find(companyInfo.Bank);
+        DirPartyTable                dirPartyTable,dirPartyTableLoc;
+        ContactPerson                contactPerson;
+        LogisticsElectronicAddress   logisticsElectronicAddress;
+        DefaultDimensionView         defaultDimensionView;
+        str                          TitleName;
+        DirPartyLocation             dirPartyLocation,dirLocation;
+        LogisticsElectronicAddress   electronicAddress;
+        CompanyInfo                  companyInfoLoc;
+        DirPartyPostalAddressView    dirPartyPostalAddressView,dirPartyPostalAddressViewLoc,dirPartyPostalAddressViewLocal;
+        companyInfoLoc = companyInfo::find();
+        CustCollectionsContact       custCollectionsContact = custCollectionsContact::find(_custTable.AccountNum);
+        boolean set;
+        str companyAddresstext;
+        str CustomerAddresstext;
+        str CompanyAddresstext2;
+        #define.MyKlientnumber('Klientennummer:')
+        #define.MyKlientname('KlientID')
+        #define.MyFax('Fax:')
+        #define.MyFooterText('Mitglied im Diakonischen Werk Berlin-Brandenburg-schlesische Oberlausitz')
+        #define.MyUstIdNr('USt-IdNr:')
+        #define.MyS42('S42')
+        #define.S42VatNum('DE322174905')
+        #define.S31VatNum('DE137177632')
+        #define.DEU('DEU')
+        
+        real VarValue;
+        CustCollectionLetterTrans custCollectionLetterTransLoc,custCollectionLetterTransLocal;
+
+        next populateCustCollectionJourTmp(_custCollectionLetterJour,_custTable,_custCollectionLetterTrans,_formLetterRemarks,_taxSpec,_postingsUntil);
+        ste_CustCollectionJourTmp.clear();
+        ttsbegin;
+        {
+            CustCollectionJourTmp.CustCollectionTrans_DueDate = _custCollectionLetterJour.DueDate;
+            CustCollectionJourTmp.STE_LegalEntity   = companyInfo.Name;
+            CustCollectionJourTmp.STE_LegalEntityId = companyInfo.dataArea;
+            ste_CustCollectionJourTmp.STE_Fee           = _custCollectionLetterJour.Fee;
+           
+            if(companyInfo.dataArea != #MyS42)
+            {
+                CustCollectionJourTmp.STE_TextMessage  = #MyFooterText;
+            }
+             
+            select firstonly   defaultDimensionView
+            where defaultDimensionView.DefaultDimension == _custCollectionLetterJour.DefaultDimension
+                && defaultDimensionView.Name == #MyKlientname;
+            {
+                if(defaultDimensionView.DisplayValue)
+                {
+                    CustCollectionJourTmp.STE_KlientId = #MyKlientnumber + '  '+ defaultDimensionView.DisplayValue;
+                }
+            }
+        
+            select firstonly  dirPartyTable
+            join contactPerson
+            where contactPerson.Party == dirPartyTable.RecId
+            && contactPerson.CustAccount == _custTable.AccountNum
+                join dirPartyPostalAddressView
+                where dirPartyPostalAddressView.Party == dirPartyTable.RecId;
+
+            select firstonly  dirPartyTableLoc
+                where dirPartyTableLoc.RecId == _custTable.Party
+            join dirPartyPostalAddressViewLoc
+                where dirPartyPostalAddressViewLoc.Party == dirPartyTableLoc.RecId;
+
+            select firstonly dirPartyPostalAddressViewLocal
+                where dirPartyPostalAddressViewLocal.Party == companyInfoLoc.RecId;
+
+            {
+                CustCollectionJourTmp.STE_ContactPersonName = dirPartyTable.Name;
+                if(dirPartyPostalAddressViewLoc.CountryRegionId == #DEU)
+                {
+                    CustomerAddresstext =   dirPartyPostalAddressViewLoc.Street +' '+ dirPartyPostalAddressViewLoc.StreetNumber +'\n'+ dirPartyPostalAddressViewLoc.ZipCode +' '+ dirPartyPostalAddressViewLoc.City;
+
+                    CompanyAddresstext =   dirPartyPostalAddressViewLocal.Street +' '+ dirPartyPostalAddressViewLocal.StreetNumber +'\n'+ dirPartyPostalAddressViewLocal.ZipCode +' '+ dirPartyPostalAddressViewLocal.City;
+
+                    CompanyAddresstext2 = dirPartyPostalAddressViewLocal.Street +' '+ dirPartyPostalAddressViewLocal.StreetNumber +' '+'|' +dirPartyPostalAddressViewLocal.ZipCode +' '+ dirPartyPostalAddressViewLocal.City;
+                }
+                else
+                {
+                    CustomerAddresstext =   dirPartyPostalAddressViewLoc.Street +' '+ dirPartyPostalAddressViewLoc.StreetNumber +'\n'+ dirPartyPostalAddressViewLoc.ZipCode +' '+ dirPartyPostalAddressViewLoc.City+ '\n'+dirPartyPostalAddressView.CountryRegionId;
+                    
+                    CompanyAddresstext =   dirPartyPostalAddressViewLocal.Street +' '+ dirPartyPostalAddressViewLocal.StreetNumber +'\n'+dirPartyPostalAddressViewLocal.ZipCode +' '+ dirPartyPostalAddressViewLocal.City+ '\n'+dirPartyPostalAddressViewLocal.CountryRegionId;
+
+                    CompanyAddresstext2 = dirPartyPostalAddressViewLocal.Street +' '+ dirPartyPostalAddressViewLocal.StreetNumber +'\n'+dirPartyPostalAddressViewLocal.ZipCode +' '+ dirPartyPostalAddressViewLocal.City+'\n'+dirPartyPostalAddressViewLocal.CountryRegionId;
+                }
+            }
+            if(dirPartyPostalAddressViewLoc)
+            {
+                custCollectionJourTmp.CustomerAddress = CustomerAddresstext;
+                CustCollectionJourTmp.CompanyAddress = CompanyAddresstext2;
+            }
+               
+            if(dirPartyPostalAddressViewLocal)
+            {
+                custCollectionJourTmp.CompanyAddress = CompanyAddresstext;
+               
+            }
+                
+            CustCollectionJourTmp.STE_CollectionsContact = custCollectionsContact.editCustCollectionsContactPersonName(set,dirPartyTable.Name);
+            CustCollectionJourTmp.STE_BankName    = bankAccountTable.BankGroupId;
+            CustCollectionJourTmp.STE_SwiftNumber = bankAccountTable.SWIFTNo;
+            CustCollectionJourTmp.STE_Iban        = bankAccountTable.IBAN;
+            if(companyInfo.dataArea == #MyS42)
+            {
+
+                CustCollectionJourTmp.STE_CompanyCoRegNum   = #MyUstIdNr +' '+ #S42VatNum;
+            }
+            else
+            {
+                CustCollectionJourTmp.STE_CompanyCoRegNum   = #MyUstIdNr+' '+ #S31VatNum;
+            }
+            
+            select firstonly custCollectionLetterTransLocal
+                where custCollectionLetterTransLocal.RecId == _custCollectionLetterTrans.RecId
+                join custTransLoc
+                where custTransLoc.Voucher == custCollectionLetterTransLocal.Voucher
+                &&custTransLoc.AccountNum ==  custCollectionLetterTransLocal.AccountNum
+                && custCollectionLetterTransLocal.CollectionLetterIssued == NoYes::Yes;
+
+            TitleName = strKeep(custCollectionJourTmp.CollectionLetterTitle,'0123456789');
+            ste_CustCollectionJourTmp.STE_CustCollectionTrans_TransDate = custCollectionLetterTransLocal.TransDate;
+            ste_CustCollectionJourTmp.STE_CustCollectionTrans_Invoice = custCollectionLetterTransLocal.Invoice;
+            ste_CustCollectionJourTmp.STE_CustCollectionTrans_DueDate =custCollectionLetterTransLocal.DueDate;
+                
+            if(custCollectionLetterTransLocal)
+            {
+                custInvoiceLine = custInvoiceLine::findByParentRecId(custinvoicetable.RecId);
+                ste_CustCollectionJourTmp.STE_AmountCur               = custCollectionLetterTransLocal.RemainAmount; 
+                CustCollectionJourTmp.STE_Update                  = NoYes::Yes;
+                ste_CustCollectionJourTmp.AmountCur                   = num2Str(custTransLoc.ReportingCurrencyAmount,1,2,2,1);
+                ste_CustCollectionJourTmp.RemainAmount                = num2Str(custTransLoc.remainAmountCur(),1,2,2,1);
+                ste_CustCollectionJourTmp.STE_CollectionLetterTitle   = any2Str(_custCollectionLetterTrans.CollectionLetterCode); 
+                ste_CustCollectionJourTmp.STE_CustCollectionTrans_RemainAmount = custTransLoc.remainAmountCur();
+                CustCollectionJourTmp.CollectionLetterNum         = custCollectionLetterTransLocal.CollectionLetterNum;
+            }
+            
+            while select * from custCollectionLetterTransLoc
+                where custCollectionLetterTransLoc.AccountNum == _custCollectionLetterTrans.AccountNum
+                && custCollectionLetterTransLoc.CollectionLetterNum == _custCollectionLetterJour.CollectionLetterNum
+                 && custCollectionLetterTransLoc.CollectionLetterIssued == NoYes::Yes
+                join custTransLoc
+                where  custTransLoc.Voucher == custCollectionLetterTransLoc.Voucher
+                && custTransLoc.AccountNum ==  custCollectionLetterTransLoc.AccountNum
+             
+              
+            {
+                VarValue += custTransLoc.remainAmountCur()+_custCollectionLetterJour.Fee;
+            }
+            CustCollectionJourTmp.STE_TotalRemainAmount = num2Str(VarValue,1,2,2,1);
+            recordInsertList.add(ste_CustCollectionJourTmp);
+            if(custCollectionLetterTransLocal)
+            {
+                recordInsertList.insertDatabase();
+            }
+           
+            while select Location,Locator,Type,LocatorExtension from  logisticsElectronicAddress
+            join dirLocation
+                where dirLocation.Location == logisticsElectronicAddress.Location
+            && dirLocation.Party           == dirPartyTable.RecId
+            {
+                if(logisticsElectronicAddress.Type     == LogisticsElectronicAddressMethodType::Email)
+                {
+                    CustCollectionJourTmp.STE_Email  = logisticsElectronicAddress.Locator;
+                }
+                else if(logisticsElectronicAddress.Type == LogisticsElectronicAddressMethodType::Phone)
+                {
+                    CustCollectionJourTmp.STE_Phone  += logisticsElectronicAddress.Locator+'-'+logisticsElectronicAddress.LocatorExtension +'\n';
+                }
+                else if (logisticsElectronicAddress.Type == LogisticsElectronicAddressMethodType::Fax)
+                {
+                    CustCollectionJourTmp.STE_Fax   = logisticsElectronicAddress.Locator+'-'+logisticsElectronicAddress.LocatorExtension;
+                }
+            }
+            
+            select firstonly dirPartyLocation
+                where dirPartyLocation.Party == companyInfoLoc.RecId
+                &&  dirPartyLocation.IsPostalAddress == NoYes::No
+                join electronicAddress
+                where electronicAddress.Location == dirPartyLocation.Location
+                && electronicAddress.Type == LogisticsElectronicAddressMethodType::Fax;
+            {
+                if(electronicAddress.Locator)
+                {
+                    CustCollectionJourTmp.STE_FaxLegalEntity    = #MyFax +'  '+ electronicAddress.Locator +'-'+electronicAddress.LocatorExtension;
+                }
+            }
+           
+
+        }
+        ttscommit;
+    }
+
+}

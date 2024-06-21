@@ -1,0 +1,38 @@
+[ExtensionOf(classStr(SalesTableListPageInteraction))]
+final class SalesTableListPageInteraction_Extension
+{
+    /// <summary>
+    /// To show partial and full sales orders
+    /// </summary>
+    /// <param name = "_query"></param>
+    public void initializeQuery(Query _query)
+    {
+        if(this.listPage().listPageArgs().menuItemName() == menuItemDisplayStr(SalesTableListPageShippedNotInvoiced))
+        {
+            QueryBuildDataSource salesTable_qbds = _query.dataSourceTable(tableNum(SalesTable));
+            salesTable_qbds.addRange(fieldNum(SalesTable, SalesStatus)).value(queryValue(salesStatus::Backorder));
+
+            QueryBuildDataSource salesLine_qbds = _query.dataSourceTable(tableNum(SalesTable)).addDataSource(tableNum(SalesLine));
+            salesLine_qbds.relations(true);
+            salesLine_qbds.joinMode(JoinMode::ExistsJoin);
+
+            QueryBuildDataSource custPackingSlipTrans_qbds = salesLine_qbds.addDataSource(tableNum(CustPackingSlipTrans));
+            custPackingSlipTrans_qbds.joinMode(JoinMode::ExistsJoin);
+            custPackingSlipTrans_qbds.addlink(fieldNum(SalesLine, SalesId), fieldNum(custPackingSlipTrans, SalesId),salesLine_qbds.name());
+
+            custPackingSlipTrans_qbds.addRange(fieldNum(CustPackingSlipTrans, DataAreaId)).value(strFmt('( (%7.%1 >= %2) && (%8.%3 == %4) ) || ( (%7.%1 = %5) && (%8.%3 = %6) )',
+                fieldStr(custPackingSlipTrans, Remain),
+                queryValue(1),
+                fieldStr(SalesLine, SalesStatus),
+                queryValue(any2Int(salesStatus::Backorder)),
+                queryValue(0),
+                queryValue(any2Int(SalesStatus::Delivered)),
+                custPackingSlipTrans_qbds.name(),
+                salesLine_qbds.name()));
+
+        }
+        next initializeQuery(_query);
+
+    }
+
+}

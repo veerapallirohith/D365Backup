@@ -1,0 +1,116 @@
+/// <summary>
+/// This class to used to get the lookup for the cost center
+/// </summary>
+internal final class STE_AssetAnalysisUIbuilder extends  SrsReportDataContractUIBuilder
+{
+    STEAssetAnalysisContract contract;
+    public DialogField CostCenter;
+    // public DialogField Books;
+    DialogField  dialogBooksList;
+   
+    public void postBuild()
+    {
+        super();
+        contract = this.dataContractObject();
+        // binding dialogs with contract fields
+
+        CostCenter = this.bindInfo().getDialogField(this.dataContractObject(), methodStr(STEAssetAnalysisContract, parmCostCenter));
+        CostCenter.registerOverrideMethod(methodStr(FormStringControl,lookup),methodStr(STE_AssetAnalysisUIbuilder,CostCenterlookup),this);
+      
+
+        // Books = this.bindInfo().getDialogField(this.dataContractObject(), methodStr(STEAssetAnalysisContract, parmBooks));
+        // Books.registerOverrideMethod(methodStr(FormStringControl,lookup),methodStr(STE_AssetAnalysisUIbuilder,lookupBooksList),this);
+
+        //  this.addDialogField(methodStr(contract,BooksList),contract);
+
+
+    }
+
+    public void postRun()
+    {
+        dialogBooksList = this.bindInfo().getDialogField(this.dataContractObject(),methodStr(STEAssetAnalysisContract,Books));
+        if(dialogBooksList)
+        {
+            dialogBooksList.lookupButton(2);
+        }
+        dialogBooksList.registerOverrideMethod(methodStr(FormStringControl,Lookup), methodStr(STE_AssetAnalysisUIbuilder,lookupBooksList),this);
+
+    }
+
+    private void CostCenterlookup(FormStringControl _lookup)
+    {
+        Query          query;
+        QueryBuildDataSource  qbds;
+        SysTableLookup     sysTableLookup;
+        DimensionAttribute   dimAttribute;
+        DimensionFinancialTag dimensionFinancialTag;
+        DimensionAttributeValue dimensionAttributeValue;
+        DimAttributeOMCostCenter dimAttributeOMCostCenter;
+        QueryBuildRange                     range1;
+        //#define.KST('kst')
+        container kstValues;
+        str kst;
+
+        kst = LedgerParameters::find().STE_Name;
+        
+        /*
+        while select * from  dimensionAttributeValue
+            join dimAttribute where dimAttribute.RECID == dimensionAttributeValue.DIMENSIONATTRIBUTE
+            join DimensionFinancialTag
+            where   DimensionFinancialTag.RecId == dimensionAttributeValue.EntityInstance
+            && dimAttribute.Name == kst
+        {
+            kstValues += DimensionFinancialTag.FinancialTagCategory;
+        }*/
+        
+
+        select firstonly dimAttributeOMCostCenter;
+
+        if(dimAttributeOMCostCenter)
+        {
+            kstValues += dimAttributeOMCostCenter.Value;
+        }
+        //select firstonly dimensionAttributeValue
+        //    join dimAttribute where dimAttribute.RECID == dimensionAttributeValue.DIMENSIONATTRIBUTE
+        //    join DimensionFinancialTag
+        //    where   DimensionFinancialTag.RecId == dimensionAttributeValue.EntityInstance
+        //    && dimAttribute.Name == kst;
+        //if(DimensionFinancialTag)
+        //{
+        //    kstValues += DimensionFinancialTag.FinancialTagCategory;
+        //}
+
+        sysTableLookup = SysTableLookup::newParameters(tablenum(DimAttributeOMCostCenter),_lookup);
+        sysTableLookup.addLookupfield(fieldnum(DimAttributeOMCostCenter, Value));
+        sysTableLookup.addLookupfield(fieldNum(DimAttributeOMCostCenter, Name));
+        query = new Query();
+        qbds = query.addDataSource(tableNum(DimAttributeOMCostCenter));
+        //   qbds.addRange(fieldNum(DimensionFinancialTag, FinancialTagCategory)).value(queryvalue('5637144579'));
+        // qbds.addRange(fieldNum(DimensionFinancialTag, FinancialTagCategory)).value(queryvalue(kstValues));
+        //range1 = qbds.addrange(fieldNum(DimensionFinancialTag, FinancialTagCategory));
+        //range1.value(con2Str(kstValues));
+        sysTableLookup.parmQuery(query);
+        sysTableLookup.parmUseLookupValue(False);
+        sysTableLookup.performFormLookup();
+    }
+
+    /// <summary>
+    /// This is used to select the multiple books in the parameter
+    /// </summary>
+    /// <param name = "_control">qbds</param>
+    public void lookupBooksList(FormStringControl  _control)
+    {
+        Query query= new Query();
+        container conBooksList;
+        QueryBuildDataSource  qbds;
+       // QueryBuildRange qbr;
+          
+
+        qbds = query.addDataSource(tableNum(AssetBookTable));
+        qbds.addSelectionField(fieldnum(AssetBookTable,BookId));
+
+        syslookupMultiselectGrid::lookup(query, _control, _control, _control, conBooksList);
+
+    }
+
+}

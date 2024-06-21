@@ -1,0 +1,26 @@
+/// <summary>
+/// This class is used to validate FixedAssetAdditionalNumberFormat on asset group table 
+/// </summary>
+internal final class STE_AssetGroupForm_EventHandler
+{
+    
+    /// <summary>
+    /// This method is used to validate FixedAssetAdditionalNumberFormat field,if the data in this field exceeds 9 digits throw error
+    /// </summary>
+    /// <param name = "sender">assetGroup</param>
+    /// <param name = "e">FormControlEventArgs</param>
+    [FormControlEventHandler(formControlStr(AssetGroup, AssetGroup_FixedAssetAdditionalNumberFormat), FormControlEventType::Modified), SuppressBPWarning('BPParameterNotUsed', 'False positive')]
+    public static void AssetGroup_FixedAssetAdditionalNumberFormat_OnModified(FormControl sender, FormControlEventArgs e)
+    {
+        FormDataSource      assetGroup_ds  = sender.formRun().dataSource('assetGroup');
+        AssetGroup assetGroup = assetGroup_ds.cursor();
+        int len = strLen(assetGroup.FixedAssetAdditionalNumberFormat);
+
+        if(len > 9)
+        {
+            Error("@Stephanus:ValidateMessage");
+        }
+      
+    }
+
+}

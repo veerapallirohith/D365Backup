@@ -1,0 +1,204 @@
+ public void update()
+    {
+        super();
+        if(this.DGMA_Status == DGMA_Status::Completed)
+        {
+            BatchHeader batHeader;
+            BatchInfo batInfo;          
+            RunBaseBatch rbbTask;
+            rbbTask = new DGMA_PaymentInvoicesSettlementBatch();
+            batInfo = rbbTask .batchInfo();
+            batInfo .parmCaption(this.FileId);
+            batInfo .parmGroupId(this.FileId);
+            batHeader = BatchHeader ::construct();
+            batHeader .addTask(rbbTask);
+            batHeader.parmRetriesOnFailure(0);
+            batHeader .save();
+
+        }
+    }
+
+
+
+
+class DGMA_RectifyServiceOrderLine_BatchJob extends RunBaseBatch implements BatchRetryable
+{
+    // Packed variables
+    int                 dummy;
+
+    #define.CurrentVersion(2)
+    #localmacro.CurrentList
+        dummy
+    #endmacro
+
+        //Stores parameters of the batch
+        public container pack()
+        {
+            //return conNull();
+            return [#CurrentVersion, #CurrentList];
+        }
+
+        //Returns the stored object for the batch to use
+        public boolean unpack(container packedClass)
+        {
+            //return true;
+            Version version = runbase::getVersion(packedClass);
+            switch (version)
+            {
+                case #CurrentVersion:
+                    [version, #CurrentList] = packedClass;
+                    break;
+                default:
+                    return false;
+            }
+
+            return true;
+        }
+
+        //Determines whether to run on server or client
+        //True - Server; False - Client
+        public boolean runsImpersonated()
+        {
+            return true;
+        }
+
+        boolean prompt()
+        {
+            return super();
+        }
+
+        /// <summary>
+        /// Processes automatic notification events.
+        /// </summary>
+        /// <remarks>
+        /// When this job runs, it captures the current date when it starts.
+        /// Even if the job run time spans multiple days, it will still act as if it
+        /// was run all on the first day.
+        /// </remarks>
+        /// <exception cref="Exception::Error">
+        /// If the validation fails; throws an error.
+        /// </exception>
+        /// <exception cref="Exception::Error">
+        /// If the automatic notification event action is not supported; throws an error.
+        /// </exception>
+        public void run()
+        {
+            SMAServiceOrderTable                    _serviceOrder,serviceOrder;
+            SMAServiceOrderLine                     _serviceOrderLine,serviceLine;
+            SMAParameters                           parameters,smaParameters;
+            int i=0;
+            int j=0;
+            int k=0;
+            while select forupdate _serviceOrderLine where
+            _serviceOrderLine.ServiceOrderStatus == SMAServiceOrderStatus::Posted  &&
+            _serviceOrderLine.WorksManagementID == 0 &&
+            _serviceOrderLine.SignOff == NoYes::No &&
+            _serviceOrderLine.DefaultDimension != 0 &&
+            _serviceOrderLine.TeamLeafTaskId != ''
+            //_serviceOrderLine.ServiceOrderId == 'LSO0000226'
+            {
+                i++;
+                ProjItemTrans itemTrans;
+                select itemTrans where itemTrans.ProjTransId == _serviceOrderLine.ProjTransId;
+                if(itemTrans)
+                {
+                    if(itemTrans.Qty != 0)
+                    {
+                        InventTable inventory= InventTable::find(itemTrans.ItemId);
+                        DGMA_TeamLeafLine teamLeafLine,teamLeafLineUpdate;
+                        SalesPriceAgreementEntity salesPrice;
+
+                        select salesPrice where salesPrice.ItemNumber == itemTrans.ItemId;
+
+                        str invoiceLineId;
+                        if(salesPrice)
+                        {
+                            while select teamLeafLine where
+                        teamLeafLine.TeamLeafTaskId == _serviceOrderLine.TeamLeafTaskId &&
+                        teamLeafLine.RateId == salesPrice.RateId &&
+                        teamLeafLine.Qty == itemTrans.Qty &&
+                        teamLeafLine.ProjSalesPrice == (itemTrans.TotalSalesAmountCur/itemTrans.Qty)
+                            {
+                                select serviceLine where serviceLine.TeamLeafTaskId == _serviceOrderLine.TeamLeafTaskId && serviceLine.TeamLeafInvoiceLineID == teamLeafLine.TeamLeafInvoiceLineID;
+                                if(!serviceLine)
+                                {
+                                    invoiceLineId = teamLeafLine.TeamLeafInvoiceLineID;
+                                    break;
+                                }
+                            }
+                            if(invoiceLineId!='')
+                            {
+                                select teamLeafLineUpdate where teamLeafLineUpdate.TeamLeafTaskId == _serviceOrderLine.TeamLeafTaskId && teamLeafLineUpdate.TeamLeafInvoiceLineID == invoiceLineId;
+                                _serviceOrderLine.TeamLeafInvoiceLineID = teamLeafLineUpdate.TeamLeafInvoiceLineID;
+                                _serviceOrderLine.TeamLeafInvoiceUUID = teamLeafLineUpdate.TeamLeafInvoiceUUID;
+                                _serviceOrderLine.TeamLeafInvoiceLineUUID = teamLeafLineUpdate.TeamLeafInvoiceLineUUID;
+                                _serviceOrderLine.DateExecution = teamLeafLineUpdate.PostingDate;
+                            }
+                        }
+                        j++;
+                        _serviceOrderLine.ItemId = itemTrans.ItemId;
+                        _serviceOrderLine.ProjCategoryId = inventory.projCategoryId;
+                        _serviceOrderLine.Qty = itemTrans.Qty;
+                        _serviceOrderLine.ProjTaxGroup = itemTrans.TaxGroupId;
+                        _serviceOrderLine.ProjTaxItemGroup = itemTrans.TaxItemGroupId;
+                        _serviceOrderLine.ProjSalesPrice = (itemTrans.TotalSalesAmountCur/itemTrans.Qty);
+                        _serviceOrderLine.SignOff = NoYes::Yes;
+                        ttsbegin;
+                        _serviceOrderLine.update();
+                        ttscommit;
+                    }
+                }
+            }
+            Info(strFmt("Total:%1,Updated:%2,Signed off:%3",int2Str(i),int2Str(j),int2Str(k)));
+
+        }
+
+        public static DGMA_RectifyServiceOrderLine_BatchJob construct()
+        {
+            return new DGMA_RectifyServiceOrderLine_BatchJob();
+        }
+
+        public static ClassDescription description()
+        {
+            return "Rectify Service Order Line";
+        }
+
+        public static void main(Args args)
+        {
+            DGMA_RectifyServiceOrderLine_BatchJob batch = new DGMA_RectifyServiceOrderLine_BatchJob();
+            batch.parmInBatch(false);
+
+            if (batch.prompt())
+            batch.runOperation();
+        }
+
+        /// <summary>
+        /// Describes whether the class is designed for execution in a new session.
+        /// </summary>
+        /// <returns>
+        /// false.
+        /// </returns>
+        protected boolean canRunInNewSession()
+        {
+            return false;
+        }
+
+        //Needs to be set to true so class can be ran in a batch
+        public boolean canGoBatch()
+        {
+            return true;
+        }
+
+        /// <summary>
+        /// Specifies if the batch task is retryable for transient exceptions or not.
+        /// </summary>
+        /// <returns>
+        /// If true is returned, the batch task is retryable, otherwise it is not.
+        /// </returns>
+        [Hookable(false)]
+        final boolean isRetryable()
+        {
+            return true;
+        }
+
+}

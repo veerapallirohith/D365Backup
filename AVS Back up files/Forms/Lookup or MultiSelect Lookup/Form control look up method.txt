@@ -1,0 +1,41 @@
+/// <summary>
+    /// Lookup method for CDProjId field
+    /// </summary>
+    /// <param name="sender">Form control type variable</param>
+    /// <param name="e">Form control event args type variable</param>
+    [FormControlEventHandler(formControlStr(ProjForecastItemCopy, ForecastSales_CDProjId), FormControlEventType::Lookup),
+        SuppressBPWarning('BPParameterNotUsed', 'Parameter required by interface')]
+    public static void ForecastSales_CDProjId_OnLookup(FormControl sender, FormControlEventArgs e)
+    {
+        FormRun                 formRun = sender.formRun();
+        FormDataSource          forecastSales_ds = formRun.dataSource(formDataSourceStr(ProjForecastItemCopy, ForecastSales)) as FormDataSource;
+        ForecastSales           locForecastSales = forecastSales_ds.cursor();
+       // ForecastSales           locForecastSales = formRun.args().record() as ForecastSales;
+        QueryBuildDataSource    qbds;
+        SysTableLookup          sysTableLookup = SysTableLookup::newParameters(tablenum(ProjTable), sender);
+        Query                   query = new Query();
+        ProjTable               locProjTable;
+        ProjId                  projParentId;
+
+        projParentId = locForecastSales.ProjId;
+
+        select firstonly locProjTable
+            where locProjTable.ProjId == locForecastSales.ProjId;
+
+        while (locProjTable.ParentId)
+        {
+            projParentId = locProjTable.ParentId;
+            
+            select firstonly locProjTable
+                where locProjTable.ProjId == projParentId;
+        }
+        
+        sysTableLookup.addLookupfield(fieldnum(ProjTable, ProjId), true);   
+        qbds = query.addDataSource(tablenum(ProjTable));
+        qbds.addRange(fieldNum(ProjTable, ProjId)).value(strFmt('%1',strFmt('%1*',projParentId)));             
+        sysTableLookup.parmQuery(query); 
+        sysTableLookup.performFormLookup(); 
+        FormControlCancelableSuperEventArgs ce = e as FormControlCancelableSuperEventArgs;
+ 
+        ce.CancelSuperCall();
+    }

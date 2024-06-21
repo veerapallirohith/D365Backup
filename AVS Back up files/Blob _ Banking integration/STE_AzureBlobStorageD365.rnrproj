@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <BuildTasksDirectory Condition=" '$(BuildTasksDirectory)' == ''">$(MSBuildProgramFiles32)\MSBuild\Microsoft\Dynamics\AX</BuildTasksDirectory>
+    <Model>Stephanus</Model>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <OutputPath>bin</OutputPath>
+    <SchemaVersion>2.0</SchemaVersion>
+    <GenerateCrossReferences>True</GenerateCrossReferences>
+    <RunAppCheckerRules>False</RunAppCheckerRules>
+    <LogAppcheckerDiagsAsErrors>False</LogAppcheckerDiagsAsErrors>
+    <DeployOnline>False</DeployOnline>
+    <ProjectGuid>{eacf4f4d-25ef-428d-92f5-d8c872c82eec}</ProjectGuid>
+    <Name>STE_AzureBlobStorageD365</Name>
+    <RootNamespace>STE_AzureBlobStorageD365</RootNamespace>
+    <StartupType>Class</StartupType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <Configuration>Debug</Configuration>
+    <DBSyncInBuild>False</DBSyncInBuild>
+    <GenerateFormAdaptors>False</GenerateFormAdaptors>
+    <Company>
+    </Company>
+    <Partition>initial</Partition>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DataEntityExpandParentChildRelations>False</DataEntityExpandParentChildRelations>
+    <DataEntityUseLabelTextAsFieldName>False</DataEntityUseLabelTextAsFieldName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="Classes\" />
+    <Folder Include="Form Extensions\" />
+    <Folder Include="Label Files\" />
+    <Folder Include="Tables\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="AxClass\STE_ERDocuManagementEvents_Handler_Old">
+      <SubType>Content</SubType>
+      <Name>STE_ERDocuManagementEvents_Handler_Old</Name>
+      <Link>Classes\STE_ERDocuManagementEvents_Handler_Old</Link>
+    </Content>
+    <Content Include="AxFormExtension\DocuType.Stephanus">
+      <SubType>Content</SubType>
+      <Name>DocuType.Stephanus</Name>
+      <Link>Form Extensions\DocuType.Stephanus</Link>
+    </Content>
+    <Content Include="AxLabelFile\Stephanus_de">
+      <SubType>Content</SubType>
+      <Name>Stephanus_de</Name>
+      <Link>Label Files\Stephanus_de</Link>
+    </Content>
+    <Content Include="AxTable\STE_AzureBlobStorageLocation">
+      <SubType>Content</SubType>
+      <Name>STE_AzureBlobStorageLocation</Name>
+      <Link>Tables\STE_AzureBlobStorageLocation</Link>
+    </Content>
+    <Content Include="Stephanus.de.label.txt">
+      <SubType>Content</SubType>
+      <Name>Stephanus.de.label.txt</Name>
+      <DependentUpon>AxLabelFile\Stephanus_de</DependentUpon>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="STE_AzureBlobStorageLibrary, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <Name>STE_AzureBlobStorageLibrary</Name>
+      <HintPath>C:\VSTS\DEV\Projects\STE_AzureBlobStorageLibrary\bin\Debug\STE_AzureBlobStorageLibrary.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime, Version=4.0.10.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <Name>System.Runtime</Name>
+      <HintPath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5.1\Facades\System.Runtime.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.Common.targets" />
+  <Import Project="$(BuildTasksDirectory)\Microsoft.Dynamics.Framework.Tools.BuildTasks.targets" />
+</Project>

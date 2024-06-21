@@ -1,0 +1,12 @@
+ [FormControlEventHandler(formControlStr(ProjForecastItemCopy, ForecastSales_CDProjId), FormControlEventType::Modified),
+        SuppressBPWarning('BPParameterNotUsed', 'Parameter required by interface')]
+    public static void ForecastSales_CDProjId_OnModified(FormControl sender, FormControlEventArgs e)
+    {
+        FormRun                     formRun = sender.formRun();
+        FormDataSource              forecastSales_ds = formRun.dataSource(formDataSourceStr(ProjForecastItemCopy, ForecastSales)) as FormDataSource;
+        ForecastSales               forecastSales = forecastSales_ds.cursor();
+
+        ttsbegin;
+        forecastSales.ProjId = forecastSales.CDProjId;
+        ttscommit;
+    }

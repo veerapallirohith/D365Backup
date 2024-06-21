@@ -1,0 +1,277 @@
+/// <summary>
+/// This class is a extension of purch line table , used to create new increment number based on main asset id while invoice posted
+/// </summary>
+[ExtensionOf(tableStr(PurchLine))]
+internal final class STE_PurchLineTable_Extension
+{
+
+    /// <summary>
+    /// This method is used to generate new number sequence in decimal format based on main fixed asset id when invoice posted
+    /// </summary>
+    /// <param name = "_assetId">AssetId</param>
+    /// <param name = "_purchLine">PurchLine</param>
+    /// <returns>Childlist</returns>
+    public container PurchLinechildList(AssetId _assetId,PurchLine _purchLine)
+    {
+        AssetGroup assetGroup;
+        AssetTable assetTable;
+
+        container  childList;
+        str        input;
+        str        nextid;
+        real       increment;
+        real       inc;
+        str        increasingNum;
+        str        countIncrementNum;
+        str        testInc;
+        real       newInc;
+        ;
+        assetTable.recordLevelSecurity(true);
+        str purchbookid =_purchLine.AssetBookId;
+        ttsbegin;
+
+        while  select AssetId, MainAssetId,IncrementNumber,assetgroup from assetTable
+            where assetTable.MainAssetId == _assetId
+        
+        {
+            if(assetTable)
+            {
+                testInc = assetTable.AssetId;
+                assetGroup = AssetGroup::find(assetTable.AssetGroup);
+
+                {
+                    int len = strLen(assetGroup.FixedAssetAdditionalNumberFormat);
+                    input = assetTable.MainAssetId;
+                    countIncrementNum = any2Str(increment);
+                    int countfunc = strLen(countIncrementNum);
+                    int newvar = countfunc-1;
+                    if(len != newvar)
+                    {
+                        increment = 0;
+                    }
+                    switch(len)
+                    {
+                        case 1:
+                            inc = increment+0;
+                            newInc = 0;
+                            break;
+                        case 2:
+                            inc = increment+0.1;
+                            newInc = 0.1;
+                            break;
+                        case 3:
+                            inc = increment+0.01;
+                            newInc = 0.01;
+                            break;
+                        case 4:
+                            inc = increment+0.001;
+                            newInc = 0.001;
+                            break;
+                        case 5:
+                            inc = increment+0.0001;
+                            newInc = 0.0001;
+                            break;
+                        case 6:
+                            inc = increment+0.00001;
+                            newInc = 0.00001;
+                            break;
+                        case 7:
+                            inc = increment+0.000001;
+                            newInc = 0.000001;
+                            break;
+                        case 8:
+                            inc = increment+0.0000001;
+                            newInc = 0.0000001;
+                            break;
+                        case 9:
+                            inc = increment+0.00000001;
+                            newInc = 0.00000001;
+                            break;
+                    }
+                    nextId = subStr(input,-0,-0) + any2Str(inc);
+                    IncreasingNum = nextId;
+
+                    {
+                        childList += assetTable.MainAssetId + strDel(IncreasingNum,1,1);
+                    }
+
+                    switch(len)
+                    {
+                        case 1:
+                            increment+= 0;
+                            break;
+                        case 2:
+                            increment+= 0.1;
+                            break;
+                        case 3:
+                            increment+= 0.01;
+                            break;
+                        case 4:
+                            increment+= 0.001;
+                            break;
+                        case 5:
+                            increment+= 0.0001;
+                            break;
+                        case 6:
+                            increment+= 0.00001;
+                            break;
+                        case 7:
+                            increment+= 0.000001;
+                            break;
+                        case 8:
+                            increment+= 0.0000001;
+                            break;
+                        case 9:
+                            increment+= 0.00000001;
+                            break;
+                    }
+                }
+            }
+        }
+        ttscommit;
+       
+        ttsbegin;
+        if(!increment)
+        {
+            while  select AssetId, MainAssetId,IncrementNumber,assetgroup from _purchLine
+            where _purchLine.MainAssetId == _assetId
+            {
+
+            
+                {
+                    testInc = _purchLine.AssetId;
+                    assetGroup = AssetGroup::find(_purchLine.AssetGroup);
+
+                    {
+                        int len = strLen(assetGroup.FixedAssetAdditionalNumberFormat);
+                        input = _purchLine.MainAssetId;
+                        countIncrementNum = any2Str(increment);
+                        int countfunc = strLen(countIncrementNum);
+                        int newvar = countfunc-1;
+                        if(len != newvar)
+                        {
+                            increment = 0;
+                        }
+                        switch(len)
+                        {
+                            case 1:
+                                inc = increment+0;
+                                newInc = 0;
+                                break;
+                            case 2:
+                                inc = increment+0.1;
+                                newInc = 0.1;
+                                break;
+                            case 3:
+                                inc = increment+0.01;
+                                newInc = 0.01;
+                                break;
+                            case 4:
+                                inc = increment+0.001;
+                                newInc = 0.001;
+                                break;
+                            case 5:
+                                inc = increment+0.0001;
+                                newInc = 0.0001;
+                                break;
+                            case 6:
+                                inc = increment+0.00001;
+                                newInc = 0.00001;
+                                break;
+                            case 7:
+                                inc = increment+0.000001;
+                                newInc = 0.000001;
+                                break;
+                            case 8:
+                                inc = increment+0.0000001;
+                                newInc = 0.0000001;
+                                break;
+                            case 9:
+                                inc = increment+0.00000001;
+                                newInc = 0.00000001;
+                                break;
+                        }
+                        nextId = subStr(input,-0,-0) + any2Str(inc);
+                        IncreasingNum = nextId;
+
+                        {
+                            childList += _purchLine.MainAssetId + strDel(IncreasingNum,1,1);
+                        }
+
+                        switch(len)
+                        {
+                            case 1:
+                                increment+= 0;
+                                break;
+                            case 2:
+                                increment+= 0.1;
+                                break;
+                            case 3:
+                                increment+= 0.01;
+                                break;
+                            case 4:
+                                increment+= 0.001;
+                                break;
+                            case 5:
+                                increment+= 0.0001;
+                                break;
+                            case 6:
+                                increment+= 0.00001;
+                                break;
+                            case 7:
+                                increment+= 0.000001;
+                                break;
+                            case 8:
+                                increment+= 0.0000001;
+                                break;
+                            case 9:
+                                increment+= 0.00000001;
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        ttscommit;
+        str contstore = conPeek(childList,conLen(childList));
+        str contstorenew;
+        real inc2 = inc + newInc;
+        str ste = any2Str(inc2);
+        str read= strDel(ste,1,1);
+
+        while  select  mainassetid,incrementnumber,assetgroup,assetid,RecId from assetTable
+            order by recid desc
+            where assetTable.MainAssetId == _assetId
+        {
+            if(contstore == assetTable.AssetId)
+            {
+                contstorenew = assetTable.MainAssetId + read;
+            }
+        }
+        if(contstorenew != '')
+        {
+            this.IncrementNumber = contstorenew;
+            this.AssetBookId = purchbookid;
+        }
+        else
+        {
+            this.IncrementNumber = contstore;
+            this.MainAssetId     = _assetId;
+            this.AssetBookId = purchbookid;
+        }
+
+        return childList;
+    }
+
+    /// <summary>
+    /// This is a over ride method to assign asset group field
+    /// </summary>
+    /// <param name = "_parmLine_Asset">VendDocumentLineAssetMap</param>
+    void initFromPurchParmLine_Asset(VendDocumentLineAssetMap _parmLine_Asset)
+    {
+        next initFromPurchParmLine_Asset(_parmLine_Asset);
+        this.AssetGroup =_parmLine_Asset.AssetGroup;
+    }
+
+}

@@ -1,0 +1,18 @@
+Requirement =  Currently the report only contains fully open orders. the requirement is to include sales order that are partially open. (i.e. if out of 3 sales order line, 2 lines are delivered/invoiced, but 1 is open , then it should show up on the list.
+
+
+
+We need one place to go to see all shipments that are ready to be invoiced, full shipments as well as partial shipments
+
+this includes 2 scenarios:
+
+Sales order with multiple lines, but only 1 line has shipped
+
+Sales order where the total quantity of the line has not shipped, only a portion of it
+
+The inquiry can be found via the navigation path below. The inquiry only contains sales order that are fully delivered. The request is to enhance the inquiry to include:
+
+Sales order that contains ANY sales order line that has been partially or fully delivered
+
+
+since we are using open sales order inquiry to create project invoice, and this is not an requirement that we've received before go live, i'll need to lower the priority of this request to 3 and handle during post go live support. 

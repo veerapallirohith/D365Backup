@@ -1,0 +1,61 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using System.IO;
+
+namespace STE_AzureBlobStorageLibrary
+{
+    public class STE_AzureBlobStorageHelperLibrary
+    {
+        public string srcPath { get; set; }
+        public string destinationPath { get; set; }
+        public string storageAccountName { get; set; }
+        public string containerName { get; set; }
+        public string storageEndPoint { get; set; }
+        public string blobName { get; set; }
+
+     
+
+        HttpClient httpClient = new HttpClient();
+
+        static void Main()
+        {
+
+        }
+
+        public Boolean saveFileInBlob(string _StorageAccountName, string _Container, string _SASKey = "", string _BlobName = "", System.IO.Stream _stream = null)
+        {
+            
+/*
+            _StorageAccountName = "stephanusblobstorage";
+            _Container = "etlbanking";
+            _SASKey = "sp=racwdli&st=2022-12-30T18:56:53Z&se=2024-12-30T02:56:53Z&sv=2021-06-08&sr=c&sig=1v0vA%2BKJWAJRAJJNWM%2BFJCOSlZGUfYVH%2BhJAb7PD144%3D";
+            _BlobName = "TEST_01"; */
+              
+            string storageAddress = string.Format("https://{0}.blob.core.windows.net/", _StorageAccountName);
+
+            //preparing URI to drop the file to blob
+            Uri containerUrl = new Uri(storageAddress + $"{_Container}/{_BlobName}" + "?" + _SASKey);
+
+            // which returns complete URI which is prepared in previous step
+            string sasUri = containerUrl.AbsoluteUri;
+
+            //x-ms-blob-type: <BlockBlob> - Returns the blob's type.
+            httpClient.DefaultRequestHeaders.Add("x-ms-blob-type", "BlockBlob");
+
+            // Drops the specified Uri as an asynchronous operation to blob
+            HttpResponseMessage response = httpClient.PutAsync(sasUri, new StreamContent(_stream)).GetAwaiter().GetResult();
+           
+            if (response.IsSuccessStatusCode)
+                return true;
+            else
+                return false;
+        }
+    }
+
+
+
+}

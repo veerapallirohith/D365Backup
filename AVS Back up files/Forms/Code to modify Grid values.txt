@@ -1,0 +1,14 @@
+QueryRun    qr = new QueryRun(SalesLine_ds.query());
+    SalesLine   salesLineLocal;
+    
+    ttsBegin;
+    while (qr.next())
+    {
+        salesLineLocal = qr.get(tableNum(SalesLine));
+        salesLineLocal.selectForUpdate(true);
+        salesLineLocal.QtyOrdered = 20; 
+        salesLineLocal.update();
+    }
+    ttsCommit;
+    
+    SalesLine_ds.executeQuery();

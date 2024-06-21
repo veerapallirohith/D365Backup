@@ -1,0 +1,68 @@
+$(document).ready(function () {
+  // Style
+  $("#mutltiFormButton").addClass('avs-button')
+  if($("#PreviousButton").is(":visible")){
+    $("fieldset").eq(1).append($("#mutltiFormButton"));
+  }
+  else{
+    $("#mutltiFormButton").hide()
+  }
+  $("#mutltiFormButton").on('click', ()=>{
+    const ruleID = $("#crf71_numberseq").val()
+    const description = $("#crf71_description").val()
+    const company = $("#crf71_company option:selected").val()
+    const url = "/Rules-Allocation/Rules-Allocation-Additional-lines" + `?rule_id=${ruleID}&description=${description}&company=${company}`
+    window.location.href =  url
+
+  })
+  
+  const costElement = `<select name="ctl00$ContentContainer$WebFormControl_74dc279757dd45cd8c1251676a88419b$EntityFormView$crf71_financialdimension" 
+  id="crf71_financialdimension" class="text form-control "
+  onchange="setIsDirty(this.id);" onkeypress="javascript:return LengthError(this, event);"></select>`;
+  const costElementstellenar = `<select name="ctl00$ContentContainer$WebFormControl_74dc279757dd45cd8c1251676a88419b$EntityFormView$crf71_costcenteroffset"
+  id ="crf71_costcenteroffset" class = "text form-control "
+  onchange = "setIsDirty(this.id);" onkeypress="javascript:return LengthError(this, event);"></select>`;
+
+  let constCentreElement = $("input#crf71_financialdimension");
+  constCentreElement.parent().html(costElement);
+  let constCentreNewElement = $("select#crf71_financialdimension");
+  constCentreNewElement.html(`<option value="">Loading...</option>`);
+
+  let costcenteroffset = $("input#crf71_costcenteroffset");
+  stellenart.parent().html(costElementstellenar);
+  let costcenteroffsetElement = $("select#crf71_costcenteroffset");
+  costcenteroffsetElement.html(`<option value="">Loading...</option>`);
+
+  $.ajax({
+    type: "GET",
+    url: "/_api/crf71_ste_costallocationextractiondvses?$select=crf71_costcenter&$count=true",
+    contentType: "application/json",
+    success: function (res)
+     {
+      constCentreNewElement.html(
+        `<option value="">Select Cost Center</option>`
+      );
+      costcenteroffsetElement.html(`<option value="">Select Cost Center</option>`);
+      for (let i = 0; i < res.value.length; i++) {
+        if (res.value[i].crf71_costcenter) {
+          constCentreNewElement.append(
+            `<option value="${res.value[i].crf71_costcenter}">${res.value[i].crf71_costcenter}</option>`
+          );
+        }
+      }
+      for(let i = 0; i<res.value.length; i++)
+      {
+        if(res.value[i].crf71_costcenteroffset)
+        {
+          costcenteroffsetElement.append(
+            `<option value="${res.value[i].crf71_costcenter}">${res.value[i].crf71_costcenter}</option>`
+          );
+        }
+      }
+    },
+    error: function (error) {
+      console.error(error);
+    },
+  });
+  });
+  

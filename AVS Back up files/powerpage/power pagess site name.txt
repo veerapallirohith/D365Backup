@@ -1,0 +1,3 @@
+site name = Stephanus Kostenleistungsrechnung    
+
+url      = StephanusD365KLR.powerappsportals.com

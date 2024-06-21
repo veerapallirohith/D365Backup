@@ -1,0 +1,7 @@
+ public void init()
+    {
+        next init();
+        FormDataSource ds =this;
+        ProjBudgetLine line = ds.cursor();
+        ds.object(fieldNum(ProjBudgetLine, CategoryId)).mandatory(false);
+    }

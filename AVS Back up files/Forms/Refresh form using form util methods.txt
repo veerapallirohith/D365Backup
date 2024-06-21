@@ -1,0 +1,17 @@
+/// <summary>
+/// This class is extension of asset table form
+/// </summary>
+[ExtensionOf(formStr(AssetTable))]
+internal final class STE_AssetTableForm_Extension
+{
+    /// <summary>
+    /// This is a over rided method used to refresh the structure after saving the data
+    /// </summary>
+    void createStruct()
+    {
+        next createStruct();
+        FormDataUtil::getFormDataSource(assetTable).refresh();
+        FormDataUtil::getFormDataSource(assetTable).reread();
+    }
+
+}

@@ -1,0 +1,83 @@
+/// <summary>
+/// This class is used to validate and change the summarizedDepreciationControl based on assetid, group in create depreciation form
+/// </summary>
+internal final class STE_AssetProposalDepreciationForm_EventHandler
+{
+    
+    /// <summary>
+    /// This event is used to change the summarizedDepreciationControl check box when we enter asset id, if GWGAssets is set to yes
+    /// </summary>
+    /// <param name="sender">Formcontrol</param>
+    /// <param name="e">FormControlEventArgs</param>
+    [FormControlEventHandler(formControlStr(AssetProposalDepreciation, QueryAssetIdControl), FormControlEventType::Modified),
+        SuppressBPWarning('BPParameterNotUsed', 'False positive')]
+    public static void QueryAssetIdControl_OnModified(FormControl sender, FormControlEventArgs e)
+    {
+        FormRun             element       = sender.formRun(); //form element
+        AssetGroupBookSetup assetGroupBookSetup;
+        AssetBook assetBook;
+        AssetTable assetTable;
+        FormCheckBoxControl summarizedDepreciationControl = element.design(0).controlName('SummarizedDepreciationControl');
+        FormStringControl queryAssetIdControl = element.design(0).controlName('QueryAssetIdControl');
+
+        assetTable = AssetTable::find(queryAssetIdControl.valueStr());
+        {
+            select firstonly assetBook where assetBook.AssetId == assetTable.AssetId
+                     &&  assetBook.AssetGroup == assetTable.assetGroup;
+            {
+                select firstonly BookId,AssetGroup,GWGAssets from assetGroupBookSetup
+                where assetGroupBookSetup.BookId == assetBook.BookId
+                    && assetGroupBookSetup.AssetGroup == assetBook.AssetGroup
+                    && assetGroupBookSetup.GWGAssets == NoYes::Yes;
+                {
+                    if(queryAssetIdControl.valueStr() == assetBook.AssetId)
+                    {
+                        if( assetGroupBookSetup.GWGAssets == NoYes::Yes)
+                        {
+                            summarizedDepreciationControl.checked(NoYes::Yes);
+                        }
+                        else
+                        {
+                            summarizedDepreciationControl.checked(NoYes::No);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    ///This event is used to change the summarizedDepreciationControl check box when we enter asset group, if GWGAssets is set to yes
+    /// </summary>
+    /// <param name="sender">formcontrol</param>
+    /// <param name="e">FormControlEventArgs</param>
+    [FormControlEventHandler(formControlStr(AssetProposalDepreciation, QueryAssetGroupControl), FormControlEventType::Modified),
+        SuppressBPWarning('BPParameterNotUsed', 'False positive')]
+    public static void QueryAssetGroupControl_OnModified(FormControl sender, FormControlEventArgs e)
+    {
+        FormRun             element       = sender.formRun(); //form element
+        AssetGroupBookSetup assetGroupBookSetup;
+        FormCheckBoxControl summarizedDepreciationControl = element.design(0).controlName('SummarizedDepreciationControl');
+        FormStringControl queryAssetGroupControl = element.design(0).controlName('QueryAssetGroupControl');
+
+        {
+            select firstonly assetGroupBookSetup
+               where  assetGroupBookSetup.AssetGroup == queryAssetGroupControl.valueStr();
+            {
+                if(queryAssetGroupControl.valueStr() == assetGroupBookSetup.AssetGroup)
+                {
+                    if( assetGroupBookSetup.GWGAssets == NoYes::Yes)
+                    {
+                        summarizedDepreciationControl.checked(NoYes::Yes);
+                    }
+                    else
+                    {
+                        summarizedDepreciationControl.checked(NoYes::No);
+                    }
+                }
+            }
+        }
+    
+    }
+
+}

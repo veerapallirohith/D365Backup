@@ -1,0 +1,42 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.32929.386
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FC65038C-1B2F-41E1-A629-BED71D161FFF}") = "STE_AzureBlobStorageD365 (USR) [Stephanus]", "STE_AzureBlobStorageD365.rnrproj", "{EACF4F4D-25EF-428D-92F5-D8C872C82EEC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "STE_AzureBlobStorageLibrary", "..\STE_AzureBlobStorageLibrary\STE_AzureBlobStorageLibrary.csproj", "{26A706D9-E6D1-48C6-8318-2537877BE975}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EACF4F4D-25EF-428D-92F5-D8C872C82EEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EACF4F4D-25EF-428D-92F5-D8C872C82EEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EACF4F4D-25EF-428D-92F5-D8C872C82EEC}.Release|Any CPU.ActiveCfg = Debug|Any CPU
+		{EACF4F4D-25EF-428D-92F5-D8C872C82EEC}.Release|Any CPU.Build.0 = Debug|Any CPU
+		{26A706D9-E6D1-48C6-8318-2537877BE975}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26A706D9-E6D1-48C6-8318-2537877BE975}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26A706D9-E6D1-48C6-8318-2537877BE975}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26A706D9-E6D1-48C6-8318-2537877BE975}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B806BC26-3AD2-4FB6-B7C2-22363B7FE08D}
+	EndGlobalSection
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 3
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = https://dev.azure.com/stephanusd365
+		SccProjectUniqueName0 = STE_AzureBlobStorageD365.rnrproj
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = ..\\STE_AzureBlobStorageLibrary\\STE_AzureBlobStorageLibrary.csproj
+		SccProjectName1 = ../STE_AzureBlobStorageLibrary
+		SccLocalPath1 = ..\\STE_AzureBlobStorageLibrary
+		SccLocalPath2 = .
+	EndGlobalSection
+EndGlobal

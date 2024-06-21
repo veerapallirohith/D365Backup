@@ -1,0 +1,1328 @@
+// For UPDATE, DELETE, CREATE
+
+let avsLoadingText = document.getElementById("loading");
+(function (webapi, $) {
+  function safeAjax(ajaxOptions) {
+    var deferredAjax = $.Deferred();
+
+    shell
+      .getTokenDeferred()
+      .done(function (token) {
+        // add headers for AJAX
+        if (!ajaxOptions.headers) {
+          $.extend(ajaxOptions, {
+            headers: {
+              __RequestVerificationToken: token,
+            },
+          });
+        } else {
+          ajaxOptions.headers["__RequestVerificationToken"] = token;
+        }
+        $.ajax(ajaxOptions)
+          .done(function (data, textStatus, jqXHR) {
+            validateLoginSession(data, textStatus, jqXHR, deferredAjax.resolve);
+          })
+          .fail(deferredAjax.reject); //AJAX
+      })
+      .fail(function () {
+        deferredAjax.rejectWith(this, arguments); // on token failure pass the token AJAX and args
+      });
+
+    return deferredAjax.promise();
+  }
+  webapi.safeAjax = safeAjax;
+})((window.webapi = window.webapi || {}), jQuery);
+// -----------------------------------------------
+$("#loadingOverview").fadeIn();
+localStorage.clear();
+
+// For Getting Data from crf71_ste_rulesallocationoverviews table : Overview
+// Import excel
+
+$("#importFileOverview").on("click", () => {
+  importDataFromExcel();
+});
+// Function to handle the Excel file import
+function importDataFromExcel() {
+  // Get the file input element
+  var fileInput = document.getElementById("excelFileInput");
+
+  // Get the selected file
+  var file = fileInput.files[0];
+
+  // Create a FileReader object to read the file
+  var reader = new FileReader();
+
+  // Register an event handler for when the file is loaded
+  reader.onload = function (e) {
+    var data = new Uint8Array(e.target.result);
+    var workbook = XLSX.read(data, { type: "array" });
+
+    // Assuming the first sheet in the Excel file is the one with data
+    var worksheet = workbook.Sheets[workbook.SheetNames[0]];
+
+    // Convert the worksheet data to JSON format
+    var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+    // Map and process the data
+    var mappedData = jsonData.map(function (row) {
+      return {
+        crf71_description: row[0],
+        crf71_method: row[1],
+      };
+    });
+    // Use Power Apps Web API to import the data to the Data Verse table
+    console.log(
+      "fileInput",
+      fileInput,
+      "file",
+      file,
+      "reader",
+      reader,
+      "data",
+      data,
+      "workbook",
+      workbook,
+      "worksheet",
+      worksheet,
+      "jsonData",
+      jsonData,
+      "mappedData",
+      mappedData
+    );
+    importDataToDataVerse(mappedData);
+  };
+
+  // Read the file as an array buffer
+  reader.readAsArrayBuffer(file);
+}
+
+// Function to import the data to the Data Verse table using Power Apps Web API
+function importDataToDataVerse(data) {
+  // Construct the API URL
+  var url = "/_api/crf71_ste_rulesallocationoverviews";
+  console.log("datalength", data.length);
+  for (let j = 1; j < data.length; j++) {
+    webapi.safeAjax({
+      type: "POST",
+      url: url,
+      contentType: "application/json",
+      // data: JSON.stringify(data),
+      data: JSON.stringify({
+        crf71_description: data[j].crf71_description,
+        crf71_method: data[j].crf71_method,
+      }),
+
+      success: function (res, status, xhr) {
+        $("#importMessage").text("Data Imported successfully");
+        console.log("Data Imported successfully");
+        //print id of newly created table record
+        // console.log("entityID: " + xhr.getResponseHeader("entityid"));
+      },
+      error: function (error) {
+        // Data import failed
+        alert("Failed to import data. Error: " + error.statusText);
+      },
+    });
+  }
+}
+//Excel import for Source Tab
+$("#importFileSource").on("click", () => {
+  //importDataFromExcelSource();
+  importDataFromExcelSource();
+});
+// Function to handle the Excel file import
+function importDataFromExcelSource() {
+  // Get the file input element
+  var fileInput = document.getElementById("excelFileInputSource");
+
+  // Get the selected file
+  var file = fileInput.files[0];
+
+  // Create a FileReader object to read the file
+  var reader = new FileReader();
+
+  // Register an event handler for when the file is loaded
+  reader.onload = function (e) {
+    var data = new Uint8Array(e.target.result);
+    let dataSource = data;
+    var workbook = XLSX.read(data, { type: "array" });
+
+    // Assuming the first sheet in the Excel file is the one with data
+    var worksheet = workbook.Sheets[workbook.SheetNames[0]];
+
+    // Convert the worksheet data to JSON format
+    var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+    // Map and process the data
+    var mappedData = jsonData.map(function (row) {
+      return {
+        crf71_ledgeraccountfrom: row[0],
+        crf71_ledgeraccountto: row[1],
+        crf71_costcenter: row[2],
+        crf71_leistungen: row[3],
+        crf71_leistungento: row[4],
+        crf71_stellenartundcharakteristik: row[5],
+        crf71_stellenartundcharakteristikto: row[6],
+      };
+    });
+    // Use Power Apps Web API to import the data to the Data Verse table
+    importDataToDataVerseSource(mappedData);
+  };
+
+  // Read the file as an array buffer
+  reader.readAsArrayBuffer(file);
+}
+
+// Function to import the data to the Data Verse table using Power Apps Web API
+function importDataToDataVerseSource(dataSource) {
+  // Construct the API URL
+  let url = "/_api/crf71_ste_rulesallocationtwos";
+  console.log("insert data", dataSource.length);
+  for (let l = 1; l < dataSource.length; l++) {
+    debugger;
+    webapi.safeAjax({
+      type: "POST",
+      url: url,
+      contentType: "application/json",
+      // data: JSON.stringify(data),
+      data: JSON.stringify({
+        crf71_ruleid: $("#ruleIdSourceForm").val(),
+        crf71_ledgeraccountfrom: dataSource[l].crf71_ledgeraccountfrom,
+        crf71_ledgeraccountto: dataSource[l].crf71_ledgeraccountto,
+        crf71_costcenter: dataSource[l].crf71_costcenter,
+        crf71_leistungen: dataSource[l].crf71_leistungen,
+        crf71_leistungento: dataSource[l].crf71_leistungento,
+        crf71_stellenartundcharakteristik:
+          dataSource[l].crf71_stellenartundcharakteristik,
+        crf71_stellenartundcharakteristikto:
+          dataSource[l].crf71_stellenartundcharakteristikto,
+      }),
+
+      success: function (res, status, xhr) {
+        $("#importMessageSource").text("Data Imported successfully");
+        console.log("Data Imported successfully");
+        //print id of newly created table record
+        // console.log("entityID: " + xhr.getResponseHeader("entityid"));
+      },
+      error: function (error) {
+        // Data import failed
+        alert("Failed to import data. Error: " + error.statusText);
+      },
+    });
+  }
+}
+
+//Excel import for destination Tab
+$("#importFileDestination").on("click", () => {
+  //importDataFromExcelSource();
+  importDataFromExcelDestination();
+});
+// Function to handle the Excel file import
+function importDataFromExcelDestination() {
+  // Get the file input element
+  var fileInput = document.getElementById("excelFileInputDestination");
+
+  // Get the selected file
+  var file = fileInput.files[0];
+
+  // Create a FileReader object to read the file
+  var reader = new FileReader();
+
+  // Register an event handler for when the file is loaded
+  reader.onload = function (e) {
+    var data = new Uint8Array(e.target.result);
+    let dataSource = data;
+    var workbook = XLSX.read(data, { type: "array" });
+
+    // Assuming the first sheet in the Excel file is the one with data
+    var worksheet = workbook.Sheets[workbook.SheetNames[0]];
+
+    // Convert the worksheet data to JSON format
+    var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+    // Map and process the data
+    var mappedData = jsonData.map(function (row) {
+      return {
+        crf71_basisid: row[0],
+        crf71_destinationdimenison: row[1],
+        crf71_costcenter: row[2],
+        crf71_lineno: row[3],
+      };
+    });
+    // Use Power Apps Web API to import the data to the Data Verse table
+    importDataToDataVerseDestination(mappedData);
+  };
+
+  // Read the file as an array buffer
+  reader.readAsArrayBuffer(file);
+}
+
+// Function to import the data to the Data Verse table using Power Apps Web API
+function importDataToDataVerseDestination(dataSource) {
+  // Construct the API URL
+  let url = "/_api/crf71_ste_rulesallocationdestinations";
+  console.log("insert data", dataSource.length);
+  for (let m = 1; m < dataSource.length; m++) {
+    debugger;
+    webapi.safeAjax({
+      type: "POST",
+      url: url,
+      contentType: "application/json",
+      // data: JSON.stringify(data),
+      data: JSON.stringify({
+        crf71_ruleid: $("#ruleIdSourceForm").val(),
+        crf71_basisid: dataSource[m].crf71_basisid,
+        crf71_destinationdimenison: dataSource[m].crf71_destinationdimenison,
+        crf71_costcenter: dataSource[m].crf71_costcenter,
+        crf71_lineno: dataSource[m].crf71_lineno,
+      }),
+
+      success: function (res, status, xhr) {
+        $("#importMessageDestination").text("Data Imported successfully");
+        console.log("Data Imported successfully");
+        //print id of newly created table record
+        // console.log("entityID: " + xhr.getResponseHeader("entityid"));
+      },
+      error: function (error) {
+        // Data import failed
+        alert("Failed to import data. Error: " + error.statusText);
+      },
+    });
+  }
+}
+
+const rulesAllocationDataValue = [];
+$.ajax({
+  type: "GET",
+  url: "/_api/crf71_ste_rulesallocationoverviews?$select=crf71_ruleid,crf71_description,crf71_company,crf71_method,crf71_ste_rulesallocationoverviewid&$orderby=crf71_ruleid asc",
+  contentType: "application/json",
+  success: function (rulesAllocationData) {
+    for (
+      let rulesAllocationIndex = 0;
+      rulesAllocationIndex < rulesAllocationData.value.length;
+      rulesAllocationIndex++
+    ) {
+      rulesAllocationDataValue.push({
+        crf71_ruleid:
+          rulesAllocationData.value[rulesAllocationIndex].crf71_ruleid,
+        crf71_method:
+          rulesAllocationData.value[rulesAllocationIndex].crf71_method,
+      });
+      $("#rulesTable tbody").append(
+        `<tr class="bg-white border-b hover:bg-gray-50">
+        <td class="" style="padding-left: 10px;">
+          <div class="flex items-center">
+            <input
+              id="checkbox-table-search-1"
+              type="radio"
+              name="ruleId"
+              data-name="${rulesAllocationData.value[rulesAllocationIndex].crf71_ruleid}"
+              class="ml-2 text-blue-600 bg-gray-100 border-gray-300 rounded-full"
+              style="width:20px;height:20px"
+            />
+            <label for="checkbox-table-search-1" class="sr-only"
+              >checkbox</label
+            >
+          </div>
+        </td>
+        <th
+          scope="row"
+          class="flex items-center px-6 py-4 text-gray-900 whitespace-nowrap"
+        >
+          <div class="">
+            <div class="font-semibold">${rulesAllocationData.value[rulesAllocationIndex].crf71_ruleid}</div>
+            <!-- <div class="font-normal text-gray-500">
+              neil.sims@flowbite.com
+            </div> -->
+          </div>
+        </th>
+        <td class="px-6 py-4">${rulesAllocationData.value[rulesAllocationIndex].crf71_description}</td>
+        <td class="px-6 py-4">
+          <div class="flex items-center">${rulesAllocationData.value[rulesAllocationIndex].crf71_method}</div>
+        </td>
+      </tr>`
+      );
+    }
+    $("#loadingOverview").fadeOut();
+    localStorage.setItem(
+      "rulesAllocationData",
+      JSON.stringify(rulesAllocationDataValue)
+    );
+  },
+  error: function (error) {
+    console.log(error);
+    $("#loadingOverview").fadeOut();
+  },
+});
+let rulesAllocationDestinationDatas = [];
+$.ajax({
+  type: "GET",
+  url: "/_api/crf71_ste_rulesallocationdestinations?$select=crf71_basispercentage,crf71_destinationdimenison,crf71_lineno,crf71_basisid,crf71_stellenartundcharakteristik,crf71_costcenter,crf71_leistungen,crf71_ruleid",
+  contentType: "application/json",
+  success: function (rulesAllocationDestinationData) {
+    for (
+      let rulesAllocationDestinationIndex = 0;
+      rulesAllocationDestinationIndex <
+      rulesAllocationDestinationData.value.length;
+      rulesAllocationDestinationIndex++
+    ) {
+      rulesAllocationDestinationDatas.push({
+        crf71_ruleid:
+          rulesAllocationDestinationData.value[rulesAllocationDestinationIndex]
+            .crf71_ruleid,
+        crf71_basispercentage:
+          rulesAllocationDestinationData.value[rulesAllocationDestinationIndex]
+            .crf71_basispercentage,
+        crf71_destinationdimenison:
+          rulesAllocationDestinationData.value[rulesAllocationDestinationIndex]
+            .crf71_destinationdimenison,
+        crf71_costcenter:
+          rulesAllocationDestinationData.value[rulesAllocationDestinationIndex]
+            .crf71_costcenter,
+        crf71_leistungen:
+          rulesAllocationDestinationData.value[rulesAllocationDestinationIndex]
+            .crf71_leistungen,
+        crf71_stellenartundcharakteristik:
+          rulesAllocationDestinationData.value[rulesAllocationDestinationIndex]
+            .crf71_stellenartundcharakteristik,
+        crf71_basisid:
+          rulesAllocationDestinationData.value[rulesAllocationDestinationIndex]
+            .crf71_basisid,
+        crf71_lineno:
+          rulesAllocationDestinationData.value[rulesAllocationDestinationIndex]
+            .crf71_lineno,
+      });
+    }
+  },
+});
+
+let sourceAllocationData = [];
+// For Getting Data from STE_RulesAllocationSource table : Source
+$.ajax({
+  type: "GET",
+  url: "/_api/crf71_ste_rulesallocationtwos?$select=crf71_ledgeraccountto,crf71_ledgeraccountfrom,crf71_ruleid,crf71_stellenartundcharakteristik,crf71_costcenter,crf71_leistungen,crf71_leistungento,crf71_stellenartundcharakteristikto",
+  contentType: "application/json",
+  success: function (rulesAllocationTwoData) {
+    for (let i = 0; i < rulesAllocationTwoData.value.length; i++) {
+      sourceAllocationData.push({
+        crf71_ste_rulesallocationtwoid:
+          rulesAllocationTwoData.value[i].crf71_ste_rulesallocationtwoid,
+        crf71_ruleid: rulesAllocationTwoData.value[i].crf71_ruleid,
+        crf71_ledgeraccountfrom:
+          rulesAllocationTwoData.value[i].crf71_ledgeraccountfrom,
+        crf71_ledgeraccountto:
+          rulesAllocationTwoData.value[i].crf71_ledgeraccountto,
+        crf71_costcenter: rulesAllocationTwoData.value[i].crf71_costcenter,
+        crf71_leistungen: rulesAllocationTwoData.value[i].crf71_leistungen,
+        crf71_leistungento: rulesAllocationTwoData.value[i].crf71_leistungento,
+        crf71_stellenartundcharakteristik:
+          rulesAllocationTwoData.value[i].crf71_stellenartundcharakteristik,
+        crf71_stellenartundcharakteristikto:
+          rulesAllocationTwoData.value[i].crf71_stellenartundcharakteristikto,
+      });
+      $("#sourceTable tbody").append(
+        `<tr class="bg-white border-b hover:bg-gray-50">
+          <td class="" style="padding-left: 10px;">
+            <div class="flex items-center">
+              <input
+                id="checkbox-table-search-1"
+                type="radio"
+                name="sourceId"
+                data-id="${rulesAllocationTwoData.value[i].crf71_ste_rulesallocationtwoid}"
+                data-from="${rulesAllocationTwoData.value[i].crf71_ledgeraccountfrom}"
+                data-to="${rulesAllocationTwoData.value[i].crf71_ledgeraccountto}"
+                class="ml-2 text-blue-600 bg-gray-100 border-gray-300 rounded-full"
+                style="width:20px;height:20px"
+              />
+              <label for="checkbox-table-search-1" class="sr-only"
+                >checkbox</label
+              >
+            </div>
+          </td>
+          <td class="px-6 py-4">${rulesAllocationTwoData.value[i].crf71_ledgeraccountfrom}</td>
+          <td class="px-6 py-4">${rulesAllocationTwoData.value[i].crf71_ledgeraccountto}</td>
+          <td class="px-6 py-4">${rulesAllocationTwoData.value[i].crf71_costcenter}</td>
+          <td class="px-6 py-4">${rulesAllocationTwoData.value[i].crf71_leistungen}</td>
+          <td class="px-6 py-4">${rulesAllocationTwoData.value[i].crf71_leistungento}</td>
+          <td class="px-6 py-4">${rulesAllocationTwoData.value[i].crf71_stellenartundcharakteristik}</td>
+          <td class="px-6 py-4">${rulesAllocationTwoData.value[i].crf71_stellenartundcharakteristikto}</td>
+        </tr>`
+      );
+    }
+  },
+});
+$("#source-tab").on("click", function () {
+  localStorage.removeItem("sourceId");
+  if (localStorage.getItem("ruleId")) {
+    $(".isRuleSelected").show();
+    $(".showRuleNotSelectError").hide();
+  } else {
+    $(".isRuleSelected").hide();
+    $(".showRuleNotSelectError").show();
+  }
+  $("#sourceTable tbody").empty();
+  if ($("#ruleIdSource").text() !== "") {
+    sourceAllocationData
+      .filter((item) => item.crf71_ruleid === $("#ruleIdSource").text())
+      .map((item, index) => {
+        $("#sourceTable tbody").append(
+          `<tr class="bg-white border-b hover:bg-gray-50">
+              <td class="" style="padding-left: 10px;">
+                <div class="flex items-center">
+                  <input
+                    id="checkbox-table-search-1"
+                    type="radio"
+                    name="sourceId"
+                    data-id="${item.crf71_ste_rulesallocationtwoid}"
+                    data-from="${item.crf71_ledgeraccountfrom}"
+                    data-to="${item.crf71_ledgeraccountto}"
+                    class="ml-2 text-blue-600 bg-gray-100 border-gray-300 rounded-full"
+                    style="width:20px;height:20px"
+                  />
+                  <label for="checkbox-table-search-1" class="sr-only"
+                    >checkbox</label
+                  >
+                </div>
+              </td>
+              <td class="px-6 py-4">${item.crf71_ledgeraccountfrom}</td>
+              <td class="px-6 py-4">${item.crf71_ledgeraccountto}</td>
+              <td class="px-6 py-4">${item.crf71_costcenter}</td>
+              <td class="px-6 py-4">${item.crf71_leistungen}</td>
+              <td class="px-6 py-4">${item.crf71_leistungento}</td>
+              <td class="px-6 py-4">${item.crf71_stellenartundcharakteristik}</td>
+              <td class="px-6 py-4">${item.crf71_stellenartundcharakteristikto}</td>
+            </tr>`
+        );
+      });
+  }
+});
+// For Getting Data from crf71_ste_rulesallocationoverviews table
+//
+/* $.ajax({
+  type: "GET",
+  url: "/_api/crf71_ste_legalentities?$select=crf71_name",
+  contentType: "application/json",
+  success: function (legalEntityData) {
+    for (let i = 0; i < legalEntityData.value.length; i++) {
+      $("#company").append(
+        `<option value="${legalEntityData.value[i].crf71_name}">${legalEntityData.value[i].crf71_name}</option>`
+      );
+    }
+  },
+}); */
+
+$("#ruleForm").on("submit", (e) => {
+  e.preventDefault();
+  // For Creating Data in crf71_ste_rulesallocationoverviews table
+  webapi.safeAjax({
+    type: "POST",
+    url: `/_api/crf71_ste_rulesallocationoverviews`,
+    contentType: "application/json",
+    data: JSON.stringify({
+      crf71_description: $("#description").val(),
+      //crf71_company: $("#company").val(),
+      crf71_method: $("#method").val(),
+    }),
+    success: function (res) {
+      window.location.reload();
+    },
+    error: function (error) {
+      alert("Something went wrong. Please contact administrator");
+    },
+  });
+});
+
+// Check if radio button is checked
+$("#rulesTable").on("click", "input[type=radio]", function () {
+  if ($(this).is(":checked")) {
+    $("#ruleIdSource").text($(this).attr("data-name"));
+    $("#ruleIdDestination").text($(this).attr("data-name"));
+    $("#ruleIdSourceForm").val($(this).attr("data-name"));
+    $("#ruleIdDestinationForm").val($(this).attr("data-name"));
+    localStorage.setItem("ruleId", $(this).attr("data-name"));
+    const selectedRule = JSON.parse(
+      localStorage.getItem("rulesAllocationData")
+    );
+    localStorage.setItem(
+      "selectedRule",
+      JSON.stringify(
+        selectedRule.find(
+          (item) => item.crf71_ruleid === $(this).attr("data-name")
+        )
+      )
+    );
+  } else {
+    localStorage.removeItem("ruleId");
+  }
+});
+$("#sourceTable").on("click", "input[type=radio]", function () {
+  if ($(this).is(":checked")) {
+    $("#sourceIdSource").text(
+      $(this).attr("data-from") + "-" + $(this).attr("data-to")
+    );
+    localStorage.setItem("sourceId", $(this).attr("data-id"));
+  } else {
+    localStorage.removeItem("sourceId");
+  }
+});
+
+//
+$.ajax({
+  type: "GET",
+  url: `/_api/crf71_ste_dimensionattributevaluestchs?$select=crf71_dimensioncode, crf71_ste_dimensionattributevaluestchid`,
+  contentType: "application/json",
+  success: function (Data) {
+    for (let i = 0; i < Data.value.length; i++) {
+      $("#crf71_stellenartundcharakteristik").append(
+        `<option value="${Data.value[i].crf71_dimensioncode}">${Data.value[i].crf71_dimensioncode}</option>`
+      );
+      $("#crf71_stellenartundcharakteristikTo").append(
+        `<option value="${Data.value[i].crf71_dimensioncode}">${Data.value[i].crf71_dimensioncode}</option>`
+      );
+      $("#crf71_stellenartundcharakteristik_destination").append(
+        `<option value="${Data.value[i].crf71_dimensioncode}">${Data.value[i].crf71_dimensioncode}</option>`
+      );
+    }
+  },
+  error: (error) => {
+    /*alert("Something went wrong. Please contact administrator")*/
+  },
+});
+//
+
+$.ajax({
+  type: "GET",
+  url: `/_api/crf71_ste_dimensionattributevalueleis?$select=crf71_dimensioncode, crf71_ste_dimensionattributevalueleiid`,
+  contentType: "application/json",
+  success: function (Data) {
+    for (let i = 0; i < Data.value.length; i++) {
+      $("#crf71_leistungen").append(
+        `<option value="${Data.value[i].crf71_dimensioncode}">${Data.value[i].crf71_dimensioncode}</option>`
+      );
+      $("#crf71_leistungenTo").append(
+        `<option value="${Data.value[i].crf71_dimensioncode}">${Data.value[i].crf71_dimensioncode}</option>`
+      );
+      $("#crf71_leistungen_destination").append(
+        `<option value="${Data.value[i].crf71_dimensioncode}">${Data.value[i].crf71_dimensioncode}</option>`
+      );
+    }
+  },
+  error: (error) => {
+    /*alert("Something went wrong. Please contact administrator")*/
+  },
+});
+//
+$.ajax({
+  type: "GET",
+  url: `/_api/crf71_ste_dimensionattributevalueksts?$select=crf71_name, crf71_ste_dimensionattributevaluekstid`,
+  contentType: "application/json",
+  success: function (Data) {
+    for (let i = 0; i < Data.value.length; i++) {
+      $("#crf71_costcenter").append(
+        `<option value="${Data.value[i].crf71_name}">${Data.value[i].crf71_name}</option>`
+      );
+      $("#crf71_costcenter_destination").append(
+        `<option value="${Data.value[i].crf71_name}">${Data.value[i].crf71_name}</option>`
+      );
+    }
+    $("#crf71_costcenter_destination").append(
+      `<option value="Child">Child</option>`
+    );
+  },
+  error: (error) => {
+    /*alert("Something went wrong. Please contact administrator")*/
+  },
+});
+
+// Ledger Account
+$.ajax({
+  type: "GET",
+  url: `/_api/crf71_ste_mainaccounts?$select=crf71_name,crf71_ste_mainaccountid`,
+  contentType: "application/json",
+  success: function (mainAccountData) {
+    for (let i = 0; i < mainAccountData.value.length; i++) {
+      $("#crf71_ledgeraccountfrom").append(
+        `<option value="${mainAccountData.value[i].crf71_name}">${mainAccountData.value[i].crf71_name}</option>`
+      );
+      $("#crf71_ledgeraccountto").append(
+        `<option value="${mainAccountData.value[i].crf71_name}">${mainAccountData.value[i].crf71_name}</option>`
+      );
+      $("#crf71_destination_dimension").append(
+        `<option value="${mainAccountData.value[i].crf71_name}">${mainAccountData.value[i].crf71_name}</option>`
+      );
+    }
+    $("#crf71_destination_dimension").append(
+      `<option value="Source">Source</option>`
+    );
+  },
+  error: (error) => {
+    /*alert("Something went wrong. Please contact administrator")*/
+  },
+});
+// Save Source Form
+$("#sourceForm").on("submit", (e) => {
+  e.preventDefault();
+  $("#loadingOverview").fadeIn();
+  webapi.safeAjax({
+    type: "POST",
+    url: "/_api/crf71_ste_rulesallocationtwos",
+    contentType: "application/json",
+    data: JSON.stringify({
+      crf71_ruleid: $("#ruleIdSourceForm").val(),
+      crf71_ledgeraccountfrom: $(
+        "#crf71_ledgeraccountfrom option:selected"
+      ).val(),
+      crf71_ledgeraccountto: $("#crf71_ledgeraccountto option:selected").val(),
+      crf71_costcenter: $("#crf71_costcenter option:selected").text(),
+      crf71_leistungen: $("#crf71_leistungen option:selected").val(),
+      crf71_stellenartundcharakteristik: $(
+        "#crf71_stellenartundcharakteristik option:selected"
+      ).val(),
+      crf71_leistungento: $("#crf71_leistungenTo option:selected").val(),
+      crf71_stellenartundcharakteristikto: $(
+        "#crf71_stellenartundcharakteristikTo option:selected"
+      ).val(),
+    }),
+    success: function (res, status, xhr) {
+      let from = $("#crf71_ledgeraccountfrom option:selected").text();
+      let to = $("#crf71_ledgeraccountto option:selected").text();
+      let costcenter = $("#crf71_costcenter option:selected").text();
+      leistungen = $("#crf71_leistungen option:selected").val();
+      stellenartundcharakteristik = $(
+        "#crf71_stellenartundcharakteristik option:selected"
+      ).val();
+      let leistungento = $("#crf71_leistungenTo option:selected").val();
+      let stellenartundcharakteristikto = $(
+        "#crf71_stellenartundcharakteristikTo option:selected"
+      ).val();
+      let costcentercontrol = $("#crf71_costcenter option:selected").val();
+      // Split
+      let leistungenOutput = [];
+      let stellarOutput = [];
+      let balanceOutput = [];
+
+      // $.ajax({
+      //   type: "GET",
+      //   url: `/_api/crf71_ste_mainaccounts/?$select=crf71_name&$filter=crf71_name ge '${from}' and crf71_name le '${to}'`,
+
+      //   contentType: "application/json",
+      //   success: function (allocationData) {
+      //     let allocationDataValue = allocationData.value;
+      //     // balanceOutput = allocationData.value;
+      //     // balanceOutput = Object.assign([],allocationData.value)
+      //     for (let i = 0; i < allocationDataValue.length; i++) {
+      //       balanceOutput.push({
+      //         Mainaccount: allocationDataValue[i]["crf71_name"],
+      //       });
+      //       //  // balanceOutput = allocationDataValue.value;
+      //     }
+      //   },
+      // });
+
+      // if (leistungento != "") {
+      //   $.ajax({
+      //     type: "GET",
+      //     url: `/_api/crf71_ste_dimensionattributevalueleis/?$select=crf71_dimensioncode, crf71_ste_dimensionattributevalueleiid&$filter=crf71_dimensioncode ge '${leistungen}' and crf71_dimensioncode le  '${leistungento}'`,
+      //     contentType: "application/json",
+      //     success: function (Leistungenall) {
+      //       let LeistungenallValue = Leistungenall.value;
+      //       //leistungenOutput = Leistungenall.value;
+      //       for (let j = 0; j < LeistungenallValue.length; j++) {
+      //         //leistungenOutput = LeistungenallValue.value;
+      //         leistungenOutput.push({
+      //           dimCode: LeistungenallValue[j]["crf71_dimensioncode"],
+      //         });
+      //       }
+      //     },
+      //   });
+      // } else {
+      //   $.ajax({
+      //     type: "GET",
+      //     url: `/_api/crf71_ste_dimensionattributevalueleis/?$select=crf71_dimensioncode, crf71_ste_dimensionattributevalueleiid`,
+      //     contentType: "application/json",
+      //     success: function (Leistungenall) {
+      //       let LeistungenallValue = Leistungenall.value;
+      //       for (let j = 0; j < LeistungenallValue.length; j++) {
+      //         balanceOutput.push({
+      //           dimCode: LeistungenallValue[j]["crf71_dimensioncode"],
+      //         });
+      //       }
+      //     },
+      //   });
+      // }
+      // if (stellenartundcharakteristikto != "") {
+      //   $.ajax({
+      //     type: "GET",
+      //     url: `/_api/crf71_ste_dimensionattributevaluestchs/?$select=crf71_dimensioncode, crf71_ste_dimensionattributevaluestchid&$filter=crf71_dimensioncode ge '${stellenartundcharakteristik}' and crf71_dimensioncode le '${stellenartundcharakteristikto}'`,
+      //     contentType: "application/json",
+      //     success: function (Stellarall) {
+      //       let StellarallValue = Stellarall.value;
+      //       //stellarOutput = Stellarall.value;
+      //       for (let k = 0; k < StellarallValue.length; k++) {
+      //         //leistungenOutput = LeistungenallValue.value;
+      //         stellarOutput.push({
+      //           Mainaccount: StellarallValue[k]["crf71_dimensioncode"],
+      //         });
+      //       }
+      //     },
+      //   });
+      // } else {
+      //   $.ajax({
+      //     type: "GET",
+      //     url: `/_api/crf71_ste_dimensionattributevaluestchs/?$select=crf71_dimensioncode, crf71_ste_dimensionattributevaluestchid'`,
+      //     contentType: "application/json",
+      //     success: function (Stellarall) {
+      //       let StellarallValue = Stellarall.value;
+      //       for (let k = 0; k < StellarallValue.length; k++) {
+      //         stellarOutput = StellarallValue.value;
+      //         // webapi.safeAjax({
+      //         //   type: "POST",
+      //         //   url: "/_api/crf71_ste_rulesallocationsourcelineses",
+      //         //   contentType: "application/json",
+      //         //   data: JSON.stringify({
+      //         // //     crf71_ruleid: $("#ruleIdSourceForm").val(),
+      //         // //     crf71_account: allocationDataValue[i].crf71_name,
+      //         // //     crf71_costcenter: allocationDataValue[i].crf71_costcenter,
+      //         // //     crf71_leistungen: LeistungenallValue[j].crf71_dimensioncode,
+      //         // //     crf71_stellenartundcharakteristik:
+      //         // //       stellenartundcharakteristik,
+      //         //   }),
+      //         //   success: function (res, status, xhr) {
+      //         //     console.log(xhr.getResponseHeader("entityid"));
+      //         //     console.log('if leist');
+      //         //     console.log(allocationDataValue);
+      //         //   },
+      //         // });
+      //       }
+      //       console.log("Stellar range");
+      //       console.log(StellarallValue);
+      //     },
+      //   });
+      // }
+
+      // working code
+
+      // $.ajax({
+      //   type: "GET",
+      //   url: `/_api/crf71_ste_mainaccounts/?$select=crf71_name&$filter=crf71_name ge '${from}' and crf71_name le '${to}'`,
+      //   contentType: "application/json",
+      //   success: function (allocationData) {
+      //     let allocationDataValue = allocationData.value;
+      //     balanceOutput = allocationData.value;
+
+      //     if (leistungen != "" && leistungento != "") {
+      //       $.ajax({
+      //         type: "GET",
+      //         url: `/_api/crf71_ste_dimensionattributevalueleis/?$select=crf71_dimensioncode, crf71_ste_dimensionattributevalueleiid&$filter=crf71_dimensioncode ge '${leistungen}' and crf71_dimensioncode le  '${leistungento}'`,
+      //         contentType: "application/json",
+      //         success: function (Leistungenall) {
+      //           let LeistungenallValue = Leistungenall.value;
+      //           leistungenOutput = Leistungenall.value;
+      //           if (
+      //             stellenartundcharakteristik != "" &&
+      //             stellenartundcharakteristikto != ""
+      //           ) {
+      //             $.ajax({
+      //               type: "GET",
+      //               url: `/_api/crf71_ste_dimensionattributevaluestchs/?$select=crf71_dimensioncode, crf71_ste_dimensionattributevaluestchid&$filter=crf71_dimensioncode ge '${stellenartundcharakteristik}' and crf71_dimensioncode le '${stellenartundcharakteristikto}'`,
+      //               contentType: "application/json",
+      //               success: function (Stellarall) {
+      //                 let StellarallValue = Stellarall.value;
+      //                 for (let i = 0; i < allocationDataValue.length; i++) {
+      //                   for (let j = 0; j < LeistungenallValue.length; j++) {
+      //                     for (let k = 0; k < StellarallValue.length; k++) {
+      //                       webapi.safeAjax({
+      //                         type: "POST",
+      //                         url: "/_api/crf71_ste_rulesallocationsourcelineses",
+      //                         contentType: "application/json",
+      //                         data: JSON.stringify({
+      //                           crf71_ruleid: $("#ruleIdSourceForm").val(),
+      //                           crf71_account:
+      //                             allocationDataValue[i].crf71_name,
+      //                           crf71_costcenter: costcentercontrol,
+      //                           crf71_leistungen:
+      //                             LeistungenallValue[j].crf71_dimensioncode,
+      //                           crf71_stellenartundcharakteristik:
+      //                             StellarallValue[k].crf71_dimensioncode,
+      //                         }),
+      //                         success: function (res, status, xhr) {
+      //                           console.log('Total records inserted:',Stellarall.length );
+      //                         },
+
+      //                       });
+      //                     }
+      //                   }
+      //                 }
+      //               },
+      //             });
+
+      //           } else {
+      //             $.ajax({
+      //               type: "GET",
+      //               url: `/_api/crf71_ste_dimensionattributevaluestchs/?$select=crf71_dimensioncode, crf71_ste_dimensionattributevaluestchid`,
+      //               contentType: "application/json",
+      //               success: function (Stellarall) {
+      //                 let StellarallValue = Stellarall.value;
+      //                 for (let i = 0; i < allocationDataValue.length; i++) {
+      //                   for (let j = 0; j < LeistungenallValue.length; j++) {
+      //                     for (let k = 0; k < StellarallValue.length; k++) {
+      //                       webapi.safeAjax({
+      //                         type: "POST",
+      //                         url: "/_api/crf71_ste_rulesallocationsourcelineses",
+      //                         contentType: "application/json",
+      //                         data: JSON.stringify({
+      //                           crf71_ruleid: $("#ruleIdSourceForm").val(),
+      //                           crf71_account:
+      //                             allocationDataValue[i].crf71_name,
+      //                           crf71_costcenter: costcentercontrol,
+      //                           crf71_leistungen:
+      //                             LeistungenallValue[j].crf71_dimensioncode,
+      //                           crf71_stellenartundcharakteristik:
+      //                             StellarallValue[k].crf71_dimensioncode,
+      //                         }),
+      //                         success: function (res, status, xhr) {
+      //                           console.log('Total records inserted:',Stellarall.length );
+      //                         },
+      //                       });
+      //                     }
+      //                   }
+      //                 }
+      //               },
+      //             });
+      //           }
+      //         },
+      //       });
+      //     } else {
+      //       $.ajax({
+      //         type: "GET",
+      //         url: `/_api/crf71_ste_dimensionattributevalueleis/?$select=crf71_dimensioncode, crf71_ste_dimensionattributevalueleiid`,
+      //         contentType: "application/json",
+      //         success: function (Leistungenall) {
+      //           let LeistungenallValue = Leistungenall.value;
+      //           if (
+      //             stellenartundcharakteristik == '' &&
+      //             stellenartundcharakteristikto == ''
+      //           ) {
+      //             $.ajax({
+      //               type: "GET",
+      //               url: `/_api/crf71_ste_dimensionattributevaluestchs/?$select=crf71_dimensioncode, crf71_ste_dimensionattributevaluestchid`,
+      //               contentType: "application/json",
+      //               success: function (Stellarall) {
+      //                 let StellarallValue = Stellarall.value;
+      //                 for (let i = 0; i < allocationDataValue.length; i++) {
+      //                   //for (let j = 0; j < LeistungenallValue.length; j++) {
+      //                    // for (let k = 0; k < StellarallValue.length; k++) {
+      //                       webapi.safeAjax({
+      //                         type: "POST",
+      //                         url: "/_api/crf71_ste_rulesallocationsourcelineses",
+      //                         contentType: "application/json",
+      //                         data: JSON.stringify({
+      //                           crf71_ruleid: $("#ruleIdSourceForm").val(),
+      //                           crf71_account:
+      //                             allocationDataValue[i].crf71_name,
+      //                           crf71_costcenter: costcentercontrol,
+      //                           // crf71_leistungen:
+      //                           //   LeistungenallValue[j].crf71_dimensioncode,
+      //                           // crf71_stellenartundcharakteristik:
+      //                           //   StellarallValue[k].crf71_dimensioncode,
+      //                         }),
+      //                         success: function (res, status, xhr) {
+      //                           console.log('Total records inserted:',Stellarall.length );
+      //                         },
+
+      //                       });
+      //                     //}
+      //                   //}
+      //                 }
+      //               },
+      //             });
+      //           }
+      //           else
+      //           {
+      //             $.ajax({
+      //               type: "GET",
+      //               url: `/_api/crf71_ste_dimensionattributevaluestchs/?$select=crf71_dimensioncode, crf71_ste_dimensionattributevaluestchid&$filter=crf71_dimensioncode ge '${stellenartundcharakteristik}' and crf71_dimensioncode le '${stellenartundcharakteristikto}'`,
+      //               contentType: "application/json",
+      //               success: function (Stellarall) {
+      //                 let StellarallValue = Stellarall.value;
+      //                 for (let i = 0; i < allocationDataValue.length; i++) {
+      //                   for (let j = 0; j < LeistungenallValue.length; j++) {
+      //                     for (let k = 0; k < StellarallValue.length; k++) {
+      //                       webapi.safeAjax({
+      //                         type: "POST",
+      //                         url: "/_api/crf71_ste_rulesallocationsourcelineses",
+      //                         contentType: "application/json",
+      //                         data: JSON.stringify({
+      //                           crf71_ruleid: $("#ruleIdSourceForm").val(),
+      //                           crf71_account:
+      //                             allocationDataValue[i].crf71_name,
+      //                           crf71_costcenter: costcentercontrol,
+      //                           crf71_leistungen:
+      //                             LeistungenallValue[j].crf71_dimensioncode,
+      //                           crf71_stellenartundcharakteristik:
+      //                             StellarallValue[k].crf71_dimensioncode,
+      //                         }),
+      //                         success: function (res, status, xhr) {
+      //                           console.log('Total records inserted:',Stellarall.length );
+      //                         },
+      //                       });
+      //                     }
+      //                   }
+      //                 }
+      //               },
+      //             });
+      //           }
+      //         },
+      //       });
+      //     }
+      //   },
+      // });
+
+      const ruleId = $("#ruleIdSourceForm").val();
+      $("#sourceForm").not("#ruleIdSourceForm")[0].reset();
+      $("#ruleIdSourceForm").val(ruleId);
+      console.log("entityID: " + xhr.getResponseHeader("entityid"));
+      // https://stephanusd365klr.powerappsportals.com/_api/crf71_ste_costallocationextractiondvses?$select=crf71_name&$filter=crf71_name%20eq%20%27133101%27%20and%20crf71_name%20eq%20%27133101%27
+
+      $.ajax({
+        type: "GET",
+        url: `/_api/crf71_ste_rulesallocationtwos(${xhr.getResponseHeader(
+          "entityid"
+        )})?$select=crf71_ledgeraccountto,crf71_ledgeraccountfrom,crf71_ruleid,crf71_stellenartundcharakteristik,crf71_costcenter,crf71_leistungen`,
+        contentType: "application/json",
+        success: function (rulesAllocationTwoDataUpdate) {
+          $("#sourceTable tbody").append(
+            `<tr class="bg-white border-b hover:bg-gray-50">
+                      <td class="" style="padding-left: 10px;">
+                        <div class="flex items-center">
+                          <input
+                            id="checkbox-table-search-1"
+                            type="radio"
+                            name="sourceId"
+                            data-id="${rulesAllocationTwoDataUpdate.crf71_ste_rulesallocationtwoid}"
+                            data-from="${rulesAllocationTwoDataUpdate.crf71_ledgeraccountfrom}"
+                            data-to="${rulesAllocationTwoDataUpdate.crf71_ledgeraccountto}"
+                            class="ml-2 text-blue-600 bg-gray-100 border-gray-300 rounded-full"
+                            style="width:20px;height:20px"
+                          />
+                          <label for="checkbox-table-search-1" class="sr-only"
+                            >checkbox</label
+                          >
+                        </div>
+                      </td>
+                      <td class="px-6 py-4">${rulesAllocationTwoDataUpdate.crf71_ledgeraccountfrom}</td>
+                      <td class="px-6 py-4">${rulesAllocationTwoDataUpdate.crf71_ledgeraccountto}</td>
+                      <td class="px-6 py-4">${rulesAllocationTwoDataUpdate.crf71_costcenter}</td>
+                      <td class="px-6 py-4">${rulesAllocationTwoDataUpdate.crf71_leistungen}</td>
+                      <td class="px-6 py-4">${rulesAllocationTwoDataUpdate.crf71_leistungento}</td>
+                      <td class="px-6 py-4">${rulesAllocationTwoDataUpdate.crf71_stellenartundcharakteristik}</td>
+                      <td class="px-6 py-4">${rulesAllocationTwoDataUpdate.crf71_stellenartundcharakteristikto}</td>
+                    </tr>`
+          );
+        },
+      });
+    },
+  });
+
+  $("#loadingOverview").fadeOut();
+});
+
+let basis = false;
+$("#destination-tab").on("click", () => {
+  let selectedRule = JSON.parse(localStorage.getItem("selectedRule"));
+  if (localStorage.getItem("selectedRule")) {
+    $(".isSourceSelected").show();
+    $(".showSourceNotSelectError").hide();
+  } else {
+    $(".isSourceSelected").hide();
+    $(".showSourceNotSelectError").show();
+  }
+  $("#destinationTable tbody").empty();
+  let totalPercentage = 0;
+  rulesAllocationDestinationDatas
+    .filter((item) => item.crf71_ruleid === localStorage.getItem("ruleId"))
+    .map((item, index) => {
+      totalPercentage += Number(item.crf71_basispercentage);
+      $("#destinationTable tbody").append(
+        `<tr class="bg-white border-b hover:bg-gray-50">
+          <td class="" style="padding-left: 10px;">
+            <div class="flex items-center">
+              <input
+                id="checkbox-table-search-1"
+                type="radio"
+                name="ruleId"
+                data-name="${item.crf71_ruleid}"
+                class="ml-2 text-blue-600 bg-gray-100 border-gray-300 rounded-full"
+                style="width:20px;height:20px"
+              />
+              <label for="checkbox-table-search-1" class="sr-only"
+                >checkbox</label
+              >
+            </div>
+          </td>
+          <td class="px-6 py-4 percentageField">${item.crf71_basispercentage}</td>
+          <td class="px-6 py-4">${item.crf71_destinationdimenison}</td>
+          <td class="px-6 py-4">${item.crf71_costcenter}</td>
+          <td class="px-6 py-4 basisField">${item.crf71_basisid}</td>
+          <td class="px-6 py-4 basisField">${item.crf71_lineno}</td>
+
+        </tr>`
+      );
+    });
+  localStorage.setItem("totalPercentage", totalPercentage);
+  if (totalPercentage >= 100) {
+    $("#createDestinationBtn").hide();
+  } else {
+    $("#createDestinationBtn").show();
+  }
+
+  if (selectedRule.crf71_method === "Basis") {
+    basis = true;
+    $("#saveBasisBtn").show();
+    $(".basisField").show();
+    $(".percentageField").hide();
+  } else {
+    basis = false;
+    $("#saveBasisBtn").hide();
+    $(".basisField").hide();
+    $(".percentageField").show();
+  }
+});
+
+$("#createDestinationFormBtn").on("click", (e) => {
+  let totalPercentage = Number(localStorage.getItem("totalPercentage"));
+
+  if (totalPercentage + Number($("#percentage").val()) > 100) {
+    $("#destinationErrorMessage").text(
+      "Total percentage can not be greater than 100"
+    );
+  } else {
+    if (basis) {
+      if ($("#crf71_basis_id_dimension").val() === "") {
+        $("#destinationErrorMessage").text("Basis ID is required");
+        return;
+      }
+      if ($("#crf71_line_no_dimension").val() === "") {
+        $("#destinationErrorMessage").text("Basis Line No. is required");
+        return;
+      }
+    } else {
+      if ($("#percentage").val() === "") {
+        $("#destinationErrorMessage").text("Percentage is required");
+        return;
+      }
+    }
+    if ($("#crf71_destination_dimension").val() === "") {
+      $("#destinationErrorMessage").text("Main account is required");
+      return;
+    }
+    if ($("#crf71_costcenter_destination").val() === "") {
+      $("#destinationErrorMessage").text("Cost center is required");
+      return;
+    }
+    $("#loadingOverview").fadeIn();
+    webapi.safeAjax({
+      type: "POST",
+      url: `/_api/crf71_ste_rulesallocationdestinations`,
+      contentType: "application/json",
+      data: JSON.stringify({
+        crf71_ruleid: localStorage.getItem("ruleId"),
+        crf71_sourceid: localStorage.getItem("sourceId"),
+        crf71_method: basis ? "Basis" : "Percentage",
+        crf71_basispercentage: basis ? "" : String($("#percentage").val()),
+        crf71_destinationdimenison: $("#crf71_destination_dimension").val(),
+        crf71_basisid: basis
+          ? $("#crf71_basis_id_dimension option:selected").text()
+          : "",
+        crf71_lineno: basis
+          ? $("#crf71_line_no_dimension option:selected").text()
+          : "",
+        crf71_costcenter: $("#crf71_costcenter_destination").val(),
+        crf71_leistungen: $("#crf71_leistungen_destination").val(),
+        crf71_stellenartundcharakteristik: $(
+          "#crf71_stellenartundcharakteristik_destination"
+        ).val(),
+        crf71_basiscostcenter: basis
+          ? lineTableData.find(
+              (item) =>
+                item.crf71_linenumber ===
+                $("#crf71_line_no_dimension option:selected").text()
+            ).crf71_costcenter
+          : "",
+        crf71_basisstellenartundcharakteristik: basis
+          ? lineTableData.find(
+              (item) =>
+                item.crf71_linenumber ===
+                $("#crf71_line_no_dimension option:selected").text()
+            ).crf71_stellenartundcharakteristik
+          : "",
+        crf71_basisleistungen: basis
+          ? lineTableData.find(
+              (item) =>
+                item.crf71_linenumber ===
+                $("#crf71_line_no_dimension option:selected").text()
+            ).crf71_leistungen
+          : "",
+        crf71_basisaccount: basis
+          ? lineTableData.find(
+              (item) =>
+                item.crf71_linenumber ===
+                $("#crf71_line_no_dimension option:selected").text()
+            ).crf71_basisaccount
+          : "",
+      }),
+      success: function (res, status, xhr) {
+        $.ajax({
+          type: "GET",
+          url: `/_api/crf71_ste_rulesallocationdestinations(${xhr.getResponseHeader(
+            "entityid"
+          )})`,
+          contentType: "application/json",
+          success: function (rulesAllocationDestinationData) {
+            rulesAllocationDestinationDatas.push({
+              crf71_ruleid: rulesAllocationDestinationData.crf71_ruleid,
+              crf71_basispercentage:
+                rulesAllocationDestinationData.crf71_basispercentage,
+              crf71_destinationdimenison:
+                rulesAllocationDestinationData.crf71_destinationdimenison,
+              crf71_costcenter: rulesAllocationDestinationData.crf71_costcenter,
+              crf71_leistungen: rulesAllocationDestinationData.crf71_leistungen,
+              crf71_stellenartundcharakteristik:
+                rulesAllocationDestinationData.crf71_stellenartundcharakteristik,
+              crf71_basisid: rulesAllocationDestinationData.crf71_basisid,
+              crf71_lineno: rulesAllocationDestinationData.crf71_lineno,
+            });
+            $("#destination-tab").click();
+            $("#destinationForm")[0].reset();
+            $("#loadingOverview").fadeOut();
+          },
+        });
+      },
+      error: function (error) {
+        alert("Something went wrong. Please contact administrator");
+        $("#loadingOverview").fadeOut();
+      },
+    });
+    $("#loadingOverview").fadeOut();
+    $("#addDestinationModalHideBtn").click();
+  }
+});
+let basisLineDataList = [];
+// Filling Basis ID
+$.ajax({
+  type: "GET",
+  url: "/_api/crf71_ste_basismasters?$select=crf71_name",
+  contentType: "application/json",
+  success: function (basisData) {
+    for (let i = 0; i < basisData.value.length; i++) {
+      $("#crf71_basis_id_dimension").append(
+        `<option value="${basisData.value[i].crf71_name}">${basisData.value[i].crf71_name}</option>`
+      );
+      basisLineDataList.push({
+        basis: basisData.value[i].crf71_name,
+        values: [],
+      });
+    }
+  },
+});
+// Filling Line
+const lineTableData = [];
+$.ajax({
+  type: "GET",
+  url: "/_api/crf71_ste_basislineses?$select=crf71_linenumber,crf71_basisid,crf71_basisratio,crf71_basisaccount,crf71_costcenter,crf71_leistungen,crf71_stellenartundcharakteristik",
+  contentType: "application/json",
+  success: function (basisLineData) {
+    for (let i = 0; i < basisLineData.value.length; i++) {
+      lineTableData.push({
+        crf71_linenumber: basisLineData.value[i].crf71_linenumber,
+        crf71_basisid: basisLineData.value[i].crf71_basisid,
+        crf71_basisratio: basisLineData.value[i].crf71_basisratio,
+        crf71_costcenter: basisLineData.value[i].crf71_costcenter,
+        crf71_basisaccount: basisLineData.value[i].crf71_basisaccount,
+        crf71_leistungen: basisLineData.value[i].crf71_leistungen,
+        crf71_stellenartundcharakteristik:
+          basisLineData.value[i].crf71_stellenartundcharakteristik,
+      });
+
+      basisLineDataList.filter((item) => {
+        if (item.basis === basisLineData.value[i].crf71_basisid) {
+          item.values.push({
+            crf71_linenumber: basisLineData.value[i].crf71_linenumber,
+            crf71_basisaccount: basisLineData.value[i].crf71_basisaccount,
+            crf71_costcenter: basisLineData.value[i].crf71_costcenter,
+            crf71_leistungen: basisLineData.value[i].crf71_leistungen,
+            crf71_stellenartundcharakteristik:
+              basisLineData.value[i].crf71_stellenartundcharakteristik,
+          });
+        }
+      });
+      localStorage.setItem("lineTableData", JSON.stringify(lineTableData));
+    }
+  },
+});
+// Basis Line change
+$("#crf71_basis_id_dimension").on("change", (e) => {
+  localStorage.setItem("basisId", e.target.value);
+  // $("#crf71_line_no_dimension").empty();
+  // $("#crf71_line_no_dimension").append(
+  //   `<option value="">Choose a Line No</option>`
+  // );
+  // $("#crf71_line_no_dimension").append(
+  //   `<option value="">Line &nbsp;&nbsp; Account &nbsp;&nbsp; Cost Center &nbsp;&nbsp; Leistungen &nbsp;&nbsp; Stellenartundcharakteristik</option>`
+  // );
+  // basisLineDataList
+  //   .find((item) => item.basis === e.target.value)
+  //   .values.map((item) => {
+  //     $("#crf71_line_no_dimension").append(
+  //       `<option value="${item.crf71_linenumber}">
+  //       ${item.crf71_linenumber} &nbsp;&nbsp;
+  //         ${item.crf71_basisaccount} &nbsp;&nbsp;
+  //         ${item.crf71_costcenter} &nbsp;&nbsp;
+  //         ${item.crf71_leistungen} &nbsp;&nbsp;
+  //         ${item.crf71_stellenartundcharakteristik}
+  //         </option>`
+  //     );
+  //   });
+});
+$("#crf71_line_no_dimension").on("focus", () => {
+  $("#crf71_line_no_dimension").empty();
+  $("#crf71_line_no_dimension").append(
+    `<option value="">Choose a Line No</option>`
+  );
+  $("#crf71_line_no_dimension").append(
+    `<option value="" class="bg-blue-500">Line &nbsp;&nbsp; Account &nbsp;&nbsp; Cost Center &nbsp;&nbsp; Leistungen &nbsp;&nbsp; Stellenartundcharakteristik</option>`
+  );
+  basisLineDataList
+    .find((item) => item.basis === localStorage.getItem("basisId"))
+    .values.map((item) => {
+      $("#crf71_line_no_dimension").append(
+        `<option value="${item.crf71_linenumber}">
+        ${item.crf71_linenumber} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          ${item.crf71_basisaccount ?? "   "} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          ${item.crf71_costcenter ?? "   "}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          ${item.crf71_leistungen ?? "   "}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          ${item.crf71_stellenartundcharakteristik ?? "   "}
+          </option>`
+      );
+    });
+});
+$("#crf71_line_no_dimension").on("change", (e) => {
+  $("#crf71_line_no_dimension option:selected").text(
+    $("#crf71_line_no_dimension").val()
+  );
+  $("select").trigger("blur");
+});
+$("#createDestinationBtn").on("click", () => {
+  $("#destinationErrorMessage").text("");
+  $("#destinationForm")[0].reset();
+});
+
+function showLoading(status) {
+  if (status) {
+    avsLoadingText.style.display = "block";
+  } else {
+    avsLoadingText.style.display = "none";
+  }
+}
+// VERSION = 74.5

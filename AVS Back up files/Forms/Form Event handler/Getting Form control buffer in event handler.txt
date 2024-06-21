@@ -1,0 +1,11 @@
+ [FormControlEventHandler(formControlStr(ForecastSales, Overview_SalesQty), FormControlEventType::Modified),
+        SuppressBPWarning('BPParameterNotUsed', 'Parameter required by interface')]
+    public static void Overview_SalesQty_OnModified(FormControl sender, FormControlEventArgs e)
+    {
+        FormRun                 formRun = sender.formRun();
+        FormDataSource          forecastSales_ds = formRun.dataSource(formDataSourceStr(ForecastSales, ForecastSales)) as FormDataSource;
+        ForecastSales           forecastSales = forecastSales_ds.cursor();
+        UnitPrice               unitPrice = forecastSales.SalesPrice;
+        FormRealControl         Overview_Amount = formRun.design().controlName(formControlStr(ForecastSales,Overview_Amount));
+ FormRealControl         ctrlGrossAmount = formRun.design().controlName(formControlStr(ProjForecastItemCopy,ctrlGrossAmount));
+      

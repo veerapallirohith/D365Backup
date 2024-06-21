@@ -1,0 +1,24 @@
+/// <summary>
+/// This is extension of asset post class
+/// </summary>
+[ExtensionOf(classStr(AssetPost))]
+internal final class STE_AssetPost_DepreciationStartDate_Extension
+{
+    /// <summary>
+    /// This mehtod is used to update asset book table depreciationStartDate field after posting the asset journal
+    /// </summary>
+    /// <param name = "_assetBook">AssetBook</param>
+    protected void updateAcquisitionForPost(AssetBook _assetBook)
+    {
+        next updateAcquisitionForPost(_assetBook);
+        assetGroupBookSetup assetGroupBookSetup;
+
+        assetGroupBookSetup =  assetGroupBookSetup::find(_assetBook.AssetGroup,_assetBook.BookId);
+
+        if( assetGroupBookSetup.GWGAssets == NoYes::Yes)
+        {
+            _assetBook.depreciationStartDate = mkDate(01,01,year(DateTimeUtil::getSystemDate(DateTimeUtil::getUserPreferredTimeZone()))) ;
+        }
+    }
+
+}

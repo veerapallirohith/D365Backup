@@ -1,0 +1,81 @@
+/// <summary>
+/// This is a extension class for Assetjournal class to override transdate in ledgerjournaltrans table and  amortization date.
+/// </summary>
+[ExtensionOf(classStr(AssetJournal))]
+internal final class STE_AssetJournal_Extension
+{
+    public STE_AssetTableFormTransactionDate transactionDateTable;
+    /// <summary>
+    /// This method is to over ride Trans adte and assign the data to amortization date in ledger journal trans table.
+    /// </summary>
+    /// <param name = "_amount">AmountCur</param>
+    /// <param name = "_assetBook">AssetBook</param>
+    /// <param name = "_transDate">TransDate</param>
+    /// <param name = "_assetBudgetModelId">AssetBudgetModelId</param>
+    /// <param name = "_period">AssetDepreciationTime</param>
+    /// <param name = "_consumptionQty">AssetConsumptionQty</param>
+    /// <param name = "_revaluationTrans">AssetRevaluationTrans</param>
+    /// <param name = "_revaluationAmount">AssetRevaluationAmount</param>
+    /// <param name = "_custTransId">RecId</param>
+    /// <param name = "_firstTransDate">TransDate</param>
+    /// <param name = "_isPriorYear">boolean</param>
+    /// <param name = "_assetDocumentType">AssetDocumentType_JP</param>
+    /// <param name = "_assetDocumentEntryRecId">AssetDocumentRecId_JP</param>
+    /// <param name = "_prevLedgerJournalTrans">LedgerJournalTrans</param>
+    /// <param name = "_ledgerJournalTransTxt">LedgerJournalTransTxt</param>
+    /// <param name = "_defaultDimension_RU">DimensionDefault</param>
+    public void populateLedgerJournalTrans(
+            AmountCur                      _amount,
+            AssetBook                      _assetBook,
+            TransDate                      _transDate,
+            AssetBudgetModelId             _assetBudgetModelId   ,
+            AssetDepreciationTime          _period               ,
+            AssetConsumptionQty            _consumptionQty        ,
+            AssetRevaluationTrans          _revaluationTrans     ,
+            AssetRevaluationAmount         _revaluationAmount     ,
+            RecId                          _custTransId           ,
+            TransDate                      _firstTransDate        ,
+            boolean                        _isPriorYear
+
+    ,AssetDocumentType_JP          _assetDocumentType
+            ,AssetDocumentRecId_JP         _assetDocumentEntryRecId
+            ,LedgerJournalTrans            _prevLedgerJournalTrans
+    ,LedgerJournalTransTxt        _ledgerJournalTransTxt
+            ,DimensionDefault             _defaultDimension_RU
+        )
+    {
+
+        next populateLedgerJournalTrans(
+                                        _amount,
+                                        _assetBook,
+                                        _transDate,
+                                        _assetBudgetModelId ,
+                                        _period                ,
+                                        _consumptionQty       ,
+                                        _revaluationTrans    ,
+                                        _revaluationAmount    ,
+                                        _custTransId         ,
+                                        _firstTransDate        ,
+                                        _isPriorYear
+                                        ,_assetDocumentType
+                                        , _assetDocumentEntryRecId
+                                        , _prevLedgerJournalTrans
+                                        , _ledgerJournalTransTxt
+                                        ,_defaultDimension_RU
+            );
+        select firstonly transactionDateTable where transactionDateTable.UserId == curUserId();
+        if(_assetBook.IsPositiveDepreciation == NoYes::Yes)
+        {
+            if(transactionDateTable.AmoritizationDate)
+            {
+                ledgerJournalTrans.AmortizationDate = _transDate;
+                ledgerJournalTrans.Transdate        = transactionDateTable.AmoritizationDate;
+            }
+        }
+            
+
+        
+
+    }
+
+}

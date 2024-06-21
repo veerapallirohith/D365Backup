@@ -1,0 +1,114 @@
+/// <summary>
+/// This class is used to create a dialog box which will display yes,No and some validations
+/// </summary>
+internal final class STE_AssetTableForm_EventHandler
+{
+    
+    /// <summary>
+    /// This method is used to create dialog box based on asset group table autonumber check box field data
+    /// </summary>
+    /// <param name="sender">assetTable_ds</param>
+    /// <param name="e">FormControlEventArgs</param>
+    [FormControlEventHandler(formControlStr(AssetTable, Identification_AssetGroup), FormControlEventType::Modified),
+        SuppressBPWarning('BPParameterNotUsed', 'False positive')]
+    public static void Identification_AssetGroup_OnModified(FormControl sender, FormControlEventArgs e)
+    {
+        FormDataSource      assetTable_ds  = sender.formRun().dataSource('assetTable');
+        FormRun             element       = sender.formRun(); //form element
+        FormControl         mainasset_MainAssetId   = element.design(0).controlName('mainasset_MainAssetId');
+        FormControl         identification_MainAssetId  = element.design(0).controlname('identification_MainAssetId');
+        AssetGroup          assetgroup;
+        AssetTable          assetTable = assetTable_ds.cursor();
+        STE_AssetTableChildApplicable assetTableChildApplicable;
+        
+        assetgroup = AssetGroup::find(assetTable.AssetGroup);
+        {
+            if(assetgroup.AutoNumberCheckbox == NoYes::yes)
+            {
+                DialogButton diagBut;
+                str strMessage = "@Stephanus:DialogBoxMessage";
+                str strTitle = "@Stephanus:Title";
+
+                diagBut = Box::yesNoCancel(
+                        strMessage,
+                        DialogButton::No, // Initial focus is on the No button.
+                strTitle);
+                if (diagBut == DialogButton::No)
+                {
+                    assetTable.IncrementNumber = assetTable.AssetId;
+                    
+                    assetTable_ds.object(fieldNum(AssetTable,MainAssetId)).mandatory(false);
+                    mainasset_MainAssetId.enabled(false);
+                    identification_MainAssetId.enabled(false);
+                  
+                }
+                else if( diagBut == DialogButton::Yes)
+                {
+                    assetTable_ds.object(fieldNum(AssetTable,MainAssetId)).mandatory(true);
+                    mainasset_MainAssetId.enabled(true);
+                    identification_MainAssetId.enabled(true);
+                    assetTable.IncrementNumber = '';
+                    delete_from assetTableChildApplicable where assetTableChildApplicable.UserId == curUserId();
+
+                    assetTableChildApplicable = null;
+                    assetTableChildApplicable.AssetId    = assetTable.AssetId;
+                    assetTableChildApplicable.AssetGroup = assetTable.AssetGroup;
+                    assetTableChildApplicable.UserId     = curUserId();
+                    assetTableChildApplicable.insert();
+    
+                }
+                assetTable_ds.refresh();
+            }
+            else
+            {
+                assetTable.IncrementNumber = assetTable.AssetId;
+                assetTable_ds.refresh();
+            }
+            
+        }
+    }
+
+    /// <summary>
+    /// This method is used to filter the main asset id based on asset group selection in asset master form
+    /// </summary>
+    /// <param name="sender">Formcontrol</param>
+    /// <param name="e">Formcontrollookup</param>
+    [FormControlEventHandler(formControlStr(AssetTable, Identification_MainAssetId), FormControlEventType::Lookup)]
+    public static void Identification_MainAssetId_OnLookup(FormControl sender, FormControlEventArgs e)
+    {
+        FormRun                             element;
+        FormControl                         formCtrl;
+        Query                               query;
+        QueryBuildDataSource                markupTrans1;
+        SysTableLookup                      sysTableLookup;
+        QueryBuildRange                     range1;
+        container values;
+
+        element  = sender.formRun();
+        formCtrl = element.design().controlName(formControlStr(AssetTable,  Identification_AssetGroup));
+        sysTableLookup = SysTableLookup::newParameters(tableNum(assettable), sender);
+        AssetTable          assetTable;
+        str groupidvalue = formCtrl.valueStr();
+        query = new Query();
+        markupTrans1 = query.addDataSource(tableNum(AssetTable));
+        
+        sysTableLookup.addLookupfield(fieldNum(AssetTable, assetid));
+        sysTableLookup.addLookupfield(fieldNum(AssetTable, assetgroup));
+        sysTableLookup.addLookupfield(fieldNum(AssetTable, name));
+
+        while select * from assetTable
+            where assetTable.MainAssetId == ''
+            && assetTable.AssetGroup == groupidvalue
+        {
+            values+= assetTable.AssetId;
+        }
+        //below code is used to get the filtered lookup based on the other field value.
+        range1  = markupTrans1.addRange(fieldNum(AssetTable,AssetId));
+        range1.value(con2Str(values));
+        sysTableLookup.parmQuery(query);
+        sysTableLookup.performFormLookup();
+        FormControlCancelableSuperEventArgs event = e as FormControlCancelableSuperEventArgs;
+        event.CancelSuperCall();
+    }
+
+}

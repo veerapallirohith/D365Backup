@@ -1,0 +1,48 @@
+
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="_args"></param>
+    [SubscribesTo(classStr(ERDocuManagementEvents), staticDelegateStr(ERDocuManagementEvents, attachingFile))]
+    public static void ERDocuManagementEvents_attachingFile(ERDocuManagementAttachingFileEventArgs _args)
+    {
+        str _StorageAccountName ='stephanusblobstorage';
+        str _Container = 'etlbanking';
+        str _SASKey = "sp=racwdli&st=2022-12-30T18:56:53Z&se=2024-12-30T02:56:53Z&sv=2021-06-08&sr=c&sig=1v0vA%2BKJWAJRAJJNWM%2BFJCOSlZGUfYVH%2BhJAb7PD144%3D";
+           
+        str _BlobName = 'TEST_01';
+        System.IO.Stream _stream = _args.getStream();
+
+        DocuType docuType = DocuType::find (_args.getDocuTypeId());
+        _args.markAsHandled();
+        var stream = _args.getStream();
+        if (stream.CanSeek)
+        {
+            stream.Seek(0, System.IO.SeekOrigin::Begin);
+        }
+
+        STE_AzureBlobStorageLibrary.STE_AzureBlobUploadLibrary upload = new STE_AzureBlobStorageLibrary.STE_AzureBlobUploadLibrary('Test');
+        STE_AzureBlobStorageLibrary.STE_AzureBlobStorageHelperLibrary helperclass = new   STE_AzureBlobStorageLibrary.STE_AzureBlobStorageHelperLibrary();
+   
+        helperclass.storageAccountName = 'stephanusblobstorage';
+        helperclass.blobName = 'TEST_01';
+        helperclass.containerName = 'etlbanking';
+
+       // upload.savefile(_StorageAccountName,_Container, _SASKey, _BlobName ,
+                                // _stream);
+        
+        if(stream.canseek == true)
+        {
+        helperclass.saveFileInBlob(_StorageAccountName,_Container, _SASKey, _BlobName , stream);
+        }
+       
+   
+       
+       
+        
+       
+
+        
+        
+                     
+    }

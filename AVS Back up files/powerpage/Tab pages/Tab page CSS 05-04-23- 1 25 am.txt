@@ -1,0 +1,239 @@
+.avs-input-field {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-weight: 500;
+    color: #333;
+}
+
+.avs-input-field:disabled {
+    background-color: #E9ECEF;
+}
+
+.form-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-gap: 15px;
+}
+
+ /* New rules allocation css start  */
+
+ /* Style Overrides for Stephanus Power Pages Portal */
+/* --------------- Index -------------- */
+/* (C) ->  Class */
+/* (I) ->  ID */
+/* Nothing in bracket means tags */
+/* ------------------------------------ */
+/* 1. Global Styles
+ */
+
+
+:root {
+    --avs-accent-color: #5a3296;
+    --avs-accent-color-light: #7c4cc5;
+    --avs-accent-color-dark: #2a1549;
+    --avs-blue: #0d6efd;
+    --avs-indigo: #6610f2;
+    --avs-purple: #6f42c1;
+    --avs-pink: #d63384;
+    --avs-red: #dc3545;
+    --avs-orange: #fd7e14;
+    --avs-yellow: #ffc107;
+    --avs-green: #198754;
+    --avs-teal: #20c997;
+    --avs-cyan: #0dcaf0;
+    --avs-white: #fff;
+    --avs-gray: #6c757d;
+    --avs-gray-dark: #343a40;
+    --avs-primary: #0d6efd;
+    --avs-secondary: #6c757d;
+    --avs-success: #198754;
+    --avs-info: #0dcaf0;
+    --avs-warning: #ffc107;
+    --avs-danger: #dc3545;
+    --avs-light: #f8f9fa;
+    --avs-dark: #212529;
+    --avs-gradient: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.15),
+      rgba(255, 255, 255, 0)
+    );
+  }
+  
+  /* 1. Global Styles */
+  *,
+  *::before,
+  *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    outline: none !important;
+    
+  }
+  .cf-mukta{
+    font-family: "Mukta", sans-serif;
+  }
+  .mt-1{
+    margin-top: 10px;
+  }
+  .avs-flex {
+    display: flex;
+  }
+  .avs-flex-d-col {
+    flex-direction: column;
+  }
+  .avs-container {
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 1rem;
+    max-width: 1200px;
+  }
+  .form-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-gap: 15px;
+  }
+  
+  .avs-input-field {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-weight: 500;
+    color: #333;
+  }
+  .avs-input-field:disabled{
+    background-color: #E9ECEF;
+  }
+  
+  .avs-table {
+    background-color: white;
+    border-collapse: collapse !important;
+    border: none !important;
+    margin-bottom: 4rem;
+  }
+  .avs-thead {
+    box-shadow: 0 5px 10px rgb(214, 214, 214);
+  }
+  
+  .avs-table-responsive {
+    overflow-x: auto;
+  }
+  .avs-table th {
+    padding: 0.5rem 1rem !important;
+    text-transform: capitalize;
+    letter-spacing: 0.1rem;
+    font-weight: normal !important;
+    border: 1px solid rgb(234, 234, 234) !important;
+    background: #76b726;
+    color: white;
+  }
+  
+  
+  .avs-table td {
+    padding: 1rem 2rem !important;
+    border: 1px solid rgb(234, 234, 234) !important;
+  }
+  
+  /* AVS Button Start */
+  .avs-button {
+      background-color: initial;
+      background-image: linear-gradient(#e84605 0, #e84605 100%);
+      border-radius: 5px;
+      border-style: none;
+      box-shadow: rgb(245 244 247 / 25%) 0 1px 1px inset;
+      color: #fff;
+      cursor: pointer;
+      font-family: Inter, sans-serif;
+      font-weight: 500;
+      height: 40px;
+      outline: 0;
+      transition: all .3s cubic-bezier(.05, .03, .35, 1);
+      user-select: none;
+      width: 100px;
+      margin: auto 10px;
+      margin-top: 30px;
+  }
+  
+  .avs-button:hover {
+    opacity: .7;
+  }
+  
+  .add-row {
+      color: white;
+      background-color: #302CE1;
+      border-color: #302CE1;
+  }
+  
+  .select2-container--default .select2-selection--single {
+      background-color: #fff;
+      border-radius: 4px;
+      box-sizing: border-box;
+      height: 38px !important;
+      padding-top: 0.7rem;
+      padding-right: 1rem;
+      padding-bottom: 0.7rem;
+      padding-left: 1rem;
+      border-top-width: 1px !important ;
+      border-right-width: 1px !important;
+      border-bottom-width: 1px !important;
+      border-left-width: 1px !important;
+      border-top-style: solid !important;
+      border-right-style: solid !important;
+      border-bottom-style: solid !important;
+      border-left-style: solid !important;
+      border-top-color: rgb(204, 204, 204) !important;
+      border-right-color: rgb(204, 204, 204) !important;
+      border-bottom-color: rgb(204, 204, 204) !important;
+      border-left-color: rgb(204, 204, 204) !important;
+  }
+  .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+      background-color: #e84605 !important;
+      color: white;
+  }
+  .select2-container--default .select2-selection--single .select2-selection__rendered {
+      line-height: 20px !important;
+  }
+  #loading {
+      width: 100%;
+      height: 100%;
+      top: 0px;
+      left: 0px;
+      position: fixed;
+      display: block;
+      opacity: 0.7;
+      background-color: #fff;
+      z-index: 99;
+      text-align: center;
+    }
+    #loading-image {
+      position: absolute;
+      top: 230px;
+      left: 395px;
+      z-index: 100;
+      text-align: center;
+    }
+    .modal-dialog.modal-dialog-centered {
+      position: relative;
+      top: 172px;
+  }
+  select option:hover{
+    background-color: #e84605 !important;
+    color:white;
+    }
+    .none{
+      display: none !important;
+    }
+  
+  @media screen and (max-width: 1000px) {
+    .avs-button {
+      height: 48px;
+      width: 100px;
+    }
+  }
+  
+  /* AVS Button End */
+
+
+ /* New rules allocation css end */

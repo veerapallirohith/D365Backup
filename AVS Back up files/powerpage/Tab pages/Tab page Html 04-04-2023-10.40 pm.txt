@@ -1,0 +1,247 @@
+<link
+  href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+  rel="stylesheet"
+/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="//cdn.datatables.net/1.13.2/js/jquery.dataTables.min.js"></script>
+<link
+  rel="stylesheet"
+  href="//cdn.datatables.net/1.13.2/css/jquery.dataTables.min.css"
+/><meta name="viewport" content="width=device-width, initial-scale=1" />
+<div style="box-sizing: border-box; background-color: #777;">
+  <button
+    onclick="openPage('Overview', this)"
+    id="defaultOpen"
+    class="tablink"
+    style="box-sizing: border-box;font-size: 25px; "
+  >
+    Overview</button
+  ><button
+    onclick="openPage('Rule', this)"
+    class="tablink"
+    style="box-sizing: border-box;font-size: 25px;"
+  >
+    Source</button
+  ><button
+    onclick="openPage('Destination', this)"
+    class="tablink"
+    style="box-sizing: border-box;font-size: 25px;"
+  >
+    Destination
+  </button>
+</div>
+<!-- Overview -->
+
+<div id="Overview" class="tabcontent p-4" style="box-sizing: border-box;">
+  <h3 style="box-sizing: border-box;">OverView</h3>
+  <div>
+    <button id="saveRuleLine" class="p-3 border rounded bg-teal-500">
+      Save
+    </button>
+  </div>
+
+  <div class="relative overflow-x-auto">
+    <table class="w-full text-left text-gray-500" id="crf71_ste_rulesallocationoverview">
+      <thead class="text-gray-700 uppercase bg-gray-50">
+        <tr>
+          <th></th>
+          <th class="px-6 py-3">Rule ID</th>
+          <th class="px-6 py-3">Description</th>
+          <th class="px-6 py-3">Method</th>
+          <th class="px-6 py-3">Company</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+          <td></td>
+          <td>
+            <input
+              disabled
+              id="ruleIdOverView"
+              type="text"
+              class="border-2 p-2 rounded"
+            />
+          </td>
+          <td>
+            <input
+              id="descriptionOverView"
+              type="text"
+              class="border-2 p-2 rounded"
+            />
+          </td>
+          <td>
+            <select id="MethodOverView" class="border-2 p-2 rounded">
+              <option value="Basis">Basis</option>
+              <option value="Percentage">Percentage</option>
+            </select>
+          </td>
+          <td>
+            <select id="CompanyOverView" class="border-2 p-2 rounded">
+              <option value="S31">S31</option>
+              <option value="S42">S42</option>
+              <option value="S00">S00</option>
+              <option value="Dat">Dat</option>
+            </select>
+          </td>
+          
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Rule -->
+<div id="Rule" class="tabcontent p-3" style="box-sizing: border-box;">
+  <h1 style="box-sizing: border-box; text-align: center;"><b><u>Source</u></b></h1>
+  <div class="flex justify-content: left;">
+    <label>Rule ID:</label>&nbsp;&nbsp;
+    <input
+      type="text"
+      id="crf71_rule"
+      class="ruleIdOverView border-2 rounded" />
+  </div>
+ <!-- data table -->
+ <div class="avs-table-responsive">
+  <table id="trulesallocation" class="table table-striped avs-table">
+    <thead>
+      <tr>
+        <th style="text-align:center;">Ledger account From </th>
+        <th style="text-align:center;">Ledger account To </th>
+        <th style="text-align:center;">Cost center</th>
+        <th style="text-align:center;">Leistungen </th>
+        <th style="text-align:center;">stellenartundcharakteristik</th>
+        <!-- <th style="text-align:center;">Method</th>
+        <th style="text-align:center;">Cost Center Offset</th>
+        <th style="text-align:center;">Leistungen Offset</th>
+        <th style="text-align:center;">stellenartundcharakteristik Offset</th>
+        <th style="text-align:center;">Active</th> -->
+        <th style="text-align:center;width:130px;">Add line <button type="button" id="addrowbtn" data-func="dt-add"
+            class="btn btn-xs dt-add" style="background-color:#76b726">
+            <span class="glyphicon glyphicon-plus" aria-hidden="true" style="color:white"></span>
+          </button></th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- <td><input type="text" id="crf71_ledgeraccountfrom" oninput="checkPercentage()" class="form-control">
+      </td> -->
+      <td><select id="crf71_ledgeraccountfrom" class="form-control"></td>
+      <td><select id="crf71_ledgeraccountto" class="form-control"></td>
+      <td><select id="crf71_costcenter" class="form-control"></td>
+      <td><select id="crf71_leistungen" class="form-control"></td>
+      <td><select id="crf71_stellenartundcharakteristik" class="form-control"></td>  
+
+      <td><button type="button" class="btn add-row btn-xs dt-edit" style="margin-right:16px;">
+          <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="btn btn-danger btn-xs dt-delete">
+          <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+        </button>
+
+        
+      </td>
+    </tbody>
+  </table>
+</div>
+</div>
+
+ <!-- data table end -->
+
+ <!-- Destination -->
+
+<div id="Destination" class="tabcontent" style="box-sizing: border-box;">
+  <h1 style="box-sizing: border-box; text-align: center;"><b><u>Destination</u></b></h1>
+  <div class="flex justify-content: left;">
+    <label>Rule ID:</label>&nbsp;&nbsp;
+    <input
+      type="text"
+      id="crf71_rule"
+      class="ruleIdOverView border-2 rounded" />
+  </div>
+  <div>
+    <label>Ledger account From:</label>&nbsp;&nbsp;
+    <input
+      type="text"
+      id="crf71_ledgeraccountfrom"
+      class="ruleIdOverView border-2 rounded" />
+      <label>Ledger account To:</label>&nbsp;&nbsp;
+    <input
+      type="text"
+      id="crf71_ledgeraccountto"
+      class="ruleIdOverView border-2 rounded" />
+  </div>
+ <!-- data table -->
+ <div class="avs-table-responsive">
+  <table id="trulesallocationone" class="table table-striped avs-table">
+    <thead>
+      <tr>
+        <th style="text-align:center;">Rule ID</th>
+        <th style="text-align:center;">Basis/Percentage </th>
+        <th style="text-align:center;">Cost center</th>
+        <!-- <th style="text-align:center;">Leistungen </th>
+        <th style="text-align:center;">stellenartundcharakteristik</th>
+        <th style="text-align:center;">Method</th>
+        <th style="text-align:center;">Cost Center Offset</th>
+        <th style="text-align:center;">Leistungen Offset</th>
+        <th style="text-align:center;">stellenartundcharakteristik Offset</th>
+        <th style="text-align:center;">Active</th> -->
+        <th style="text-align:center;width:130px;">Add line <button type="button" id="addrowbtnone" data-func="dt-add"
+            class="btn btn-xs dt-add" style="background-color:#76b726">
+            <span class="glyphicon glyphicon-plus" aria-hidden="true" style="color:white"></span>
+          </button></th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- <td><input type="text" id="crf71_ledgeraccountfrom" oninput="checkPercentage()" class="form-control">
+      </td> -->
+      <td><select id="crf71_rule" class="form-control"></td>
+      <td><select id="#crf71_basis_percentage" class="form-control"></td>
+      <td><select id="crf71_costcenter" class="form-control"></td>
+      <!-- <td><select id="crf71_leistungen" class="form-control"></td>
+      <td><select id="crf71_stellenartundcharakteristik" class="form-control"></td>   -->
+      <td><button type="button" class="btn add-row btn-xs dt-edit" style="margin-right:16px;">
+          <span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>
+        </button>
+        <button type="button" class="btn btn-danger btn-xs dt-delete">
+          <span class="glyphicon glyphicon-remove" aria-hidden="true"></span>
+        </button>
+
+        
+      </td>
+    </tbody>
+  </table>
+</div>
+</div>
+<script>
+  function openPage(pageName, elmnt) {
+    console.log($("input[type=radio]:checked").attr("data-name"));
+    $(".ruleIdOverView").val($("input[type=radio]:checked").attr("data-name"));
+    var i, tabcontent, tablinks;
+    tabcontent = document.getElementsByClassName("tabcontent");
+    for (i = 0; i < tabcontent.length; i++) {
+      tabcontent[i].style.display = "none";
+    }
+    tablinks = document.getElementsByClassName("tablink");
+    for (i = 0; i < tablinks.length; i++) {
+      tablinks[i].style.backgroundColor = "";
+    }
+    document.getElementById(pageName).style.display = "block";
+    elmnt.style.backgroundColor = "#2f5fef";
+  }
+  // Get the element with id="defaultOpen" and click on it
+  document.getElementById("defaultOpen").click();
+</script>
+<div
+  class="row sectionBlockLayout text-left"
+  style="box-sizing: border-box; display: flex; flex-wrap: wrap; margin: 0px; min-height: auto; padding: 8px;"
+>
+  <div
+    class="container"
+    style="box-sizing: border-box; padding: 0px; display: flex; flex-wrap: wrap;"
+  >
+    <div
+      class="col-md-12 columnBlockLayout"
+      style="box-sizing: border-box; flex-grow: 1; display: flex; flex-direction: column; min-width: 300px;"
+    ></div>
+  </div>
+</div>

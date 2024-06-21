@@ -1,0 +1,28 @@
+need global admin role or user needs to be Member of the “Project Collection Administrators” permissions group in ADO.
+
+To get available work spaces- 
+tf workspaces /computer:* /owner:* /collection:"https://dev.azure.com/drivergroupplc"
+
+To get workspace details in xml format :
+>tf workspaces /computer:* /owner:* /collection:"https://dev.azure.com/drivergroupplc" /format:xml > c:\temp\workspaces.xml
+
+To delete the workspace using user :
+
+tf workspace /delete DG-DEV-2;1e42e258-8c2c-405c-8490-ab233d74b9c9\SKUPCHENKO1000@quantiq.com  /collection:"https://dev.azure.com/drivergroupplc"
+
+
+refrence Link :
+
+https://omni365.wordpress.com/2021/09/30/how-to-set-a-workspace-to-public-when-you-do-not-have-access-to-it/#:~:text=How%20to%20set%20a%20workspace%20to%20public%20when,%2Fcollection%3A%20https%3A%2F%2F%3Csite.url%3E%2Fdefaultcollection%203%203.%20Change%20Permission%20to%20Public%3A
+
+
+
+tf workspace /delete "DG-DEV-2;Sergii Kupchenko" /collection:"https://dev.azure.com/drivergroupplc"
+
+
+tf workspace /delete DG-DEV-2;Sergii Kupchenko /server:"https://dev.azure.com/drivergroupplc/tfs/D365 Implementation (Mendoza)" 
+
+Permssions : tf workspace /delete DG-DEV-2;1e42e258-8c2c-405c-8490-ab233d74b9c9\SKUPCHENKO1000@quantiq.com  /collection:"https://dev.azure.com/drivergroupplc"
+
+tf workspace /collection:"https://dev.azure.com/drivergroupplc">.visualstudio.com/defaultcollection DEV-DEV01-1_WAVE2;https://<site.url>.visualstudio.com\<username> /permission:Public
+

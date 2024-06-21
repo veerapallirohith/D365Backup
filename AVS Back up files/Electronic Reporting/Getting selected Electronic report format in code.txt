@@ -1,0 +1,44 @@
+protected void outputReport()
+    {
+        next  outputReport();
+        PSAProjInvoiceContract contract = this.parmReportContract().parmRdpContract() as PSAProjInvoiceContract;
+        FormLetterReport formLetter = this.formLetterReport;
+     
+       
+
+        str format = formLetter.getCurrentPrintSetting().parmReportFormatName();
+        str trimmedString;
+
+        int startPos = strScan(format, '{', 1, strLen(format)) + 1;
+        int endPos = strScan(format, '}', startPos, strLen(format)); // Remove the + 1 here
+
+        if (startPos > 0 && endPos > startPos)
+        {
+            
+            trimmedString = subStr(format,startPos,endPos- startPos);
+            //trimmedString = strFind(trimmedString,'}', 1,strLen(format)
+        }
+        ERFormatMappingTable erFormatMappingTable = ERFormatMappingTable::findByGUID(str2Guid(trimmedString)) ;
+        if(erFormatMappingTable.Name == 'WithoutHeaderNo Split by Month-DG_Project invoice (Excel)')
+        {
+        
+            DGMA_ProjInvoiceTmp   invoiceTmp,tmp;
+            ttsbegin;
+            RecordInsertList insertList = new RecordInsertList(tableNum(DGMA_ProjInvoiceTmp))  ;
+            while select QTQ_RESOURCENAME,  Category ,ProjId,  DGMA_FinalAmount from tmp
+                group by QTQ_RESOURCENAME,  Category ,ProjId,  DGMA_FinalAmount
+            {
+                invoiceTmp.QTQ_ResourceName =  tmp.qtq_resourceName ;
+                invoiceTmp.Category =  tmp.Category;
+                invoiceTmp.ProjId =   tmp.ProjId;
+                invoiceTmp.DGMA_FinalAmount = tmp.DGMA_FinalAmount;
+                insertList.add(invoiceTmp);
+                
+            }
+            update_recordset tmp Setting CanBeDeleted = NoYes::Yes;
+            delete_from tmp;
+            insertList.insertDatabase();
+            ttscommit;
+        }
+
+    }

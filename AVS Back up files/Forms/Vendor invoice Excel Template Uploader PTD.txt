@@ -1,0 +1,597 @@
+/// <summary>
+///  name space used for data library
+/// Written by PTD on 14/04/2023
+/// </summary>
+
+using System.IO;
+using OfficeOpenXml;
+using OfficeOpenXml.ExcelPackage;
+using OfficeOpenXml.ExcelRange;
+
+/// <summary>
+///  STE_IntercompanyTemplateUploaderUpdate class used for import data from Excel
+/// </summary>
+
+
+internal final class STE_IntercompanyTemplateUploaderUpdate
+{
+    
+  /// <summary>
+  /// Run Method For Import of the Data
+  /// </summary>
+    public void run()
+    {
+        this.importData();
+    }
+
+    [SuppressBPWarning('BPUnusedStrFmtArgument','The placeholder %1 to strFmt is not used in the format string.')]
+    /// <summary>
+    /// For Customer Free Text Invoice Template
+    /// </summary>
+    /// <param name = "rowCount">int</param>
+    /// <param name = "columncount">int</param>
+    /// <param name = "range">OfficeOpenXml.ExcelRange</param>
+    public void customerFreeTextInvoiceTemplate(int rowCount, int columncount,OfficeOpenXml.ExcelRange range)
+    {
+        int i;
+        CustInvoiceTemplate             custInvoiceTemplate,custInvoiceTemplateLoc;
+        CustInvoiceDistributionTemplate custInvoiceDistributionTemplateInsert,custInvoiceDistributionTemplateLoc;
+        STE_ARInterCompanyTable         arInterCompanyTable;
+        CustInvoiceLineTemplate         custInvoiceLineTemplate,custInvoiceLineTemplateDelete;
+        CustInvoiceStandardLineTemplate custInvoiceStandardLineTemplate,custInvoiceStandardLineTemplateLoc;
+        CustInvoiceStandardLineTemplate custInvoiceStandardLineTemplateDelete;
+
+        RecId                           LedgerDimension,defaultDimension_Ledger;
+        InterCompanyTradingPartner      interCompanyTradingPartner, interCompanyTradingPartnerVendor;
+
+        LedgerJournalName                       ledgerJournalName;
+        MainAccount                             mainAccount;
+        #define.LanguageId('de')
+        #define.CurrencyCode('EUR')
+        
+        for (i = 1; i<= rowCount; i++)
+        {
+            if(i == 1)
+            {
+                continue;
+            }            
+            custInvoiceTemplate.TemplateName        = (range.get_Item(i,1).Value);
+            custInvoiceTemplateLoc = custInvoiceTemplate::findByTemplateName(custInvoiceTemplate.TemplateName);
+                       
+            if(!custInvoiceTemplateLoc)
+            {
+                //******************* Insert custInvoiceTemplate Header data *********************
+                custInvoiceTemplate.TemplateDescription = (range.get_Item(i,2).Value);
+                custInvoiceTemplate.TaxGroup            = (range.get_Item(i,21).Value);
+                custInvoiceTemplate.TaxItemGroup        = (range.get_Item(i,22).Value);
+                custInvoiceTemplate.DefaultDimension    = this.createDefaultDimension(range.get_Item(i,7).Value,range.get_Item(i,8).value,range.get_Item(i,9).value,range.get_Item(i,10).value,range.get_Item(i,11).value,
+                                                                       range.get_Item(i,12).value,range.get_Item(i,13).value,range.get_Item(i,14).value,range.get_Item(i,15).value,range.get_Item(i,16).value,range.get_Item(i,17).value,range.get_Item(i,18).value);
+                        
+                custInvoiceTemplate.AccountingDistributionTemplate =0;
+                custInvoiceTemplate.LanguageId   = #LanguageId;
+                custInvoiceTemplate.CurrencyCode = #CurrencyCode;
+
+                custInvoiceTemplate.STE_VendorTemplateName = (range.get_Item(i,5).Value);
+                interCompanyTradingPartner = InterCompanyTradingPartner::findOrCreateCustomer(range.get_Item(i,4).Value, range.get_Item(i,3).Value);
+                interCompanyTradingPartnerVendor = interCompanyTradingRelation::getRelatedTradingPartner(interCompanyTradingPartner);
+                            
+                /*
+                select crosscompany VendInvoiceTemplate
+                                          where VendInvoiceTemplate.TemplateName == custInvoiceTemplate.STE_VendorTemplateName
+                                             && VendInvoiceTemplate.DataAreaId   == interCompanyTradingPartnerVendor.VendorDataAreaId;
+                if(!VendInvoiceTemplate.RecId)
+                {
+                    throw Error("Vendor template name does not exist in Vendor Invoice Template. Please Create a Template in Vendor Invoice template Master");
+
+                }*/
+
+                custInvoiceTemplate.STE_JournalName        = (range.get_Item(i,6).Value);
+
+                select crosscompany ledgerJournalName
+                              where ledgerJournalName.JournalName == custInvoiceTemplate.STE_JournalName
+                                 && ledgerJournalName.JournalType == LedgerJournalType::VendInvoiceRegister
+                                 && ledgerJournalName.DataAreaId  == interCompanyTradingPartnerVendor.VendorDataAreaId;
+                if(!ledgerJournalName.RecId)
+                {
+                    throw Error("@Stephanus:STE_interCompany_Journal");
+                }
+                            
+                custInvoiceTemplate.insert();
+
+                arInterCompanyTable.CustInvoiceTemplate = custInvoiceTemplate.RecId;
+                arInterCompanyTable.CustDataAreaId      = (range.get_Item(i,3).Value);
+                arInterCompanyTable.CustAccountNum      = (range.get_Item(i,4).Value);
+                arInterCompanyTable.VendAccountNum      = interCompanyTradingPartnerVendor.vendAccount();
+                arInterCompanyTable.VendDataAreaId      = interCompanyTradingPartnerVendor.VendorDataAreaId;
+                arInterCompanyTable.Active              = NoYes::Yes;
+                arInterCompanyTable.insert();
+                            
+            }
+                        
+            mainAccount           = MainAccount::findByMainAccountId(range.get_Item(i,19).Value);
+            LedgerDimension       = LedgerDynamicAccountHelper::getDynamicAccountFromAccountNumber(mainAccount.MainAccountId,LedgerJournalACType::Ledger);
+                       
+            select firstonly custInvoiceStandardLineTemplateLoc
+                       where custInvoiceStandardLineTemplateLoc.LedgerDimension     == LedgerDimension
+                       &&    custInvoiceStandardLineTemplateLoc.CustInvoiceTemplate == custInvoiceTemplate.RecId;
+            if(!custInvoiceStandardLineTemplateLoc)
+            {
+                custInvoiceLineTemplate =null;
+                custInvoiceStandardLineTemplate =null;
+                custInvoiceLineTemplate.initValue();
+                //custInvoiceLineTemplate.LineNum                        = i;
+                custInvoiceLineTemplate.CustInvoiceTemplate            = custInvoiceTemplate.RecId;
+                custInvoiceLineTemplate.InstanceRelationType           = DictTable::getRelationTypeFromTableName(tableStr(CustInvoiceStandardLineTemplate));
+                                                    
+                //i,5 ; i,6 Column Skipped;                                             
+                custInvoiceLineTemplate.Description                    = custInvoiceStandardLineTemplate.editDescription(true, (range.get_Item(i,20).Value));
+                custInvoiceLineTemplate.AmountCur                      = (range.get_Item(i,25).value);
+                custInvoiceLineTemplate.TaxGroup                       = custInvoiceTemplate.TaxGroup;
+                custInvoiceLineTemplate.TaxItemGroup                   = custInvoiceTemplate.TaxItemGroup;                        
+                custInvoiceLineTemplate.insert();
+
+                custInvoiceStandardLineTemplate.initValue();
+                custInvoiceStandardLineTemplate.initFromCustInvoiceTemplate(custInvoiceTemplate);
+                custInvoiceStandardLineTemplate.DefaultDimension        = custInvoiceTemplate.DefaultDimension;
+                custInvoiceStandardLineTemplate.TaxItemGroup            =  custInvoiceTemplate.TaxItemGroup;
+                custInvoiceStandardLineTemplate.CustInvoiceTemplate     = custInvoiceTemplate.RecId; //Added by vishnu on 10-04-2023
+                custInvoiceStandardLineTemplate.LedgerDimension         = LedgerDynamicAccountHelper::getDynamicAccountFromAccountNumber(mainAccount.MainAccountId,LedgerJournalACType::Ledger);
+                custInvoiceStandardLineTemplate.Quantity                = (range.get_Item(i,23).Value);
+                custInvoiceStandardLineTemplate.UnitPrice               = (range.get_Item(i,24).value);
+
+                if(custInvoiceStandardLineTemplate.Quantity == 0)
+                {
+                    info(strFmt("@Stephanus:STE_interCompany_Quantity",custInvoiceTemplate.TemplateName));
+                }
+
+                if(custInvoiceStandardLineTemplate.UnitPrice == 0)
+                {
+                    info(strFmt("@Stephanus:STE_interCompany_Price",custInvoiceTemplate.TemplateName));
+                }
+                //custInvoiceStandardLineTemplate.AmountCur              = custInvoiceStandardLineTemplate.editAmount(true,custInvoiceLineTemplate.AmountCur);
+                custInvoiceStandardLineTemplate.modifiedField(fieldNum(custInvoiceStandardLineTemplate, UnitPrice ));
+                custInvoiceStandardLineTemplate.insert();
+                            
+                delete_from custInvoiceDistributionTemplateLoc
+                      where custInvoiceDistributionTemplateLoc.CustInvoiceLineTemplate == custInvoiceStandardLineTemplate.RecId;
+
+                delete_from custInvoiceStandardLineTemplateDelete
+                          where custInvoiceStandardLineTemplateDelete.CustInvoiceTemplate ==  custInvoiceTemplate.RecId
+                           &&   !custInvoiceStandardLineTemplateDelete.LedgerDimension;
+
+                delete_from custInvoiceLineTemplateDelete
+                          where custInvoiceLineTemplateDelete.CustInvoiceTemplate == custInvoiceTemplate.RecId
+                           &&   custInvoiceLineTemplateDelete.InstanceRelationType != DictTable::getRelationTypeFromTableName(tableStr(CustInvoiceStandardLineTemplate));
+
+                                                        
+            }
+                 
+            defaultDimension_Ledger = this.createDefaultDimension(range.get_Item(i,27).value,range.get_Item(i,28).value,range.get_Item(i,29).value,range.get_Item(i,30).value,range.get_Item(i,31).value,range.get_Item(i,32).value,range.get_Item(i,33).value,range.get_Item(i,34).value,range.get_Item(i,35).value,range.get_Item(i,36).value,range.get_Item(i,37).value,range.get_Item(i,38).value);
+            //custInvoiceDistributionTemplateInsert.LedgerDimension = LedgerDimensionFacade::serviceCreateLedgerDimension(custInvoiceStandardLineTemplate.LedgerDimension,custInvoiceTemplate.DefaultDimension );
+            custInvoiceDistributionTemplateInsert.LedgerDimension = LedgerDimensionFacade::serviceCreateLedgerDimension(custInvoiceStandardLineTemplate.LedgerDimension,defaultDimension_Ledger);
+            
+            custInvoiceDistributionTemplateInsert.Percentage              = (range.get_Item(i,39).value);
+            custInvoiceDistributionTemplateInsert.AmountCur               = (range.get_Item(i,40).value);            
+            custInvoiceDistributionTemplateInsert.CustInvoiceLineTemplate = custInvoiceStandardLineTemplate.RecId;
+
+            if(custInvoiceDistributionTemplateInsert.LedgerDimension != 0 )
+            {
+                if(custInvoiceDistributionTemplateInsert.Percentage)
+                {
+                    custInvoiceDistributionTemplateInsert.AmountCur = CurrencyExchange::round(((custInvoiceDistributionTemplateInsert.Percentage / 100) * custInvoiceLineTemplate.AmountCur), custInvoiceTemplate.CurrencyCode);
+                }
+
+                if(custInvoiceDistributionTemplateInsert.AmountCur != 0.0)
+                {
+                    custInvoiceDistributionTemplateInsert.Percentage = (custInvoiceDistributionTemplateInsert.AmountCur / custInvoiceLineTemplate.AmountCur) * 100;
+                }
+
+                custInvoiceDistributionTemplateInsert.insert();
+            }            
+            custInvoiceDistributionTemplateInsert =null;                          
+        }    
+
+        delete_from custInvoiceStandardLineTemplateDelete
+                          where custInvoiceStandardLineTemplateDelete.CustInvoiceTemplate ==  custInvoiceTemplate.RecId
+                           &&   !custInvoiceStandardLineTemplateDelete.LedgerDimension;
+
+        delete_from custInvoiceLineTemplateDelete
+                          where custInvoiceLineTemplateDelete.CustInvoiceTemplate == custInvoiceTemplate.RecId
+                           &&   custInvoiceLineTemplateDelete.InstanceRelationType != DictTable::getRelationTypeFromTableName(tableStr(CustInvoiceStandardLineTemplate));
+
+    }
+
+    [SuppressBPWarning('BPUnusedStrFmtArgument','The placeholder %1 to strFmt is not used in the format string.')]
+    /// <summary>
+    /// For Vendor Free Text Invoice Template.
+    /// </summary>
+    /// <param name = "rowCount">int</param>
+    /// <param name = "columncount">int</param>
+    /// <param name = "range">OfficeOpenXml.ExcelRange</param>
+    public void vendorFreeTextInvoiceTemplate(int rowCount, int columncount,OfficeOpenXml.ExcelRange range)
+    {
+
+        STE_VendInvoiceTemplate                 vendInvoiceTemplate, vendInvoiceTemplateLoc;
+        STE_VendInvoiceDistributionTemplate     vendInvoiceDistributionTemplateInsert, vendInvoiceDistributionTemplateLoc;
+        STE_VendInvoiceLineTemplate             vendInvoiceLineTemplate, vendInvoiceLineTemplateLoc;
+        RecId                                   LedgerDimension,defaultDimension_Ledger;
+        MainAccount                             mainAccount;
+        CustInvoiceTemplate                     custInvoiceTemplate;
+        str                                     templateName;
+        STE_ARInterCompanyTable                 aRInterCompanyTable;
+        int i;
+
+        for (i = 1; i<= rowCount; i++)
+        {
+            if(i == 1)
+            {
+                continue;
+            }
+            templateName = (range.get_Item(i,1).Value);
+
+            select firstonly custInvoiceTemplate
+                      where custInvoiceTemplate.STE_VendorTemplateName == templateName;
+            if(!custInvoiceTemplate)
+            {
+                throw error(strFmt("@Stephanus:STE_interCompany_Vendor",templateName));
+            }
+            aRInterCompanyTable = STE_ARInterCompanyTable::findByCustInvoiceTemplate(custInvoiceTemplate.RecId);
+            //aRInterCompanyTable.VendDataAreaId;
+
+            changeCompany(aRInterCompanyTable.VendDataAreaId)
+            {
+                vendInvoiceTemplate.TemplateName            = templateName;//(range.get_Item(i,1).Value);
+                vendInvoiceTemplateLoc = STE_VendInvoiceTemplate::findByTemplateName(vendInvoiceTemplate.TemplateName);       
+
+                if(!vendInvoiceTemplateLoc)
+                {
+                    vendInvoiceTemplate.TemplateDescription = (range.get_Item(i,2).Value);
+                    vendInvoiceTemplate.DefaultDimension    = this.createDefaultDimension(range.get_Item(i,3).Value,range.get_Item(i,4).value,range.get_Item(i,5).value,range.get_Item(i,6).value,range.get_Item(i,7).value,
+                                                                           range.get_Item(i,8).value,range.get_Item(i,9).value,range.get_Item(i,10).value,range.get_Item(i,11).value,range.get_Item(i,12).value,range.get_Item(i,13).value,range.get_Item(i,14).value);
+                    //vendInvoiceTemplate.DataAreaId = aRInterCompanyTable.VendDataAreaId;
+                    vendInvoiceTemplate.insert();                
+                }              
+                             
+                        
+                mainAccount           = MainAccount::findByMainAccountId(range.get_Item(i,16).Value);
+                LedgerDimension       = LedgerDynamicAccountHelper::getDynamicAccountFromAccountNumber(mainAccount.MainAccountId,LedgerJournalACType::Ledger);
+                       
+                
+                select firstonly vendInvoiceLineTemplateLoc
+                                        where vendInvoiceLineTemplateLoc.LedgerDimension    == LedgerDimension
+                                       &&    vendInvoiceLineTemplateLoc.VendInvoiceTemplate == vendInvoiceTemplate.RecId;           
+               
+                if(!vendInvoiceLineTemplateLoc)
+                {
+                    vendInvoiceLineTemplate.VendInvoiceTemplate           = vendInvoiceTemplate.RecId;
+                    vendInvoiceLineTemplate.Description                   = (range.get_Item(i,15).Value);
+                    vendInvoiceLineTemplate.TaxGroup                      = (range.get_Item(i,17).Value);
+                    vendInvoiceLineTemplate.TaxItemGroup                  = (range.get_Item(i,18).Value);
+                    vendInvoiceLineTemplate.Quantity                      = (range.get_Item(i,19).Value);
+                    vendInvoiceLineTemplate.UnitPrice                     = (range.get_Item(i,20).Value);
+                    vendInvoiceLineTemplate.AmountCur                     = (range.get_Item(i,21).value);
+                    vendInvoiceLineTemplate.LedgerDimension               = LedgerDynamicAccountHelper::getDynamicAccountFromAccountNumber(mainAccount.MainAccountId,LedgerJournalACType::Ledger);
+                    vendInvoiceLineTemplate.insert();
+
+                    delete_from vendInvoiceDistributionTemplateLoc
+                          where vendInvoiceDistributionTemplateLoc.VendInvoiceLineTemplate == vendInvoiceLineTemplate.RecId;
+                            
+                }
+                       
+                defaultDimension_Ledger = this.createDefaultDimension(range.get_Item(i,23).value,range.get_Item(i,24).value,range.get_Item(i,25).value,range.get_Item(i,26).value,range.get_Item(i,27).value,range.get_Item(i,28).value,range.get_Item(i,29).value,range.get_Item(i,30).value,range.get_Item(i,31).value,range.get_Item(i,32).value,range.get_Item(i,33).value,range.get_Item(i,34).value);
+                //vendInvoiceDistributionTemplateInsert.LedgerDimension = LedgerDimensionFacade::serviceCreateLedgerDimension(vendInvoiceLineTemplate.LedgerDimension,vendInvoiceTemplate.DefaultDimension);
+                vendInvoiceDistributionTemplateInsert.LedgerDimension = LedgerDimensionFacade::serviceCreateLedgerDimension(vendInvoiceLineTemplate.LedgerDimension,defaultDimension_Ledger);
+
+                vendInvoiceDistributionTemplateInsert.Percentage              = (range.get_Item(i,35).value);
+                vendInvoiceDistributionTemplateInsert.AmountCur               = (range.get_Item(i,36).value);
+                vendInvoiceDistributionTemplateInsert.VendInvoiceLineTemplate = vendInvoiceLineTemplate.RecId;
+
+                if(vendInvoiceLineTemplate.RecId ==0)
+                    throw Error(strFmt("Vendor invoice template %1 is already exist." ,vendInvoiceTemplateLoc.TemplateName));
+                
+                if(vendInvoiceDistributionTemplateInsert.Percentage)
+                {
+                    vendInvoiceDistributionTemplateInsert.AmountCur = CurrencyExchange::round(((vendInvoiceDistributionTemplateInsert.Percentage / 100) * vendInvoiceLineTemplate.AmountCur), 'EUR');
+                }
+
+                if(vendInvoiceDistributionTemplateInsert.AmountCur != 0.0)
+                {
+                    vendInvoiceDistributionTemplateInsert.Percentage = (vendInvoiceDistributionTemplateInsert.AmountCur / vendInvoiceLineTemplate.AmountCur) * 100;
+                }
+                vendInvoiceDistributionTemplateInsert.insert();          
+                vendInvoiceDistributionTemplateInsert =null;
+            }   
+
+        }
+       
+    }
+
+    /// <summary>
+    /// importData method used for insert data in Retail infocode table specific
+    /// </summary>
+    void importData()
+    {
+        System.IO.Stream                stream;
+        DialogGroup                     dlgUploadGroup;
+        FileUploadBuild                 fileUploadBuild;
+        FormBuildControl                formBuildControl;
+        Dialog           dialog =    new Dialog("@Stephanus:STE_interCompany_Dialog");
+
+        dlgUploadGroup          = dialog.addGroup("@Stephanus:STE_interCompany_Template");
+        formBuildControl        = dialog.formBuildDesign().control(dlgUploadGroup.name());
+        fileUploadBuild         = formBuildControl.addControlEx(classstr(FileUpload), 'Upload');
+
+        fileUploadBuild.style(FileUploadStyle::MinimalWithFilename);
+        fileUploadBuild.fileTypesAccepted('.xlsx');
+                
+        if (dialog.run() && dialog.closedOk())
+        {
+            FileUpload fileUploadControl     = dialog.formRun().control(dialog.formRun().controlId('Upload'));
+            FileUploadTemporaryStorageResult fileUploadResult = fileUploadControl.getFileUploadResult();
+
+            if(fileUploadResult != null && fileUploadResult.getUploadStatus())
+            {
+                stream = fileUploadResult.openResult();
+                using (ExcelPackage Package = new ExcelPackage(stream))
+                {
+                    int rowCount,columncount,rowCountsheet2,columncountSheet2;
+                   
+                    Package.Load(stream);
+
+                    ExcelWorksheet worksheet           = package.get_Workbook().get_Worksheets().get_Item(1);
+                    OfficeOpenXml.ExcelRange range     = worksheet.Cells;
+
+                    rowCount           = (worksheet.Dimension.End.Row) - (worksheet.Dimension.Start.Row)  + 1;
+                    columncount        = (worksheet.Dimension.End.Column);
+
+                    ExcelWorksheet worksheetSnd           = package.get_Workbook().get_Worksheets().get_Item(2);
+                    OfficeOpenXml.ExcelRange rangeSnd     = worksheetSnd.Cells;
+
+                    rowCount           = (worksheet.Dimension.End.Row) - (worksheet.Dimension.Start.Row)  + 1;
+                    columncount        = (worksheet.Dimension.End.Column);
+
+                    rowCountsheet2     = (worksheetSnd.Dimension.End.Row) - (worksheetSnd.Dimension.Start.Row)  + 1;
+                    columncount        = (worksheetSnd.Dimension.End.Column);
+
+                    ttsbegin;
+                    this.customerFreeTextInvoiceTemplate(rowCount,columncount,range);
+                    this.vendorFreeTextInvoiceTemplate(rowCountsheet2,columncountSheet2,rangeSnd);
+                    ttscommit;                  
+                    Info("@Stephanus:STE_interCompany_Insert");
+
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// For the Default Dimension
+    /// </summary>
+    /// <param name = "_Dim2">str</param>
+    /// <param name = "_Dim3">str</param>
+    /// <param name = "_Dim4">str</param>
+    /// <param name = "_Dim5">str</param>
+    /// <param name = "_Dim6">str</param>
+    /// <param name = "_Dim7">str</param>
+    /// <param name = "_Dim8">str</param>
+    /// <param name = "_Dim9">str</param>
+    /// <param name = "_Dim10">str</param>
+    /// <param name = "_Dim11">str</param>
+    /// <param name = "_Dim12">str</param>
+    /// <param name = "_Dim13">str</param>
+    /// <returns>DimensionDefault</returns>
+    public DimensionDefault createDefaultDimension(str _Dim2, str _Dim3, str _Dim4,str _Dim5,str _Dim6,str _Dim7,str _Dim8,str _Dim9,str _Dim10,str _Dim11,str _Dim12,str _Dim13)
+    {
+        DimensionAttributeValueSetStorage   valueSetStorage = new DimensionAttributeValueSetStorage();
+        DimensionDefault                    result;
+        int                     i;
+        DimensionAttribute      dimensionAttribute;
+        DimensionAttributeValue dimensionAttributeValue;
+
+        str Dim2 = 'F02_KST';
+        str Dim3 = 'F03_Kostentraeger_Projekte';
+        str Dim4 = 'F04_Rueckstellungsart_Rueckstellungsbewegung';
+        str Dim5 = 'F05_Leistungen';
+        str Dim6 = 'F06_StellenartUndCharakteristik';
+        str Dim7 = 'F07_Lohnarten';
+        str Dim8 = 'F08_KlientID';
+        str Dim9 = 'F09_Geschaeftsbereich';
+        str Dim10 = 'F10_Region';
+        str Dim11 = 'F11_Einrichtung';
+        str Dim12 = 'F12_Angebot';
+        str Dim13 = 'F13_Gruppe';
+
+
+    
+        //Change the dimension names. Use the dimension name which are open and active in the system
+        //I have given Region, Purpose and Costcentre just for an example
+    
+        container               conAttr = [Dim2,Dim3,Dim4,Dim5,Dim6,Dim7,Dim8,Dim9,Dim10,Dim11,Dim12,Dim13];
+    
+        //Change the values which you want to set in dimensions. Use values which are open and active in the system
+        //I have given the arguments of function as values for dimensions.
+    
+        //Dimension name    ->      dimension value
+    
+        //Region            ->      department
+        //Purpose           ->      purpose
+        //Costcentre        ->      costCenter
+    
+        container               conValue = [_Dim2,_Dim3,_Dim4,_Dim5,_Dim6,_Dim7,_Dim8,_Dim9,_Dim10,_Dim11,_Dim12,_Dim13];
+    
+        str                     dimValue;
+    
+        for (i = 1; i <= conLen(conAttr); i++)
+        {
+            dimensionAttribute = dimensionAttribute::findByName(conPeek(conAttr,i));
+            if (dimensionAttribute.RecId == 0)
+            {
+                continue;
+            }
+            dimValue = conPeek(conValue,i);
+            if (dimValue != "")//"@Stephanus:STE_interCompany_Quotes")
+            {
+                dimensionAttributeValue = dimensionAttributeValue::findByDimensionAttributeAndValue(dimensionAttribute,dimValue,false,true);
+                valueSetStorage.addItem(dimensionAttributeValue);
+            }
+        }
+    
+        result = valueSetStorage.save();
+        //It reutrns the value of type DimensionDefault
+        return result;
+    }
+
+    /// <summary>
+    /// For Generating the Ledger Dimension using Main account
+    /// </summary>
+    /// <param name = "_mainAccountId">MainAccountNum  </param>
+    /// <param name = "_Dim2">str</param>
+    /// <param name = "_Dim3">str</param>
+    /// <param name = "_Dim4">str</param>
+    /// <param name = "_Dim5">str</param>
+    /// <param name = "_Dim6">str</param>
+    /// <param name = "_Dim7">str</param>
+    /// <param name = "_Dim8">str</param>
+    /// <param name = "_Dim9">str</param>
+    /// <param name = "_Dim10">str</param>
+    /// <param name = "_Dim11">str</param>
+    /// <param name = "_Dim12">str</param>
+    /// <param name = "_Dim13">str</param>
+    /// <returns>DimensionDynamicAccount</returns>
+    public DimensionDynamicAccount   generateLedgerDimension(MainAccountNum  _mainAccountId ,str _Dim2, str _Dim3, str _Dim4,str _Dim5,str _Dim6,str _Dim7,str _Dim8,str _Dim9,str _Dim10,str _Dim11,str _Dim12,str _Dim13)
+    {
+        int                                 hierarchyCount;
+        int                                 hierarchyIdx;
+        LedgerRecId                         ledgerRecId;
+        MainAccount                         mainAccount;
+        RefRecId                            recordvalue;
+        DimensionAttribute                  dimensionAttribute;
+        DimensionAttributeValue             dimensionAttributeValue;
+        DimensionSetSegmentName             dimensionSet;
+        DimensionStorage                    dimStorage;
+        dimensionAttributeValueCombination  dimensionAttributeValueCombination;
+        int                                 i = 1;
+
+        container                           conData;
+        DimensionAttributeValueContract     ValueContract;
+        LedgerAccountContract               LedgerAccountContract;
+        List                                valueContracts;
+
+ 
+
+        #define.MainAccount('MainAccount')
+        str Dim2 = 'F02_KST';
+        str Dim3 = 'F03_Kostentraeger_Projekte';
+        str Dim4 = 'F04_Rueckstellungsart_Rueckstellungsbewegung';
+        str Dim5 = 'F05_Leistungen';
+        str Dim6 = 'F06_StellenartUndCharakteristik';
+        str Dim7 = 'F07_Lohnarten';
+        str Dim8 = 'F08_KlientID';
+        str Dim9 = 'F09_Geschaeftsbereich';
+        str Dim10 = 'F10_Region';
+        str Dim11 = 'F11_Einrichtung';
+        str Dim12 = 'F12_Angebot';
+        str Dim13 = 'F13_Gruppe';
+ 
+
+        LedgerAccountContract   = new LedgerAccountContract();
+        valueContracts           = new List(Types::Class);
+
+ 
+
+        conData =[_mainAccountId];
+
+ 
+
+        mainAccount = MainAccount::findByMainAccountId(_mainAccountId);
+        recordvalue = DimensionHierarchy::getAccountStructure(mainAccount.RecId,Ledger::current());
+        hierarchyCount = DimensionHierarchy::getLevelCount(recordvalue);
+        DimensionSet = DimensionHierarchyLevel::getDimensionHierarchyLevelNames(recordvalue);
+
+ 
+
+        if (recordvalue)
+        {
+            for(hierarchyIdx = 1 ; hierarchyIdx <= hierarchyCount ; hierarchyIdx++)
+            {
+
+                if(hierarchyIdx == 1 && i == 1)
+                {
+                    continue;   
+                }
+
+                dimensionAttribute = DimensionAttribute::findByLocalizedName(DimensionSet[hierarchyIdx],false,"@Stephanus:STE_interCompany_en");
+                if (dimensionAttribute.Name == Dim2 && hierarchyIdx == 2)
+                {
+                    conData += [_Dim2];
+                }
+                if (dimensionAttribute.Name == Dim3 && hierarchyIdx == 3)
+                {
+                    conData += [_Dim3];
+                }
+                //Pending Needs to Be Compeleted.
+                if(dimensionAttribute.Name == Dim2 || dimensionAttribute.Name == Dim3)
+                {
+                    i++;
+                    if (dimensionAttribute.Name == Dim2 && conPeek(conData,i) == "@Stephanus:STE_interCompany_Quotes" || dimensionAttribute.Name == Dim3 && conPeek(conData,i) == "@Stephanus:STE_interCompany_Quotes")
+                    {
+                        continue;
+                    } 
+                    dimensionAttributeValue = DimensionAttributeValue::findByDimensionAttributeAndValue(dimensionAttribute,conPeek(conData,i),true,true);
+                    if(dimensionAttributeValue)
+                    {
+                        ValueContract = new DimensionAttributeValueContract();
+                        ValueContract.parmName(dimensionAttribute.Name) ;
+                        ValueContract.parmValue(dimensionAttributeValue.CachedDisplayValue);
+                        valueContracts.addEnd(ValueContract);
+                    }
+                }
+            }
+
+            LedgerAccountContract.parmMainAccount(_mainAccountId);
+            LedgerAccountContract.parmValues(valueContracts);
+
+            dimStorage = DimensionServiceProvider::buildDimensionStorageForLedgerAccount(LedgerAccountContract);
+            dimensionAttributeValueCombination = DimensionAttributeValueCombination::find(dimStorage.save());
+            ledgerRecId = dimensionAttributeValueCombination.RecId;
+        }
+        return ledgerRecId;
+    }
+
+    /// <summary>
+    /// For generateLedgerDimensionUsingAccount
+    /// </summary>
+    /// <param name = "_mainAccountId">MainAccountNum</param>
+    /// <returns>DimensionAttributeValueCombination</returns>
+    public DimensionAttributeValueCombination generateLedgerDimensionUsingAccount(MainAccountNum  _mainAccountId)
+    {
+        LedgerAccountContract               LedgerAccountContract = new LedgerAccountContract();
+        DimensionStorage                    dimStorage;
+        DimensionAttributeValueCombination  dimensionAttributeValueCombination;
+
+        LedgerAccountContract.parmMainAccount(_mainAccountId);
+
+        dimStorage = DimensionServiceProvider::buildDimensionStorageForLedgerAccount(LedgerAccountContract,true);
+
+
+        dimensionAttributeValueCombination = DimensionAttributeValueCombination::find(dimStorage.save());
+
+        return dimensionAttributeValueCombination;
+    }
+
+    /// <summary>
+    /// create object for STE_IntercompanyTemplateUploaderUpdate class and used for data import
+    /// </summary>
+    /// <param name = "args">Call the args </param>
+    public static void main (Args args)
+    {
+
+        STE_IntercompanyTemplateUploaderUpdate     STE_IntercompanyTemplateUploaderUpdate;
+
+        STE_IntercompanyTemplateUploaderUpdate = new STE_IntercompanyTemplateUploaderUpdate();
+
+        STE_IntercompanyTemplateUploaderUpdate.run();
+
+    }
+
+}

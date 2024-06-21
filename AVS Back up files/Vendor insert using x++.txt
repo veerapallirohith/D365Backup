@@ -1,0 +1,68 @@
+internal final class Test
+{
+    /// <summary>
+    /// Class entry point. The system will call this method when a designated menu 
+    /// is selected or when execution starts and this class is set as the startup class.
+    /// </summary>
+    /// <param name = "_args">The specified arguments.</param>
+    public static void main(Args _args)
+    {
+            VendTable VendTable;
+            NumberSeq numberSeq;
+            Name name = 'Demo vendor DRK';
+            DirParty dirParty;
+            DirPartyPostalAddressView dirPartyPostalAddressView;
+            DirPartyContactInfoView dirPartyContactInfo;
+            DirPartyTable dirPartyTable;;
+            ttsBegin;
+            VendTable.initValue();
+            try
+            {
+                //VendTable
+              //  numberSeq = NumberSeq::newGetNum(VendParameters::numRefVendAccount(), true);
+              
+              //  numberSeq.used();
+            VendTable.AccountNum = 'V000712';
+            VendTable.VendGroup = 'ZVER';
+                VendTable.Currency = 'USD';
+                VendTable.PaymTermId = 'Net45';
+                VendTable.PaymMode = 'CHECK';
+           
+                VendTable.insert();
+                dirPartyTable = DirPartyTable::findRec(VendTable.Party, true);
+                dirPartyTable.Name = name;
+                dirPartyTable.update();
+                //DirParty
+                // Creates a new instance of the DirParty class from an address book entity that is represented by the VendTable parameter.
+                dirParty = DirParty::constructFromCommon(VendTable);
+                dirPartyPostalAddressView.LocationName = 'Demo Location ';
+                dirPartyPostalAddressView.City = 'São Paulo';
+                dirPartyPostalAddressView.Street = '4th Avenue';
+                dirPartyPostalAddressView.StreetNumber = '18';
+                dirPartyPostalAddressView.CountryRegionId = 'BRA';
+               // dirPartyPostalAddressView.State = 'SP';
+                // Fill address
+                dirParty.createOrUpdatePostalAddress(dirPartyPostalAddressView);
+                dirPartyContactInfo.LocationName = 'Contact Phone';
+                dirPartyContactInfo.Locator = '561291156431';
+                dirPartyContactInfo.Type = LogisticsElectronicAddressMethodType::Phone;
+                dirPartyContactInfo.IsPrimary = NoYes::Yes;
+                dirParty.parmName(name);//('Teera7878');
+                // Fill Contacts
+                dirParty.createOrUpdateContactInfo(dirPartyContactInfo);
+                info(strFmt("Your vendor has been created."));
+                ttsCommit;
+            }
+            catch(Exception::Error)
+            {
+                //ttsAbort;
+                throw Exception::Error;
+                // throwException::Error;
+            }
+        }
+    }
+
+
+
+
+   

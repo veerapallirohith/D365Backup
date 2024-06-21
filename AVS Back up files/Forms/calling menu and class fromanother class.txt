@@ -1,0 +1,8 @@
+MenuFunction menuFunction = new MenuFunction(menuItemActionStr(SMAStageEngine_Next),Menuitemtype::Action);
+                Args args = new Args(menuFunction);
+                SmaStageEngine smaStageEngine;
+                args.parm('NextStage');
+                args.parmEnumType(4586);
+                args.parmEnum(SMAStageChange::NextStage);
+                args.record(_serviceOrder);
+                smaStageEngine::main(args); 

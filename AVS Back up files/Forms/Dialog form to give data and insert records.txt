@@ -1,0 +1,67 @@
+Blog Link : https://www.d365snippets.com/2022/06/how-to-create-a-dialog-in-dynamics-365-finance-and-operations-2022.html 
+
+
+class STE_AzureBlobDialogFormDetails extends RunBase
+{
+    public  DialogField         blobContainer;
+    public  DialogField         blobSasToken;
+    public  Dialogfield         blobName;
+    public  Dialogfield         blobStoragePath;
+    public STE_AzureBlobStorageLocation  azureBlobStorageLocation;
+    public str Name,SAS,Path,ContainerName;
+
+    public container pack()
+
+    {
+
+        return conNull();
+
+    }
+
+    public boolean unpack(container _packedClass)
+
+    {
+
+        return true;
+
+    }
+
+    public Object dialog()
+    {
+        Dialog                dialog;
+        dialog = super();
+        //Setup the dialog
+      
+        dialog.caption('Azure Blob Storage');
+
+        blobContainer = dialog.addField (extendedTypeStr(String255), 'BlobContainer' );
+        blobSasToken = dialog.addField(extendedTypeStr(Notes), 'Sas Token');
+        blobName = dialog.addField(extendedTypeStr(String255), 'Blob Name');
+        blobStoragePath = dialog.addField(extendedTypeStr(String255), 'Blob Storage Path');
+      
+        return dialog;
+    }
+
+    public boolean getFromDialog()
+    {
+        Name   = blobName.value();
+        SAS = blobSasToken.value();
+        Path = blobStoragePath.value();
+        ContainerName = blobContainer.value();
+
+        return super();
+    }
+
+    public void run()
+
+    {
+        delete_from azureBlobStorageLocation;
+        azureBlobStorageLocation.SasToken = SAS;
+        azureBlobStorageLocation.BlobContainer = ContainerName;
+        azureBlobStorageLocation.BlobName = Name;
+        azureBlobStorageLocation.BlobStoragePath = Path;
+        azureBlobStorageLocation.BlobYesNo = NoYes::Yes;
+        azureBlobStorageLocation.insert();
+    }
+
+}
