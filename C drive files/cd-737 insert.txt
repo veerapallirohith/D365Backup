@@ -1,0 +1,72 @@
+  public void insert()
+    {
+        custInvoiceTrans custInvoiceTrans;
+        CustInvoiceJour custInvoiceJour;
+        SalesLine salesLine;
+        inventTrans inventTrans;
+        InventTransOrigin   inventTransOrigin;
+        InventDim           inventDim;
+        str      invoiceDetails;
+        SalesInvoiceTmp salesinvoiceTmpLoc;
+
+
+      //  CustInvoiceJour     custInvoiceJour; // = this.parmCustInvoiceJour(CustInvoiceJour::findRecId(contract.parmRecordId()));
+      //  CustInvoiceTrans    custInvoiceTransLoc, custInvoiceTransLoc2;
+      //  SalesinvoiceTmp     salesinvoiceTmpLoc;
+      ////  salesInvoiceTmp     salesinvoicetmplocal = SalesInvoiceTmp::findInvoiceid_itemid_journalrecid(custInvoiceTransLoc.invoiceid,custInvoiceTransLoc.itemid,custInvoiceTransLoc.parentrecid);
+      //  SalesLine           salesLineLoc;
+      //  InventTrans         inventTransLoc;
+      //  InventDim           inventDimLoc;
+      //  InventTransOrigin   inventTransOriginLoc;
+      //  str                 invoiceDetails;
+
+      
+
+        while select * from custInvoiceTrans
+            where custInvoiceTrans.ParentRecId == custInvoiceJour.RecId
+        {
+            ttsbegin;
+            select forupdate this order by RecId asc
+                where this.CDInventTransId == "";
+            {
+                this.CDInventTransId = custInvoiceTrans.InventTransId;
+
+                // if (salesinvoiceTmpLoc.InvoiceId && salesinvoiceTmpLoc.JournalRecId && salesinvoiceTmpLoc.CDInventTransId)
+                {
+                    //select CustInvoiceJour where CustInvoiceJour.RecId == salesinvoiceTmpLoc.JournalRecId
+                    //select custInvoiceTransLoc2 where custInvoiceTransLoc2.SalesId == custInvoiceJourLoc.SalesId
+                    //&& custInvoiceTransLoc.ItemId == salesinvoiceTmpLoc.ItemId
+                    //&& custInvoiceTransLoc2.InvoiceId == salesinvoiceTmpLoc.InvoiceId
+                    //&& custInvoiceTransLoc.Qty == salesinvoiceTmpLoc.Qty
+                    //&& custInvoiceTransLoc.SalesPrice == salesinvoiceTmpLoc.SalesPrice
+                    //&& custInvoiceTransLoc2.InventTransId == salesinvoiceTmpLoc.CDInventTransId;
+
+                    select firstonly CustomerLineNum, CDCustomerShipmentNumber from salesLine
+                        where salesLine.SalesId == custInvoiceTrans.SalesId
+                            && salesLine.ItemId == custInvoiceTrans.ItemId
+                            && salesLine.InventTransId == custInvoiceTrans.InventTransId;
+
+                    while select Qty,PackingSlipId,DateFinancial,InventTransOrigin,InventDimId from inventTrans
+                        where inventTrans.InvoiceId == custInvoiceTrans.InvoiceId
+                            && inventTrans.ItemId == custInvoiceTrans.ItemId
+                    join inventTransOrigin
+                        where inventTransOrigin.RecId == inventTrans.InventTransOrigin
+                            && inventTransOrigin.InventTransId == custInvoiceTrans.InventTransId
+                    Join inventDim
+                        where inventDim.inventDimId == inventTrans.inventDimId
+                    {
+                        if (inventTrans && inventDim && salesLine)
+                        {
+                            //invoiceDetails += this.setInvoiceDetails(inventTransLoc,inventDimLoc,salesLineLoc);
+                            //  invoiceDetails += invoiceDetails;
+                            invoiceDetails = strFmt("@CD_Label:InvoiceDetails",abs(inventTrans.Qty), InventTrans.PackingSlipId,InventTrans.DateFinancial,inventDim.inventSerialId,inventDim.InventVersionId,salesLine.CustomerLineNum,salesLine.CDCustomerShipmentNumber);
+                        }
+                    }
+                    this.CDInvoiceDetails = invoiceDetails;
+                    this.insert();
+                    this.clear();
+                }
+                //salesinvoiceTmpLoc.update();
+            }
+            ttscommit;
+        }

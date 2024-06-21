@@ -1,0 +1,128 @@
+[ExtensionOf(tableStr(SalesInvoiceTmp))]
+final class CDSalesInvoiceTmp_Extension
+{
+    public void insert()
+    {
+        custInvoiceTrans    custInvoiceTrans, custInvoiceTransLoc;
+        CustInvoiceJour     custInvoiceJour;
+        CustInvoiceJour     custInvoiceJourLoc = CustInvoiceJour::findRecId(this.JournalRecId);
+        SalesLine           salesLine;
+        inventTrans         inventTrans;
+        InventTransOrigin   inventTransOrig;
+        InventDim           inventDim;
+        str                 invoiceDetails;
+        SalesInvoiceTmp     salesinvoiceTmpLoc = SalesInvoiceTmp::findInventtransids(this.InvoiceId,this.ItemId,this.JournalRecId,this.Qty,this.LineAmount,this.CDInventTransId);
+
+        //select custInvoiceJour where custInvoiceJour.RecId == this.JournalRecId
+        //    join custInvoiceTrans where custInvoiceTrans.SalesId ==  custInvoiceJour.SalesId
+        //    && custInvoiceTrans.ItemId == this.ItemId
+        //    &&  custInvoiceTrans.InvoiceId == this.InvoiceId
+        //    && custInvoiceTrans.Qty == this.Qty
+        //    && custInvoiceTrans.InventTransId == this.CDInventTransId;
+
+        while select * from custInvoiceTransLoc
+            where custInvoiceTransLoc.ParentRecId == custInvoiceJourLoc.RecId
+                //&& custInvoiceTransLoc.SalesId == custInvoiceJourLoc.SalesId
+                //&& custInvoiceTransLoc.InvoiceId == custInvoiceJourLoc.InvoiceId
+        {
+            this.CDInventTransId = custInvoiceTransLoc.InventTransId;
+            if (this.ItemId && this.InvoiceId && this.JournalRecId && this.CDInventTransId)
+            {
+                select custInvoiceJourloc where custInvoiceJourloc.RecId == this.JournalRecId
+                    join custInvoiceTrans where custInvoiceTrans.SalesId == custInvoiceJourloc.SalesId
+                    //&& custInvoiceTransLoc.ParentRecId == custInvoiceJourLoc.RecId
+                    //&& custInvoiceTransLoc.InvoiceId == custInvoiceJourLoc.InvoiceId
+                    && custInvoiceTrans.ItemId == this.ItemId
+                    && custInvoiceTrans.InvoiceId == this.InvoiceId
+                    && custInvoiceTrans.Qty == this.Qty
+                    && custInvoiceTrans.SalesPrice == this.SalesPrice
+                    && custInvoiceTrans.InventTransId == this.CDInventTransId
+                        && this.CDInvoiceDetails == "";
+
+                select firstonly CustomerLineNum, CDCustomerShipmentNumber from salesLine
+                where salesLine.SalesId == custInvoiceTrans.SalesId
+                    && salesLine.ItemId == custInvoiceTrans.ItemId
+                    && salesLine.InventTransId == custInvoiceTrans.InventTransId;
+
+                while select Qty,PackingSlipId,DateFinancial,InventTransOrigin,InventDimId from inventTrans
+                    where inventTrans.InvoiceId == custInvoiceTrans.InvoiceId
+                && inventTrans.ItemId == custInvoiceTrans.ItemId
+                join inventTransOrig
+                    where inventTransOrig.RecId == inventTrans.InventTransOrigin
+                    && inventTransOrig.InventTransId == custInvoiceTrans.InventTransId
+                Join inventDim
+                where inventDim.inventDimId == inventTrans.inventDimId
+                {
+                    if (inventTrans && inventDim && salesLine)
+                    {
+                        invoiceDetails += this.setInvoiceDetails(InventTrans,InventDim,SalesLine);
+                    }
+                }
+                this.CDInvoiceDetails = invoiceDetails;
+            }
+        }
+        next insert();
+    }
+
+    public final str setInvoiceDetails(InventTrans  inventTrans,InventDim   inventDim,SalesLine    salesLine)
+    {
+        str      invoiceDetails;
+
+        invoiceDetails = strFmt("@CD_Label:InvoiceDetails",abs(inventTrans.Qty), InventTrans.PackingSlipId,InventTrans.DateFinancial,inventDim.inventSerialId,inventDim.InventVersionId,salesLine.CustomerLineNum,salesLine.CDCustomerShipmentNumber);
+
+        invoiceDetails += '\n';
+
+        return invoiceDetails;
+    }
+
+    public void update()
+    {
+        //custInvoiceTrans custInvoiceTrans;
+        //CustInvoiceJour custInvoiceJour; // = CustInvoiceJour::findRecId(this.JournalRecId);
+        //SalesLine salesLine;
+        //inventTrans inventTrans;
+        //InventTransOrigin   inventTransOrig;
+        //InventDim           inventDim;
+        //str      invoiceDetails;
+        //SalesInvoiceTmp salesinvoiceTmpLoc;
+
+        next update();
+
+        //select * from salesinvoiceTmpLoc
+        //    where salesinvoiceTmpLoc.RecId == this.RecId;
+
+    //    if (/*this.ItemId && */ salesinvoiceTmpLoc.InvoiceId && salesinvoiceTmpLoc.JournalRecId && salesinvoiceTmpLoc.CDInventTransId)
+    //    {
+    //        //select custInvoiceJour where custInvoiceJour.RecId == salesinvoiceTmpLoc.JournalRecId
+    //            select custInvoiceTrans where //custInvoiceTrans.SalesId == custInvoiceJour.SalesId
+    //             //&& custInvoiceTrans.ItemId == this.ItemId
+    //             custInvoiceTrans.InvoiceId == salesinvoiceTmpLoc.InvoiceId
+    //            //&& custInvoiceTrans.Qty == this.Qty
+    //            //&& custInvoiceTrans.SalesPrice == this.SalesPrice
+    //            && custInvoiceTrans.InventTransId == salesinvoiceTmpLoc.CDInventTransId
+    //            && custInvoiceTrans.ParentRecId == salesinvoiceTmpLoc.JournalRecId;
+
+    //        select firstonly CustomerLineNum, CDCustomerShipmentNumber from salesLine
+    //            where salesLine.SalesId == custInvoiceTrans.SalesId
+    //                && salesLine.ItemId == custInvoiceTrans.ItemId
+    //                && salesLine.InventTransId == custInvoiceTrans.InventTransId;
+
+    //        while select Qty,PackingSlipId,DateFinancial,InventTransOrigin,InventDimId from inventTrans
+    //                where inventTrans.InvoiceId == custInvoiceTrans.InvoiceId
+    //            && inventTrans.ItemId == custInvoiceTrans.ItemId
+    //            join inventTransOrig
+    //                where inventTransOrig.RecId == inventTrans.InventTransOrigin
+    //                && inventTransOrig.InventTransId == custInvoiceTrans.InventTransId
+    //        Join inventDim
+    //            where inventDim.inventDimId == inventTrans.inventDimId
+    //        {
+    //            if (inventTrans && inventDim && salesLine)
+    //            {
+    //                invoiceDetails += this.setInvoiceDetails(inventTrans,inventDim,salesLine);
+    //            }
+    //        }
+    //        this.CDInvoiceDetails = invoiceDetails;
+    //    }
+    }
+
+}

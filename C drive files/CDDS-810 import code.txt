@@ -1,0 +1,15 @@
+ [DataEventHandler(tableStr(Jet_PurchTableStaging), DataEventType::MappingEntityToDataSource)]
+    public static void Jet_PurchTableStaging_onMappingEntityToDataSource(Common _sender, DataEventArgs _eventArgs)
+    {
+        Jet_PurchTableStaging jet_PurchTableStaging  = _sender as Jet_PurchTableStaging;// = cursor as Jet_PurchTable;
+       
+        DirPerson dirperson;
+        HcmWorker      hcmworker;
+
+        select recid from hcmworker
+            join dirperson where dirperson.RecId ==  hcmworker.Person
+            && dirperson.Name     ==  jet_PurchTableStaging.Requestor;
+        jet_PurchTableStaging.Requester = hcmworker.RecId;
+
+
+    }

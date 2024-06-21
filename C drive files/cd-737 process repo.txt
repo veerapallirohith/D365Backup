@@ -1,0 +1,184 @@
+/// <summary>
+/// created by Manikandan L     CDDS-737    20/06/2022
+/// This Is an extension class of SalesinvoiceDP
+/// </summary>
+[ExtensionOf(classStr(SalesInvoiceDP))]
+final class CD_SalesInvoiceDp_Extension
+{
+    public  CDSalesInvoiceTaxDetailsTmp  tmpPsaTaxDetails;
+    
+    
+     
+
+    [SRSReportDataSetAttribute(tableStr(CDSalesInvoiceTaxDetailsTmp))]
+    public CDSalesInvoiceTaxDetailsTmp getCDSalesInvoiceTaxDetails()
+    {
+        select tmpPsaTaxDetails;
+        return tmpPsaTaxDetails;
+    }
+
+    /// <summary>
+    /// Processes the report business logic.
+    /// </summary>
+    /// <remarks>
+    /// This method provides the ability to write the report business logic and will be called by the SSRS
+    /// at runtime. The method will compute data and populate the data tables that will be returned to the
+    /// SSRS. Note that this is a framework class. Customizing this class can cause problems with future
+    /// upgrades to the software.
+    /// </remarks>
+    public void processReport()
+    {
+        delete_from tmpPsaTaxDetails;
+        contract = this.parmDataContract() as SalesInvoiceContract;
+        custInvoiceJour custInvoiceJourloc = this.parmCustInvoiceJour(CustInvoiceJour::findRecId(contract.parmRecordId()));
+            //this.getExcludedTaxAmount(CustInvoiceTrans::findRecId(contract.parmrecordid()));
+       // CustInvoiceTrans custinvoicetrans = CustInvoiceTrans::findRecId(custInvoiceJourloc.RecId);
+        
+       next processReport();
+
+        CustInvoiceTrans         custInvoiceTransPT;
+        SalesInvoiceTmp          salesInvoiceTmpPT;
+
+        while select * from custInvoiceTransPT
+            where custInvoiceTransPT.ParentRecId == custInvoiceJourloc.RecId
+        {
+            ttsbegin;
+            select forupdate salesInvoiceTmpPT order by RecId desc
+                where salesInvoiceTmpPT.CDInventTransId == "";
+
+            salesInvoiceTmpPT.CDInventTransId = custInvoiceTransPT.InventTransId;
+            Info(strFmt("RecId: %1 & InventTransId: %2", salesInvoiceTmpPT.RecId, salesInvoiceTmpPT.CDInventTransId));
+            salesinvoicetmppt.update();
+            ttscommit;
+        }
+
+        CustInvoiceTrans custinvoicetrans = CustInvoiceTrans::findsalesid_invoiceid_recid(custInvoiceJourloc.SalesId,custInvoiceJourloc.InvoiceId,custInvoiceJourloc.RecId);
+        SalesInvoiceTmp salesinvoicetmp = SalesInvoiceTmp::findinvoiceid(custinvoicetrans.InvoiceId,custinvoicetrans.ItemId);
+        //  = SalesInvoiceTmp::findInventtransids(custinvoicetrans.invoiceid,custinvoicetrans.itemid,custinvoicetrans.parentrecid,custinvoicetrans.Qty,custinvoicetrans.inventtransid);
+         
+        InventTrans inventtransloc,inventtrans;
+        inventtransorigin inventorigin,inventtransorig;
+        InventDim inventdimloc,inventdim;
+      //  CustInvoiceJour       custInvoiceJour;
+        SalesLine             salesLine;
+        str invoicedetails;
+        str details;
+     
+        // custInvoiceTrans custInvoiceTransloc = CustInvoiceTrans::findInventtransids(salesInvoiceTmp.InvoiceId , salesInvoiceTmp.ItemId,salesInvoiceTmp.JournalRecId,salesInvoiceTmp.Qty);
+        // CustInvoiceTrans  custinvoicetrans;
+         
+        //salesinvoicetmp.clear();
+        //   if(salesinvoicetmp.findlast().cdinventtransid != this.CDInventTransId)
+       
+       // RecordInsertList recordinsertlist;
+       // recordinsertlist = new RecordInsertList(tableNum(SalesInvoiceTmp));
+
+       // ttsbegin;
+       //// select forupdate salesinvoicetmp;
+       // while  select * from custInvoiceTrans
+       //      //group by custInvoiceTrans.Qty , custInvoiceTrans.InventTransId
+       //      join custInvoiceJourloc where custInvoiceJourloc.RecId == custinvoicetrans.ParentRecId
+       //      join inventorigin where inventorigin.InventTransId == custinvoicetrans.InventTransId
+       //              join inventtransloc where inventtransloc.InventTransOrigin == inventorigin.RecId
+       //              join inventdimloc where inventdimloc.inventDimId == inventtransloc.inventDimId
+       //             join salesline where salesLine.SalesId == custInvoiceTrans.SalesId
+       //                 && salesLine.ItemId == custInvoiceTrans.ItemId
+       //                 && salesLine.InventTransId == custInvoiceTrans.InventTransId
+       //              && custInvoiceTrans.InvoiceId        == salesinvoicetmp.InvoiceId
+       //              && custInvoiceTrans.ItemId              == salesinvoicetmp.ItemId
+       //     && custInvoiceTrans.ParentRecId         == salesinvoicetmp.JournalRecId
+       //   //  && salesInvoiceTmp.CDInventTransIDUpdated == NoYes::No;
+
+       // //select forupdate SalesInvoiceTmp;
+
+
+       // {
+       //     salesinvoicetmp.CDInventTransId  = custinvoicetrans.InventTransId;
+       //     salesinvoicetmp.BackOrderLineItemId   = inventdimloc.inventDimId;
+
+       //     salesinvoicetmp.InventSerialId  = inventdimloc.inventSerialId;
+       //     salesinvoicetmp.PackingSlipId        = inventtransloc.PackingSlipId;
+       //     salesinvoicetmp.CDCustomerLineNum    = salesLine.CustomerLineNum;
+       //     salesinvoicetmp.DateFinancial        = inventtransloc.DateFinancial;
+       //     salesinvoicetmp.CDCustomerShipmentNumber = salesLine.CDCustomerShipmentNumber;
+       //     salesinvoicetmp.BackOrderLineQuantity   = abs(inventtransloc.Qty);
+       //     salesinvoicetmp.InventVersionId           = inventdimloc.InventVersionId;
+       //     salesinvoicetmp.CDTaxItemGroup = custInvoiceTrans.TaxItemGroup;
+
+
+          
+
+          
+            // select forupdate salesInvoiceTmp;
+            //  salesInvoiceTmp.doUpdate();
+           // salesinvoicetmp.doInsert();
+           
+            recordinsertlist.add(salesinvoicetmp);
+        }
+        recordinsertlist.insertDatabase();
+        ttscommit;
+        if (salesinvoicetmp.ItemId && salesinvoicetmp.InvoiceId && salesinvoicetmp.JournalRecId && salesinvoicetmp.CDInventTransId)
+        {
+
+            select firstonly custInvoiceJourloc where custInvoiceJourloc.RecId == salesinvoicetmp.JournalRecId
+        join custInvoiceTrans where custInvoiceTrans.SalesId == custInvoiceJourloc.SalesId
+        && custInvoiceTrans.ItemId == salesinvoicetmp.ItemId
+        && custInvoiceTrans.InvoiceId == salesinvoicetmp.InvoiceId
+                && CustInvoiceTrans.inventtransid == salesinvoicetmp.CDInventTransId;
+           
+
+                salesinvoicetmp.CDTaxItemGroup = custInvoiceTrans.TaxItemGroup;
+            //salesInvoiceTmp.CDLineNum      = custInvoiceTrans.LineNum;
+            //salesInvoiceTmp.InventSerialId  = any2Str(salesInvoiceTmp.CDLinenumber());
+            //salesInvoiceTmp.CDInventTransIDUpdated = NoYes::Yes;
+
+            select firstonly CustomerLineNum, CDCustomerShipmentNumber from salesLine
+        where salesLine.SalesId == custInvoiceTrans.SalesId
+            && salesLine.ItemId == custInvoiceTrans.ItemId
+            && salesLine.InventTransId == custInvoiceTrans.InventTransId;
+
+
+            while select * from inventtransloc
+            where inventtransloc.InvoiceId == custInvoiceTrans.InvoiceId
+                  && inventtransloc.ItemId == custInvoiceTrans.ItemId
+            join inventorigin
+                  where inventorigin.RecId == inventtransloc.InventTransOrigin
+                  && inventorigin.InventTransId == custInvoiceTrans.InventTransId
+            Join inventdimloc
+                  where inventdimloc.inventDimId == inventtransloc.inventDimId
+            {
+                if (inventTransloc && inventDimloc && salesLine)
+                {
+                    invoiceDetails += salesinvoicetmp.setInvoiceDetails(InventTransloc,InventDimloc,SalesLine);
+                }
+            }
+            salesinvoicetmp.CDInvoiceDetails = invoiceDetails;
+        }
+    
+   
+              
+        this.insertIntoSalesTaxdetails(custInvoiceJour);
+}
+
+    /// <summary>
+    /// This is an insert method to get sales tax details
+    /// </summary>
+    /// <param name = "_custInvoiceJour">CustInvoiceJour</param>
+    public void insertIntoSalesTaxdetails(CustInvoiceJour _custInvoiceJour)
+    {
+        TaxTrans    taxTrans = TaxTrans::find(_custInvoiceJour.LedgerVoucher,_custInvoiceJour.InvoiceDate);
+ 
+        while select sum(SourceBaseAmountCur),sum(SourceRegulateAmountCur) from taxTrans
+            group by taxTrans.TaxCode
+                   where  taxTrans.Voucher == _custInvoiceJour.LedgerVoucher
+                   &&    taxTrans.TransDate == _custInvoiceJour.InvoiceDate
+        {
+            tmpPsaTaxDetails.CDTaxCode                  =  taxTrans.TaxCode;
+            tmpPsaTaxDetails.CDSourceBaseAmountCur      =  abs(taxTrans.SourceBaseAmountCur);
+            tmpPsaTaxDetails.CDSourceRegulateAmountCur  =abs(taxTrans.SourceRegulateAmountCur);
+          //  tmpPsaTaxDetails.insert();
+            tmpPsaTaxDetails.clear();
+        }
+    }
+
+}

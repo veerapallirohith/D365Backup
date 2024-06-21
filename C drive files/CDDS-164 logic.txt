@@ -1,0 +1,26 @@
+ InventTrans         inventtranslocal = InventTrans::findTransId(_packingSlipLineSelection.parmCustPackingSlipTrans().InventTransId);
+        CustPackingSlipJour   custpackingslipjourlocal = CustPackingSlipJour::findFromCustPackingSlipTrans           (_packingSlipLineSelection.parmCustPackingSlipTrans().SalesId,  _packingSlipLineSelection.parmCustPackingSlipTrans().PackingSlipId,  _packingSlipLineSelection.parmCustPackingSlipTrans().DeliveryDate);
+ 
+
+        if(salesPackingslipChildTmp.CDInventSerialId == '' && salesPackingSlipTmp.CDLineNum != 0) // && salesPackingslipchildTmp.ItemId ==  salesPackingslipChildTmp.ItemId)
+         {
+
+            while select  CDInventSerialId  from inventtranslocal
+               // group by cdinventserialid
+               where inventtranslocal.PackingSlipId == custpackingslipjourlocal.packingslipid
+            //      && inventtranslocal.ItemId         ==   _packingSlipLineSelection.parmCustPackingSlipTrans().ItemId
+            //&& inventtranslocal.PackingSlipId  == _packingSlipLineSelection.parmCustPackingSlipTrans().PackingSlipId
+
+            {
+                salesPackingslipChildTmp.cdinventserialid = inventtranslocal.cdinventserialid;
+                salesPackingslipChildTmp.insert();
+            }
+         }
+       else
+            {
+                if(salesPackingslipTmp.Remain == 0)
+                 {
+                salesPackingslipChildTmp.CDInventSerialId = salesPackingslipTmp.CDInventSerialId;
+                salesPackingslipChildTmp.insert();
+                  }
+            }
